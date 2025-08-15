@@ -19,15 +19,15 @@ export const WalletConnect = ({ open, onOpenChange }: WalletConnectProps) => {
 
   // Simulated 0G Chain configuration
   const OG_CHAIN_CONFIG = {
-    chainId: '0x40d8', // 16600 in hex (0G Newton Testnet)
-    chainName: '0G Newton Testnet',
+    chainId: '0x40e1', // 16601 in hex (0G Galileo Testnet)
+    chainName: '0G Galileo Testnet',
     nativeCurrency: {
       name: '0G',
-      symbol: '0G',
+      symbol: 'OG',
       decimals: 18,
     },
-    rpcUrls: ['https://evmrpc-testnet.0g.ai'],
-    blockExplorerUrls: ['https://chainscan-newton.0g.ai'],
+    rpcUrls: ['https://rpc-galileo.0g.ai'],
+    blockExplorerUrls: ['https://chainscan-galileo.0g.ai'],
   };
 
   const connectWallet = async () => {
