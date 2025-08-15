@@ -19,7 +19,7 @@ export const WalletConnect = ({ open, onOpenChange }: WalletConnectProps) => {
 
   // Simulated 0G Chain configuration
   const OG_CHAIN_CONFIG = {
-    chainId: '0x40e1', // 16601 in hex (0G Galileo Testnet)
+    chainId: '0x40e9', // 16601 in hex (0G Galileo Testnet)
     chainName: '0G Galileo Testnet',
     nativeCurrency: {
       name: '0G',
