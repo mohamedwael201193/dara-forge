@@ -106,7 +106,8 @@ const OG_CHAIN_CONFIG = {
   const disconnectWallet = () => {
     setIsConnected(false);
     setWalletAddress("");
-    setChainId("");{
+    setChainId("");
+    toast({
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected from DARA.",
     });
