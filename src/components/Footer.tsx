@@ -17,14 +17,13 @@ export const Footer = () => {
     { name: "How It Works", href: "#how-it-works" },
     { name: "Features", href: "#features" },
     { name: "Demo", href: "#demo" },
-    { name: "Roadmap", href: "#roadmap" }
   ];
 
   const resources = [
-    { name: "Documentation", href: "#", icon: ExternalLink },
-    { name: "GitHub Repository", href: "#", icon: Github },
-    { name: "Research Papers", href: "#", icon: ExternalLink },
-    { name: "0G Integration Guide", href: "#", icon: ExternalLink }
+    { name: "Documentation", href: "https://docs.0g.ai/", icon: ExternalLink },
+    { name: "GitHub Repository", href: "https://github.com/mohamedwael201193/dara-forge", icon: Github },
+    { name: "Research Papers", href: "https://0g.ai/papers", icon: ExternalLink },
+    { name: "0G Integration Guide", href: "https://docs.0g.ai/integration-guide", icon: ExternalLink }
   ];
 
   const ogComponents = [
@@ -52,14 +51,20 @@ export const Footer = () => {
               Powered by the 0G ecosystem.
             </p>
             <div className="flex gap-4">
-              <Button variant="ghost" size="icon" className="w-10 h-10">
-                <Twitter className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="w-10 h-10" asChild>
+                <a href="https://x.com/Mowael777" target="_blank" rel="noopener noreferrer">
+                  <Twitter className="w-5 h-5" />
+                </a>
               </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10">
-                <Github className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="w-10 h-10" asChild>
+                <a href="https://github.com/mohamedwael201193/dara-forge" target="_blank" rel="noopener noreferrer">
+                  <Github className="w-5 h-5" />
+                </a>
               </Button>
-              <Button variant="ghost" size="icon" className="w-10 h-10">
-                <Mail className="w-5 h-5" />
+              <Button variant="ghost" size="icon" className="w-10 h-10" asChild>
+                <a href="mailto:mohamedwael2001193@gmail.com">
+                  <Mail className="w-5 h-5" />
+                </a>
               </Button>
             </div>
           </div>
@@ -90,6 +95,8 @@ export const Footer = () => {
                   <a
                     key={index}
                     href={resource.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors duration-200 group"
                   >
                     <span>{resource.name}</span>
@@ -132,8 +139,7 @@ export const Footer = () => {
         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="text-center md:text-left">
             <p className="text-sm text-muted-foreground">
-              © 2024 DARA. Built for the 0G WaveHack Buildathon. 
-              Transforming research through decentralization.
+              Made with passion by DEVMO © 2025. Empowering the future of decentralized AI research.
             </p>
           </div>
           
@@ -150,3 +156,4 @@ export const Footer = () => {
     </footer>
   );
 };
+
