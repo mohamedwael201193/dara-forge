@@ -3,7 +3,7 @@ import { ProblemSolutionSection } from "@/components/ProblemSolutionSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { FeaturesSection } from "@/components/FeaturesSection";
 import { DemoSection } from "@/components/DemoSection";
-import { RoadmapSection } from "@/components/RoadmapSection";
+
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
