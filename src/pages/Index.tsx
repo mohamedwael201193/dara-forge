@@ -24,8 +24,7 @@ const Index = () => {
       {/* Interactive Demo */}
       <DemoSection />
       
-      {/* Roadmap */}
-      <RoadmapSection />
+
       
       {/* Footer */}
       <Footer />
