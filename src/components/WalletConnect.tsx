@@ -18,17 +18,17 @@ export const WalletConnect = ({ open, onOpenChange }: WalletConnectProps) => {
   const { toast } = useToast();
 
   // Simulated 0G Chain configuration
-  const OG_CHAIN_CONFIG = {
-    chainId: '0x40e9', // 16601 in hex (0G Galileo Testnet)
-    chainName: '0G Galileo Testnet',
-    nativeCurrency: {
-      name: '0G',
-      symbol: 'OG',
-      decimals: 18,
-    },
-    rpcUrls: ['https://rpc-galileo.0g.ai'],
-    blockExplorerUrls: ['https://chainscan-galileo.0g.ai'],
-  };
+const OG_CHAIN_CONFIG = {
+  chainId: '0x40E9', // 16601 in hex
+  chainName: '0G-Galileo-Testnet',
+  nativeCurrency: {
+    name: '0G',
+    symbol: 'OG',
+    decimals: 18,
+  },
+  rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+  blockExplorerUrls: ['https://chainscan-galileo.0g.ai'],
+};
 
   const connectWallet = async () => {
     setIsConnecting(true);
