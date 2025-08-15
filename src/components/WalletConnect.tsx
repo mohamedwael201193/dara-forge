@@ -14,7 +14,6 @@ export const WalletConnect = ({ open, onOpenChange }: WalletConnectProps) => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
-  const [ogBalance, setOgBalance] = useState("0"); // New state for 0G balance
   const [chainId, setChainId] = useState("");
   const { toast } = useToast();
 
@@ -87,7 +86,6 @@ const OG_CHAIN_CONFIG = {
 
       // Set connection state
       setWalletAddress(accounts[0]);
-      setOgBalance(balanceOg);
       setChainId(OG_CHAIN_CONFIG.chainId);
       setIsConnected(true);
 
@@ -105,14 +103,10 @@ const OG_CHAIN_CONFIG = {
       });
     } finally {
       setIsConnecting(false);
-    }
-  };
-
   const disconnectWallet = () => {
     setIsConnected(false);
-    setWalletAddress('');
-    setChainId('');
-    toast({
+    setWalletAddress("");
+    setChainId("");{
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected from DARA.",
     });
@@ -233,14 +227,6 @@ const OG_CHAIN_CONFIG = {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium">0G Balance</span>
-                    <div className="flex items-center gap-2 p-2 bg-muted rounded text-sm font-mono">
-                      <span className="flex-1 truncate">
-                        {ogBalance} OG
-                      </span>
-                    </div>
-                  </div>
                 </div>
 
                 <div className="flex gap-2">
