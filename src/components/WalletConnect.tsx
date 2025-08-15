@@ -103,6 +103,9 @@ const OG_CHAIN_CONFIG = {
       });
     } finally {
       setIsConnecting(false);
+    }
+  };
+
   const disconnectWallet = () => {
     setIsConnected(false);
     setWalletAddress("");
