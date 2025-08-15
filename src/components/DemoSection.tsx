@@ -17,15 +17,12 @@ import {
 import { WalletConnect } from "./WalletConnect"; // Import the new component
 
 export const DemoSection = () => {
-  const [isWalletConnectOpen, setIsWalletConnectOpen] = useState(false); // State for wallet connect dialog
   const [connectedWallet, setConnectedWallet] = useState(false);
   const [currentDemo, setCurrentDemo] = useState<'upload' | 'compute' | 'verify'>('upload');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [computeStatus, setComputeStatus] = useState<'idle' | 'running' | 'complete'>('idle');
 
-  const handleWalletConnect = () => {
-    setIsWalletConnectOpen(true); // Open the wallet connect dialog
-  };
+
 
   const simulateUpload = () => {
     setUploadProgress(0);
@@ -98,14 +95,7 @@ export const DemoSection = () => {
                 <h3 className="font-semibold">Wallet Connection</h3>
                 <Wallet className="w-5 h-5 text-muted-foreground" />
               </div>
-              <Button
-                variant="hero"
-                onClick={handleWalletConnect}
-                className="w-full"
-              >
-                Connect Wallet
-              </Button>
-              <WalletConnect open={isWalletConnectOpen} onOpenChange={setIsWalletConnectOpen} />
+              <WalletConnect />
             </Card>
 
             {/* Demo Steps */}
