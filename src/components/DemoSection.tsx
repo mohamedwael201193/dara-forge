@@ -1,7 +1,4 @@
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { 
   Wallet, 
   Upload, 
@@ -14,15 +11,17 @@ import {
   Database,
   Cpu
 } from "lucide-react";
+import { WalletConnect } from "./WalletConnect"; // Import the new component
 
 export const DemoSection = () => {
+  const [isWalletConnectOpen, setIsWalletConnectOpen] = useState(false); // State for wallet connect dialog
   const [connectedWallet, setConnectedWallet] = useState(false);
   const [currentDemo, setCurrentDemo] = useState<'upload' | 'compute' | 'verify'>('upload');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [computeStatus, setComputeStatus] = useState<'idle' | 'running' | 'complete'>('idle');
 
   const handleWalletConnect = () => {
-    setConnectedWallet(!connectedWallet);
+    setIsWalletConnectOpen(true); // Open the wallet connect dialog
   };
 
   const simulateUpload = () => {
@@ -97,24 +96,13 @@ export const DemoSection = () => {
                 <Wallet className="w-5 h-5 text-muted-foreground" />
               </div>
               <Button
-                variant={connectedWallet ? "neural" : "hero"}
+                variant="hero"
                 onClick={handleWalletConnect}
                 className="w-full"
               >
-                {connectedWallet ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Connected: 0x42A7...9F3B
-                  </>
-                ) : (
-                  "Connect Wallet"
-                )}
+                Connect Wallet
               </Button>
-              {connectedWallet && (
-                <div className="mt-3 text-sm text-muted-foreground">
-                  ✓ 0G Chain connection established
-                </div>
-              )}
+              <WalletConnect open={isWalletConnectOpen} onOpenChange={setIsWalletConnectOpen} />
             </Card>
 
             {/* Demo Steps */}
