@@ -176,8 +176,7 @@ const OG_CHAIN_CONFIG = {
             </div>
             <div>
               <h3 className="font-semibold text-lg">Successfully Connected</h3>
-                 <p className="text-muted-foreground text-sm">
-                    Your wallet is connected to 0G-Galileo-Testnet
+              <p className="text-muted-foreground text-sm                    Your wallet is connected to 0G-Galileo-Testnet
               </p>
             </div>
           </div>
