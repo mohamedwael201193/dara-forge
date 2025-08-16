@@ -12,7 +12,9 @@ import {
   CheckCircle, 
   Clock,
   Database,
-  Cpu
+  Cpu,
+  BarChart2,
+  Activity
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; // Import the new component
 
@@ -21,8 +23,6 @@ export const DemoSection = () => {
   const [currentDemo, setCurrentDemo] = useState<'upload' | 'compute' | 'verify'>('upload');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [computeStatus, setComputeStatus] = useState<'idle' | 'running' | 'complete'>('idle');
-
-
 
   const simulateUpload = () => {
     setUploadProgress(0);
@@ -262,6 +262,18 @@ export const DemoSection = () => {
                           <span className="ml-2 font-medium">0.002 ETH</span>
                         </div>
                       </div>
+                      {/* Simulated Graph/Visualization */}
+                      <div className="mt-4">
+                        <h5 className="font-medium mb-2">Key Metric Trend:</h5>
+                        <div className="w-full h-32 bg-neural-node/10 rounded-lg flex items-end justify-around p-2">
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '80%' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '60%' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '90%' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '70%' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '85%' }}></div>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center mt-2">Simulated trend data over time</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -345,3 +357,4 @@ export const DemoSection = () => {
     </section>
   );
 };
+
