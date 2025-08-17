@@ -1,6 +1,10 @@
+"use client";
+
 import { ethers } from "ethers";
 
 export const DARA_CONTRACT = (process.env.NEXT_PUBLIC_DARA_CONTRACT || "").toLowerCase();
+export const EXPLORER = (process.env.NEXT_PUBLIC_OG_EXPLORER || "").replace(/\/$/, "");
+
 export const DARA_ABI = [
   {
     "anonymous": false,

@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,16 @@ import {
   Database,
   Cpu,
   BarChart2,
-  Activity
+  Activity,
+  FileText,
+  ExternalLink,
+  AlertCircle
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; // Import the new component
+import { uploadBlobTo0GStorageViaBrowser, gatewayUrlForRoot } from "@/lib/ogStorage";
+import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
+import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
+import { ethers } from "ethers";
 
 export const DemoSection = () => {
   const [connectedWallet, setConnectedWallet] = useState(false);
@@ -24,24 +32,106 @@ export const DemoSection = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [computeStatus, setComputeStatus] = useState<'idle' | 'running' | 'complete'>('idle');
 
-  const simulateUpload = () => {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string>("");
+
+  const [datasetRoot, setDatasetRoot] = useState<string>("");
+  const [datasetTx, setDatasetTx] = useState<string>("");
+
+  const [manifestRoot, setManifestRoot] = useState<string>("");
+  const [manifestTx, setManifestTx] = useState<string>("");
+  const [manifestHash, setManifestHash] = useState<string>("");
+
+  const [onchainTx, setOnchainTx] = useState<string>("");
+  const [logId, setLogId] = useState<string>("");
+
+  const handleRealUpload = async (file: File) => {
+    setError("");
     setUploadProgress(0);
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 10;
-      });
+    setBusy(true);
+
+    // Simulate progress up to 90% while uploading
+    let progress = 0;
+    const timer = setInterval(() => {
+      progress = Math.min(progress + 7, 90);
+      setUploadProgress(progress);
     }, 200);
+
+    try {
+      // 1) Upload dataset to 0G Storage
+      const ds = await uploadBlobTo0GStorageViaBrowser(file, file.name);
+      setDatasetRoot(ds.rootHash);
+      setDatasetTx(ds.txHash);
+
+      // 2) Build and upload manifest
+      const provider = new ethers.BrowserProvider((window as any).ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      const uploader = accounts[0];
+
+      const manifest: DaraManifest = buildManifest(
+        ds.rootHash,
+        "Wave‑1 sample dataset import",
+        uploader,
+        { app: "DARA", version: "0.1" }
+      );
+      const mHash = manifestHashHex(manifest);
+      setManifestHash(mHash);
+
+      const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
+      const mu = await uploadBlobTo0GStorageViaBrowser(mBlob, "manifest.json");
+      setManifestRoot(mu.rootHash);
+      setManifestTx(mu.txHash);
+
+      // Finish progress
+      setUploadProgress(100);
+    } catch (e: any) {
+      setError(e.message || "Upload failed");
+      setUploadProgress(0);
+    } finally {
+      clearInterval(timer);
+      setBusy(false);
+    }
   };
 
   const simulateCompute = () => {
-    setComputeStatus('running');
+    setComputeStatus("running");
     setTimeout(() => {
-      setComputeStatus('complete');
+      setComputeStatus("complete");
     }, 3000);
+  };
+
+  const commitToChain = async () => {
+    setError("");
+    setBusy(true);
+    try {
+      const fileId = manifestRoot || datasetRoot;
+      if (!fileId) throw new Error("Please upload a dataset first.");
+
+      const signer = await getSigner();
+      const contract = getDaraContract(signer);
+      const tx = await contract.logData(fileId);
+      const receipt = await tx.wait();
+
+      // Parse LogCreated event
+      const iface = new ethers.Interface(DARA_ABI as any);
+      for (const log of receipt.logs) {
+        if (log.address.toLowerCase() === contract.target.toLowerCase()) {
+          try {
+            const parsed = iface.parseLog(log);
+            if (parsed?.name === "LogCreated") {
+              setLogId(parsed.args?.logId?.toString?.() || "");
+              break;
+            }
+          } catch {}
+        }
+      }
+      const txHash = (receipt as any).hash || (receipt as any).transactionHash;
+      setOnchainTx(txHash);
+    } catch (e: any) {
+      setError(e.message || "On‑chain logging failed");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const demoSteps = [
@@ -144,37 +234,55 @@ export const DemoSection = () => {
                   </div>
 
                   {/* File Drop Zone */}
-                  <div 
-                    className="border-2 border-dashed border-border rounded-xl p-12 text-center 
-                      hover:border-accent/50 hover:bg-accent/5 transition-all duration-300 cursor-pointer"
-                    onClick={simulateUpload}
-                  >
-                    <Database className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-lg font-medium mb-2">Drop files here or click to browse</p>
-                    <p className="text-sm text-muted-foreground">Supports: .csv, .json, .parquet, .h5</p>
-                  </div>
+                  <div
+  className="border-2 border-dashed border-border rounded-xl p-12 text-center hover:border-accent/50 hover:bg-accent/5 transition-all duration-300"
+>
+  <label className="block cursor-pointer">
+    <input
+      type="file"
+      className="hidden"
+      onChange={(e) => e.target.files?.[0] && handleRealUpload(e.target.files[0])}
+      disabled={busy}
+      accept=".csv,.json,.parquet,.h5"
+    />
+    <Database className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+    <p className="text-lg font-medium mb-2">Drop files here or click to browse</p>
+    <p className="text-sm text-muted-foreground">Supports: .csv, .json, .parquet, .h5</p>
+  </label>
+</div>
 
-                  {/* Upload Progress */}
-                  {uploadProgress > 0 && (
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span>research-dataset.csv</span>
-                        <span>{uploadProgress}%</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div 
-                          className="bg-gradient-accent h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${uploadProgress}%` }}
-                        />
-                      </div>
-                      {uploadProgress === 100 && (
-                        <div className="flex items-center gap-2 text-sm text-accent">
-                          <CheckCircle className="w-4 h-4" />
-                          Stored on 0G Storage with hash: 0xab7f2...8e3c
-                        </div>
-                      )}
-                    </div>
-                  )}
+{datasetRoot && (
+  <div className="flex items-center gap-2 text-sm mt-2">
+    <CheckCircle className="w-4 h-4 text-accent" />
+    <span>Stored on 0G Storage</span>
+  </div>
+)}
+<div className="text-xs space-y-1 mt-2">
+  {datasetRoot && (
+    <div>
+      Dataset Root: <code>{datasetRoot}</code>
+      {" • "}
+      <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(datasetRoot)}>
+        Open
+      </a>
+      {datasetTx && <> {" • "} Upload Tx: <code>{datasetTx}</code></>}
+    </div>
+  )}
+  {manifestRoot && (
+    <div>
+      Manifest Root: <code>{manifestRoot}</code>
+      {" • "}
+      <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(manifestRoot, "manifest.json")}>
+        Open
+      </a>
+      {manifestTx && <> {" • "} Upload Tx: <code>{manifestTx}</code></>}
+    </div>
+  )}
+  {manifestHash && (
+    <div>Manifest Hash (canonical): <code>{manifestHash}</code></div>
+  )}
+  {error && <div className="text-red-500">{error}</div>}
+</div>
                 </div>
               )}
 
@@ -294,45 +402,34 @@ export const DemoSection = () => {
 
                   {/* Verification Status */}
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-accent" />
-                        <span>Computation Hash Verified</span>
-                      </div>
-                      <Badge className="bg-accent/10 text-accent">✓ Valid</Badge>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-accent" />
-                        <span>Data Integrity Confirmed</span>
-                      </div>
-                      <Badge className="bg-accent/10 text-accent">✓ Valid</Badge>
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-4 bg-card rounded-lg border border-border">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-accent" />
-                        <span>Results Published to 0G DA</span>
-                      </div>
-                      <Badge className="bg-accent/10 text-accent">✓ Public</Badge>
-                    </div>
-                  </div>
+  <div className="p-4 bg-card rounded-lg border border-border">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Shield className="w-5 h-5 text-primary" />
+        <span>Anchor manifest root on 0G Chain</span>
+      </div>
+      <Button variant="default" size="sm" disabled={busy || (!datasetRoot && !manifestRoot)} onClick={commitToChain}>
+        {busy ? "Committing…" : "Commit to 0G Chain"}
+      </Button>
+    </div>
+    <div className="mt-2 text-xs text-muted-foreground">
+      FileId: <code>{manifestRoot || datasetRoot || "—"}</code>
+    </div>
+  </div>
 
-                  {/* Blockchain Explorer Link */}
-                  <Card className="p-4 bg-primary/5 border-primary/20">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">Transaction Hash</div>
-                        <div className="text-sm text-muted-foreground font-mono">
-                          0x7f3a9...b8e2c4
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        View on Explorer
-                      </Button>
-                    </div>
-                  </Card>
+  {onchainTx && (
+    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+      <div className="font-medium">On‑chain Transaction</div>
+      <div className="text-sm font-mono">{onchainTx}</div>
+      <div className="mt-2">
+        <Button variant="outline" size="sm" asChild>
+          <a href={`${EXPLORER}/tx/${onchainTx}`} target="_blank" rel="noreferrer">View on Explorer</a>
+        </Button>
+      </div>
+      {logId && <div className="text-xs mt-2 text-muted-foreground">Event LogCreated ID: <code>{logId}</code></div>}
+    </div>
+  )}
+</div>
 
                   {/* Collaboration Panel */}
                   <div className="pt-4 border-t border-border">

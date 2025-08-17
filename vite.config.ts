@@ -20,9 +20,17 @@ export default defineConfig(({ mode }) => ({
     },
   },
   define: {
-    global: 'globalThis',
+    global: "globalThis",
+    "process.env": {},
+  },
+  build: {
+    rollupOptions: {
+      external: ["node:crypto", "node:fs", "node:path", "node:fs/promises", "stream"],
+    },
   },
   optimizeDeps: {
-    exclude: ['@0glabs/0g-ts-sdk']
-  }
+    exclude: ["@0glabs/0g-ts-sdk"],
+  },
 }));
+
+
