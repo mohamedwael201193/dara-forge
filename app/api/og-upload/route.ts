@@ -12,6 +12,14 @@ const RPC_URL = process.env.NEXT_PUBLIC_OG_RPC_URL || "https://evmrpc-testnet.0g
 const INDEXER_RPC = (process.env.NEXT_PUBLIC_OG_INDEXER || "https://indexer-storage-testnet-turbo.0g.ai").replace(/\/$/, "");
 const BACKEND_PK = process.env.OG_STORAGE_PRIVATE_KEY;
 
+export async function GET() {
+  // Simple health check to prove the route exists
+  const hasPK = Boolean(BACKEND_PK?.startsWith("0x"));
+  return new Response(JSON.stringify({ ok: true, route: "og-upload", hasPK }), {
+    headers: { "content-type": "application/json" },
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     if (!BACKEND_PK?.startsWith("0x")) {
@@ -25,6 +33,7 @@ export async function POST(req: NextRequest) {
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+
     const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "og-"));
     const filename = explicitName || (file as any).name || "upload.bin";
     const tmpPath = path.join(tmpDir, `${Date.now()}-${filename}`);
@@ -54,7 +63,10 @@ export async function POST(req: NextRequest) {
     const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer);
     await fileObj.close?.().catch(() => {});
     await fs.unlink(tmpPath).catch(() => {});
-    if (uploadErr !== null) return new Response(`0G upload error: ${uploadErr}`, { status: 500 });
+
+    if (uploadErr !== null) {
+      return new Response(`0G upload error: ${uploadErr}`, { status: 500 });
+    }
 
     const txHash = typeof tx === "string" ? tx : tx?.hash || tx?.transactionHash || String(tx);
     return new Response(JSON.stringify({ rootHash, txHash }), {
