@@ -5,21 +5,25 @@ import { ethers } from "ethers";
 const RPC_URL = process.env.NEXT_PUBLIC_OG_RPC_URL || "https://evmrpc-testnet.0g.ai/";
 const INDEXER_RPC = (process.env.NEXT_PUBLIC_OG_INDEXER || "https://indexer-storage-testnet-turbo.0g.ai").replace(/\/$/, "");
 
+// Use CDN import directly to bypass Node.js built-in issues in Vite
+async function loadOgSdk(): Promise<any> {
+  return await import("https://esm.sh/@0glabs/0g-ts-sdk/dist/zgstorage.esm.js");
+}
+
 /**
  * Upload a Blob to 0G Storage in the browser using the user's MetaMask signer.
  * Returns the file Merkle root (rootHash) and the upload tx hash (string).
- * IMPORTANT: import @0glabs/0g-ts-sdk from the package root (no deep path) to avoid Vite export errors.
  */
 export async function uploadBlobTo0GStorageViaBrowser(
   blob: Blob,
   filename: string
 ): Promise<{ rootHash: string; txHash: string }> {
-  const mod = await import("@0glabs/0g-ts-sdk");  // <-- root import only
+  const mod = await loadOgSdk();
   const Indexer = (mod as any).Indexer;
-  const SDKBlob = (mod as any).Blob;               // SDK's browser Blob with merkleTree()
+  const SDKBlob = (mod as any).Blob; // SDK's browser Blob with merkleTree()
 
   if (!Indexer || !SDKBlob) {
-    throw new Error("0G SDK exports not found. Expected { Indexer, Blob } from @0glabs/0g-ts-sdk.");
+    throw new Error("0G SDK exports not found. Expected { Indexer, Blob }.");
   }
 
   // Wrap the DOM Blob in SDK Blob to access merkleTree()

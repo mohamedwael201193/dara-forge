@@ -4,14 +4,13 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig({
   server: {
     host: "::",
     port: 8080,
   },
   plugins: [
     react(),
-    mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -23,14 +22,9 @@ export default defineConfig(({ mode }) => ({
     global: "globalThis",
     "process.env": {},
   },
-  build: {
-    rollupOptions: {
-      external: ["node:crypto", "node:fs", "node:path", "node:fs/promises", "stream"],
-    },
-  },
   optimizeDeps: {
     exclude: ["@0glabs/0g-ts-sdk"],
   },
-}));
+});
 
 
