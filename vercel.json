@@ -5,6 +5,12 @@
       "maxDuration": 60,
       "memory": 1024
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/og-upload",
+      "destination": "/api/og-upload.cjs"
+    }
+  ]
 }
 
