@@ -1,10 +1,9 @@
 {
   "functions": {
     "api/og-upload.ts": {
-      "runtime": "nodejs18.x",
+      "runtime": "@vercel/node@2.0.0",
       "maxDuration": 60,
-      "memory": 1024,
-      "src": "api/og-upload.ts"
+      "memory": 1024
     }
   },
   "builds": [
