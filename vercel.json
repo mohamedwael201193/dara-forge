@@ -3,7 +3,8 @@
     "api/og-upload.ts": {
       "runtime": "nodejs18.x",
       "maxDuration": 60,
-      "memory": 1024
+      "memory": 1024,
+      "src": "api/og-upload.ts"
     }
   }
 }
