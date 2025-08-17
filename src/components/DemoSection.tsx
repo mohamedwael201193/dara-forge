@@ -21,7 +21,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; // Import the new component
-import { uploadBlobTo0GStorageViaBrowser, gatewayUrlForRoot } from "@/lib/ogStorage";
+import { uploadBlobTo0GStorage, gatewayUrlForRoot } from "@/lib/ogStorage";
 import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
@@ -59,7 +59,7 @@ export const DemoSection = () => {
 
     try {
       // 1) Upload dataset to 0G Storage
-      const ds = await uploadBlobTo0GStorageViaBrowser(file, file.name);
+      const ds = await uploadBlobTo0GStorage(file, file.name);
       setDatasetRoot(ds.rootHash);
       setDatasetTx(ds.txHash);
 
@@ -78,7 +78,7 @@ export const DemoSection = () => {
       setManifestHash(mHash);
 
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const mu = await uploadBlobTo0GStorageViaBrowser(mBlob, "manifest.json");
+      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json");
       setManifestRoot(mu.rootHash);
       setManifestTx(mu.txHash);
 
