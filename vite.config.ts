@@ -8,7 +8,7 @@ export default defineConfig({
   server: {
     host: "::",
     port: 8080,
-    proxy: { "/api": "http://localhost:3000" } // vercel dev default port
+    // Removed proxy for Vercel deployment, as it's only for local development
   },
   plugins: [
     react(),

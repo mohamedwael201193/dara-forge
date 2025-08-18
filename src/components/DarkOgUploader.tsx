@@ -2,7 +2,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import { ethers } from "ethers";
-import { uploadBlobTo0GStorageViaBrowser, gatewayUrlForRoot } from "@/lib/ogStorage";
+import { uploadBlobTo0GStorage, gatewayUrlForRoot } from "@/lib/ogStorage";
 import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 
@@ -32,7 +32,7 @@ export default function DarkOgUploader() {
     setErr(""); setBusy(true);
     try {
       // 1) Upload file to 0G Storage
-      const { rootHash, txHash } = await uploadBlobTo0GStorageViaBrowser(file, file.name);
+      const { rootHash, txHash } = await uploadBlobTo0GStorage(file, file.name);
       setDatasetRoot(rootHash);
       setDatasetTx(txHash);
 
@@ -43,7 +43,7 @@ export default function DarkOgUploader() {
       setManifestHash(mHash);
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const mUpload = await uploadBlobTo0GStorageViaBrowser(manifestBlob, "manifest.json");
+      const mUpload = await uploadBlobTo0GStorage(manifestBlob, "manifest.json");
       setManifestRoot(mUpload.rootHash);
       setManifestTx(mUpload.txHash);
     } catch (e: any) {
