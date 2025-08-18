@@ -2,9 +2,8 @@ export const INDEXER =
   (import.meta.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai').replace(/\/$/, '');
 
 export function gatewayUrlForRoot(root: string, name?: string) {
-  // Always go via proxy so we can wait/stream reliably
   const qs = `root=${encodeURIComponent(root)}${name ? `&name=${encodeURIComponent(name)}` : ''}`;
-  return `/api/og-file?${qs}`;
+  return `/api/og-file?${qs}`; // ← proxy that waits then streams
 }
 
 export type UploadResponse = {
