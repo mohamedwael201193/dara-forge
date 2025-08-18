@@ -25,10 +25,10 @@ function must(name: string) {
 const sleep = (ms:number)=>new Promise(r=>setTimeout(r,ms));
 
 async function gatewayHasFile(indexerBase: string, root: string) {
-  const base = indexerBase.replace(/\/$/, ");
+  const base = indexerBase.replace(/\/$/, "");
   const url  = `${base}/file?root=${encodeURIComponent(root)}`;
   try {
-    const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" } });
+    const resp = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' } });
     return resp.ok || resp.status === 206;
   } catch {
     return false;
@@ -162,5 +162,6 @@ export default async function handler(req: any, res: any) {
     return res.status(500).json({ ok: false, error: String(err?.message || err) });
   }
 }
+
 
 

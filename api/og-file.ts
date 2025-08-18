@@ -14,8 +14,9 @@ async function gatewayHasFile(indexerBase: string, root: string) {
   const base = indexerBase.replace(/\/$/, "");
   const url = `${base}/file?root=${encodeURIComponent(root)}`;
   try {
-    const resp = await fetch(url, { method: "HEAD" });
-    return resp.ok;
+    // Ask for first byte to avoid downloading full content
+    const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" } });
+    return resp.ok || resp.status === 206;
   } catch {
     return false;
   }
