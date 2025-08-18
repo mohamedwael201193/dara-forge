@@ -48,7 +48,8 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
-    "ethers": "^5.7.2",
+    "ethers": "^6.15.0",
+    "ethers5": "npm:ethers@5.7.2",
     "formidable": "^3.5.4",
     "input-otp": "^1.4.2",
     "js-sha3": "^0.9.3",
@@ -101,8 +102,12 @@
     "typescript-eslint": "^8.38.0",
     "util": "^0.12.5",
     "vite": "^5.4.19"
-  },
-  "overrides": {
-    "ethers": "5.7.2"
   }
-}
+
+,
+  "pnpm": {
+    "overrides": {
+      "ethers": "5.7.2"
+    }
+  }
+
