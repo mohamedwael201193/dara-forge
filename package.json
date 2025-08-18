@@ -2,7 +2,7 @@
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -49,7 +49,7 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.15.0",
-    "ethers5": "npm:ethers@5.7.2",
+    "ethers5": "npm:ethers@^5.7.2",
     "formidable": "^3.5.4",
     "input-otp": "^1.4.2",
     "js-sha3": "^0.9.3",
@@ -102,10 +102,5 @@
     "typescript-eslint": "^8.38.0",
     "util": "^0.12.5",
     "vite": "^5.4.19"
-  },
-  "pnpm": {
-    "overrides": {
-      "ethers": "5.7.2"
-    }
   }
 }

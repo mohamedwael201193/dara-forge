@@ -29,7 +29,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).send("Server not configured: OG_STORAGE_PRIVATE_KEY is missing or invalid");
     }
 
-    // 1) Parse multipart using Busboy (no Content-Type header set manually on client)
+    // 1) Parse multipart using Busboy
     const { tmpPath } = await new Promise<{ tmpPath: string }>((resolve, reject) => {
       const bb = Busboy({ headers: req.headers as any });
       let tmpPath = "";
@@ -47,7 +47,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       bb.on("error", reject);
       bb.on("finish", () => {
-        if (!wrote || !tmpPath) return reject(new Error("No file provided (expected field name \'file\')"));
+        if (!wrote || !tmpPath) return reject(new Error("No file provided (expected field name \"file\")"));
         resolve({ tmpPath });
       });
 
@@ -73,15 +73,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const rootHash = tree.rootHash();
 
-    // 4) ethers v5 (alias) so frontend can stay on ethers v6
-    const ethers5 = await import("ethers5");
-    const provider = new (ethers5 as any).providers.JsonRpcProvider(RPC_URL);
-    const signer = new (ethers5 as any).Wallet(BACKEND_PK as string, provider);
+    // 4) ethers v5 (alias) for the server
+    const ethers5 = require("ethers5");
+    const provider = new ethers5.providers.JsonRpcProvider(RPC_URL);
+    const signer = new ethers5.Wallet(BACKEND_PK as string, provider);
 
     try {
       const addr = await signer.getAddress();
       const bal = await provider.getBalance(addr);
-      console.log(`[og-upload] Using backend addr=${addr}, balance=${(ethers5 as any).utils.formatEther(bal)} OG`);
+      console.log(`[og-upload] Using backend addr=${addr}, balance=${ethers5.utils.formatEther(bal)} OG`);
     } catch {}
 
     // 5) Upload via Indexer
