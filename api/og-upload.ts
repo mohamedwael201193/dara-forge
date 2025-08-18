@@ -28,15 +28,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).send("Server not configured: OG_STORAGE_PRIVATE_KEY is missing or invalid");
     }
 
-    // 1) Parse multipart using Busboy
-    const { default: Busboy } = await import("busboy");
-    const tmpInfo = await new Promise<{ tmpPath: string; filename: string }>((resolve, reject) => {
+    // Parse multipart with Busboy
+    const bbMod = await import("busboy");
+    const Busboy: any = (bbMod as any).default || (bbMod as any);
+    const { tmpPath, filename } = await new Promise<{ tmpPath: string; filename: string }>((resolve, reject) => {
       const bb = Busboy({ headers: req.headers as any });
       let tmpPath = "";
       let filename = "upload.bin";
       let wrote = false;
 
-      bb.on("file", (_name, file, info) => {
+      bb.on("file", (_name: string, file: any, info: any) => {
         filename = info?.filename || filename;
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-"));
         tmpPath = path.join(tmpDir, `${Date.now()}-${filename}`);
@@ -55,20 +56,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       (req as any).pipe(bb);
     });
 
-    // 2) Build Merkle tree and upload via 0G SDK
+    // Build Merkle tree and upload via 0G SDK
     const og = await import("@0glabs/0g-ts-sdk");
     const ZgFile = (og as any).ZgFile || (og as any).default?.ZgFile;
     const Indexer = (og as any).Indexer || (og as any).default?.Indexer;
     if (!ZgFile || !Indexer) {
-      await fsp.unlink(tmpInfo.tmpPath).catch(() => {});
+      await fsp.unlink(tmpPath).catch(() => {});
       return res.status(500).send("0G SDK server exports not found (expected ZgFile, Indexer)");
     }
 
-    const fileObj = await ZgFile.fromFilePath(tmpInfo.tmpPath);
+    const fileObj = await ZgFile.fromFilePath(tmpPath);
     const [tree, treeErr] = await fileObj.merkleTree();
     if (treeErr !== null) {
       await fileObj.close?.().catch(() => {});
-      await fsp.unlink(tmpInfo.tmpPath).catch(() => {});
+      await fsp.unlink(tmpPath).catch(() => {});
       return res.status(500).send(`Merkle tree error: ${treeErr}`);
     }
     const rootHash = tree.rootHash();
@@ -80,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer);
     await fileObj.close?.().catch(() => {});
-    await fsp.unlink(tmpInfo.tmpPath).catch(() => {});
+    await fsp.unlink(tmpPath).catch(() => {});
 
     if (uploadErr !== null) {
       return res.status(500).send(`0G upload error: ${uploadErr}`);
@@ -94,5 +95,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).send(`Server error: ${e?.message || String(e)}`);
   }
 }
-
 
