@@ -1,10 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-
-// Use require for better CommonJS compatibility
-const os = require("os");
-const path = require("path");
-const fs = require("fs");
-const fsp = require("fs/promises");
+import os from "os";
+import path from "path";
+import fs from "fs";
+import { promises as fsp } from "fs";
 
 const RPC_URL = process.env.NEXT_PUBLIC_OG_RPC_URL || "https://evmrpc-testnet.0g.ai/";
 const INDEXER_RPC = (process.env.NEXT_PUBLIC_OG_INDEXER || "https://indexer-storage-testnet-turbo.0g.ai").replace(/\/$/, "");
@@ -30,50 +28,55 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).send("Server not configured: OG_STORAGE_PRIVATE_KEY is missing or invalid");
     }
 
-    // Use formidable with require for better compatibility
-    const formidable = require("formidable");
+    // Parse multipart with Busboy
+    const bbMod = await import("busboy");
+    const Busboy: any = (bbMod as any).default || (bbMod as any);
     const { tmpPath, filename } = await new Promise<{ tmpPath: string; filename: string }>((resolve, reject) => {
-      const form = formidable({
-        multiples: false,
-        uploadDir: os.tmpdir(),
-        keepExtensions: true
+      const bb = Busboy({ headers: req.headers as any });
+      let tmpPath = "";
+      let filename = "upload.bin";
+      let wrote = false;
+
+      bb.on("file", (_name: string, file: any, info: any) => {
+        filename = info?.filename || filename;
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-"));
+        tmpPath = path.join(tmpDir, `${Date.now()}-${filename}`);
+        const ws = fs.createWriteStream(tmpPath);
+        file.pipe(ws);
+        ws.on("finish", () => { wrote = true; });
+        ws.on("error", reject);
       });
 
-      form.parse(req, (err: any, fields: any, files: any) => {
-        if (err) return reject(err);
-        const file = Array.isArray(files.file) ? files.file : files.file;
-        if (!file) return reject(new Error("No file provided"));
-        
-        const filename = (fields.filename as string) || file.originalFilename || "upload.bin";
-        resolve({ tmpPath: file.filepath, filename });
+      bb.on("error", reject);
+      bb.on("finish", () => {
+        if (!wrote || !tmpPath) return reject(new Error("No file provided (expected field name 'file')"));
+        resolve({ tmpPath, filename });
       });
+
+      (req as any).pipe(bb);
     });
 
-    // Dynamic import for 0G SDK
+    // Build Merkle tree and upload via 0G SDK
     const og = await import("@0glabs/0g-ts-sdk");
     const ZgFile = (og as any).ZgFile || (og as any).default?.ZgFile;
     const Indexer = (og as any).Indexer || (og as any).default?.Indexer;
-    
     if (!ZgFile || !Indexer) {
       await fsp.unlink(tmpPath).catch(() => {});
-      return res.status(500).send("0G SDK exports not found");
+      return res.status(500).send("0G SDK server exports not found (expected ZgFile, Indexer)");
     }
 
     const fileObj = await ZgFile.fromFilePath(tmpPath);
     const [tree, treeErr] = await fileObj.merkleTree();
-    
     if (treeErr !== null) {
       await fileObj.close?.().catch(() => {});
       await fsp.unlink(tmpPath).catch(() => {});
       return res.status(500).send(`Merkle tree error: ${treeErr}`);
     }
-    
     const rootHash = tree.rootHash();
 
-    // Dynamic import for ethers
-    const ethers = await import("ethers");
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const signer = new ethers.Wallet(BACKEND_PK as string, provider);
+    const { JsonRpcProvider, Wallet } = await import("ethers");
+    const provider = new JsonRpcProvider(RPC_URL);
+    const signer = new Wallet(BACKEND_PK as string, provider);
     const indexer = new Indexer(INDEXER_RPC);
 
     const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer);
@@ -85,12 +88,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const txHash = typeof tx === "string" ? tx : tx?.hash || tx?.transactionHash || String(tx);
-    
     res.setHeader("content-type", "application/json");
     return res.status(200).send(JSON.stringify({ rootHash, txHash }));
-    
   } catch (e: any) {
-    console.error("[og-upload] Error:", e);
+    console.error("[og-upload] Uncaught server error:", e);
     return res.status(500).send(`Server error: ${e?.message || String(e)}`);
   }
 }
