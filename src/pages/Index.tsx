@@ -3,7 +3,6 @@ import { ProblemSolutionSection } from "@/components/ProblemSolutionSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { FeaturesSection } from "@/components/FeaturesSection";
 import { DemoSection } from "@/components/DemoSection";
-import OGUploadCard from "@/components/OGUploadCard";
 
 import { Footer } from "@/components/Footer";
 
@@ -24,7 +23,7 @@ const Index = () => {
       
       {/* Interactive Demo */}
       <section className="mx-auto max-w-5xl px-4 py-8">
-        <OGUploadCard />
+        <DemoSection />
       </section>
       
 
@@ -36,5 +35,3 @@ const Index = () => {
 };
 
 export default Index;
-
-
