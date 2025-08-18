@@ -1,8 +1,8 @@
 {
-  "name": "vite_react_shadcn_ts",
+  "name": "dara-forge",
   "private": true,
+  "engines": { "node": "20.x" },
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -48,10 +48,8 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
-    "ethers": "^6.13.1",
+    "ethers": "^6.15.0",
     "ethers5": "npm:ethers@^5.7.2",
-
-
     "formidable": "^3.5.4",
     "input-otp": "^1.4.2",
     "js-sha3": "^0.9.3",
@@ -106,3 +104,4 @@
     "vite": "^5.4.19"
   }
 }
+
