@@ -35,7 +35,7 @@ async function gatewayHasFile(indexerBase: string, root: string) {
   }
 }
 
-async function waitForGateway(indexerBase: string, root: string, budgetMs = 8000, intervalMs = 400) {
+async function waitForGateway(indexerBase: string, root: string, budgetMs = 60000, intervalMs = 1000) {
   const start = Date.now();
   while (Date.now() - start < budgetMs) {
     if (await gatewayHasFile(indexerBase, root)) return true;
@@ -136,7 +136,7 @@ export default async function handler(req: any, res: any) {
     if (tmpPath) await fs.unlink(tmpPath).catch(() => {});
 
     // 4) Ensure it’s visible on the gateway (best effort)
-    const gatewayReady = await waitForGateway(OG_INDEXER, rootHash, 8000, 400);
+    const gatewayReady = await waitForGateway(OG_INDEXER, rootHash, 60000, 1000);
 
     // 5) Log on-chain regardless (idempotent provenance)
     const contract = new ethers.Contract(DARA_CONTRACT, ABI, signer);

@@ -46,7 +46,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // GET → wait for availability, then stream
-    await waitForGateway(INDEXER, root, 20000, 500);
+    await waitForGateway(INDEXER, root, 60000, 1000);
 
     const upstreamUrl = `${INDEXER}/file?root=${encodeURIComponent(root)}`;
     const upstream = await fetch(upstreamUrl);
