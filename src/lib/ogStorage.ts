@@ -12,4 +12,14 @@ export async function uploadBlobTo0GStorage(blob: Blob, filename: string) {
   return res.json() as Promise<{ rootHash: string; txHash: string }>;
 }
 
+export function gatewayUrlForRoot(rootHash: string, filename?: string): string {
+  // This is a placeholder. You might need to adjust the base URL based on your 0G Storage Gateway setup.
+  const baseUrl = "https://zero.g.storage"; 
+  if (filename) {
+    return `${baseUrl}/${rootHash}/${filename}`;
+  } else {
+    return `${baseUrl}/${rootHash}`;
+  }
+}
+
 
