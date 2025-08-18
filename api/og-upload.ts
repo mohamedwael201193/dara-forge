@@ -31,7 +31,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Use formidable with require for better compatibility
-    const formidable = require("formidable");
+    const formidable = require("formidable").default;
     const { tmpPath, filename } = await new Promise<{ tmpPath: string; filename: string }>((resolve, reject) => {
       const form = formidable({
         multiples: false,
