@@ -1,25 +1,48 @@
-export async function uploadBlobTo0GStorage(blob: Blob, filename: string) {
-  const form = new FormData();
-  form.append("file", blob, filename || "upload.bin"); // field name MUST be "file"
-  const res = await fetch("/api/og-upload", {
-    method: "POST",
-    body: form, // do NOT set Content-Type; the browser sets the boundary
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || `Upload failed (${res.status})`);
-  }
-  return res.json() as Promise<{ rootHash: string; txHash: string }>;
+export const INDEXER =
+(import.meta.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai').replace(/\/$/, '');
+export function gatewayUrlForRoot(root: string, name?: string) {
+return `${INDEXER}/file?root=${encodeURIComponent(root)}${name ? `&name=${encodeURIComponent(name)}` : ''}`;
 }
+export type UploadResponse = {
+ok: boolean;
+filename: string;
+mimetype: string;
+rootHash: string;
+alreadyStored?: boolean;
+storageTx?: any;
+chainTx?: string;
+downloadUrl?: string;
+error?: string;
+};
+export function uploadBlobTo0GStorage(
+blob: Blob,
+filename: string,
+onProgress?: (percent: number) => void
+): Promise<UploadResponse> {
+return new Promise((resolve, reject) => {
+const fd = new FormData();
+fd.append('file', blob, filename || 'upload.bin');
+const xhr = new XMLHttpRequest();
+xhr.open('POST', '/api/og-upload');
 
-export function gatewayUrlForRoot(rootHash: string, filename?: string): string {
-  // This is a placeholder. You might need to adjust the base URL based on your 0G Storage Gateway setup.
-  const baseUrl = "https://zero.g.storage"; 
-  if (filename) {
-    return `${baseUrl}/${rootHash}/${filename}`;
-  } else {
-    return `${baseUrl}/${rootHash}`;
+xhr.upload.onprogress = (evt) => {
+  if (onProgress && evt.lengthComputable) onProgress(Math.round((evt.loaded / evt.total) * 100));
+};
+
+xhr.onload = () => {
+  try {
+    const json = JSON.parse(xhr.responseText || '{}');
+    if (xhr.status >= 200 && xhr.status < 300 && json.ok) resolve(json);
+    else reject(new Error(json.error || `HTTP ${xhr.status}`));
+  } catch (e: any) {
+    reject(e);
   }
+};
+
+xhr.onerror = () => reject(new Error('Network error during upload'));
+xhr.send(fd); // don’t set Content-Type manually
+
+});
 }
 
 
