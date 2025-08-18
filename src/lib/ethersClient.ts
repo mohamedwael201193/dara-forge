@@ -2,8 +2,8 @@
 
 import { ethers } from "ethers";
 
-export const DARA_CONTRACT = (process.env.NEXT_PUBLIC_DARA_CONTRACT || "").toLowerCase();
-export const EXPLORER = (process.env.NEXT_PUBLIC_OG_EXPLORER || "").replace(/\/$/, "");
+export const DARA_CONTRACT = (import.meta.env.VITE_DARA_CONTRACT || "").toLowerCase();
+export const EXPLORER = (import.meta.env.VITE_OG_EXPLORER || "").replace(/\/$/, "");
 
 export const DARA_ABI = [
   {
