@@ -1,10 +1,9 @@
 {
   "functions": {
-    "api/*.ts": {
+    "api/og-upload.ts": {
       "runtime": "nodejs20.x",
       "maxDuration": 60,
-      "memory": 1024,
-      "includeFiles": "api/package.json"
+      "memory": 1024
     }
   }
 }
