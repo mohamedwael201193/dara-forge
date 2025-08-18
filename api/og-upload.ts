@@ -76,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const signer = new ethers.Wallet(BACKEND_PK as string, provider);
     const indexer = new Indexer(INDEXER_RPC);
 
-    const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer);
+    const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer, { gasLimit: 5000000 });
     await fileObj.close?.().catch(() => {});
     await fsp.unlink(tmpPath).catch(() => {});
 
