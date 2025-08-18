@@ -49,7 +49,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     });
 
-    // Dynamic import for 0G SDK
+    // Dynamic import so the function still bundles fine
+    const E = await import("ethers");
+    // Prefer ethers v5 namespace. If we detect v6 (no providers), return a clear error.
+    const ethersAny: any = (E as any).ethers ?? E;
+    if (!ethersAny?.providers?.JsonRpcProvider) {
+      return res.status(500).send("Server misconfigured: ethers v6 detected. Please pin ethers@5.7.2");
+    }
+
+    const provider = new ethersAny.providers.JsonRpcProvider(RPC_URL);
+    const signer = new ethersAny.Wallet(BACKEND_PK as string, provider);
+
+    // Optional: quick balance check to avoid silent failures due to no funds
+    try {
+      const addr = await signer.getAddress();
+      const bal = await provider.getBalance(addr);
+      // You can log this for debugging; address is not sensitive, PK is never logged
+      console.log(`[og-upload] Using backend addr=${addr}, balance=${ethersAny.utils.formatEther(bal)} OG`);
+    } catch {}
+
     const og = await import("@0glabs/0g-ts-sdk");
     const ZgFile = (og as any).ZgFile || (og as any).default?.ZgFile;
     const Indexer = (og as any).Indexer || (og as any).default?.Indexer;
@@ -70,15 +88,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     
     const rootHash = tree.rootHash();
 
-    // Dynamic import for ethers
-    const ethers = await import("ethers");
-    const provider = new ethers.JsonRpcProvider(RPC_URL);
-    const signer = new ethers.Wallet(BACKEND_PK as string, provider);
-    const indexer = new Indexer(INDEXER_RPC);
-
     let txResult: any;
     try {
-      const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer, { gasLimit: 5000000 });
+      const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer); // remove { gasLimit: ... } unless SDK docs require it
       if (uploadErr !== null) {
         throw uploadErr;
       }
@@ -101,4 +113,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(500).send(`Server error: ${e?.message || String(e)}`);
   }
 }
+
 
