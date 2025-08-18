@@ -52,7 +52,8 @@ export default async function handler(req: any, res: any) {
     const upstream = await fetch(upstreamUrl);
     if (!upstream.ok) {
       const text = await upstream.text().catch(() => "");
-      return res.status(upstream.status || 502).send(text || "upstream error");
+      console.error(`[og-file] Upstream error: ${upstream.status} - ${text}`);
+      return res.status(upstream.status || 502).json({ code: upstream.status || 502, message: text || "upstream error", data: null });
     }
 
     const ctHdr = upstream.headers.get("content-type");
