@@ -49,9 +49,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     });
 
-    // Dynamic import so the function still bundles fine
+    // Dynamic import and v5 guard
     const E = await import("ethers");
-    // Prefer ethers v5 namespace. If we detect v6 (no providers), return a clear error.
     const ethersAny: any = (E as any).ethers ?? E;
     if (!ethersAny?.providers?.JsonRpcProvider) {
       return res.status(500).send("Server misconfigured: ethers v6 detected. Please pin ethers@5.7.2");
@@ -60,11 +59,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const provider = new ethersAny.providers.JsonRpcProvider(RPC_URL);
     const signer = new ethersAny.Wallet(BACKEND_PK as string, provider);
 
-    // Optional: quick balance check to avoid silent failures due to no funds
+    // Optional: log addr and balance for debugging (safe; no PK)
     try {
       const addr = await signer.getAddress();
       const bal = await provider.getBalance(addr);
-      // You can log this for debugging; address is not sensitive, PK is never logged
       console.log(`[og-upload] Using backend addr=${addr}, balance=${ethersAny.utils.formatEther(bal)} OG`);
     } catch {}
 
