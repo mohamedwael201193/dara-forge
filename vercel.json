@@ -1,10 +1,8 @@
 {
-  "functions": {
-    "api/*.ts": {
-      "runtime": "@vercel/node@2.0.0",
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  }
+"regions": ["sin1"],
+"functions": {
+"api/og-upload.ts": { "runtime": "nodejs20.x", "memory": 1024, "maxDuration": 180 },
+"api/og-events.ts": { "runtime": "nodejs20.x" }
+}
 }
 
