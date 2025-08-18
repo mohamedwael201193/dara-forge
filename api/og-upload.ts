@@ -41,11 +41,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       form.parse(req, (err: any, fields: any, files: any) => {
         if (err) return reject(err);
-        const file = Array.isArray(files.file) ? files.file[0] : files.file;
-        if (!file) return reject(new Error("No file provided"));
+          const file = Array.isArray(files.file) ? files.file[0] : files.file;
+        if (!file || !file.filepath) return reject(new Error("No file provided or file path missing"));
         
         const filename = (fields.filename as string) || file.originalFilename || "upload.bin";
-        resolve({ tmpPath: file.filepath, filename });
+        resolve({ tmpPath: file.filepath, filename });;
       });
     });
 
