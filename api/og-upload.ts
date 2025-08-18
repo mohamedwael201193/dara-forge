@@ -25,10 +25,10 @@ function must(name: string) {
 const sleep = (ms:number)=>new Promise(r=>setTimeout(r,ms));
 
 async function gatewayHasFile(indexerBase: string, root: string) {
-  const base = indexerBase.replace(/\/$/, '');
+  const base = indexerBase.replace(/\/$/, ");
   const url  = `${base}/file?root=${encodeURIComponent(root)}`;
   try {
-    const resp = await fetch(url, { method: 'GET', headers: { Range: 'bytes=0-0' } });
+    const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" } });
     return resp.ok || resp.status === 206;
   } catch {
     return false;
@@ -136,7 +136,7 @@ export default async function handler(req: any, res: any) {
     if (tmpPath) await fs.unlink(tmpPath).catch(() => {});
 
     // 4) Ensure it’s visible on the gateway (best effort)
-    const gatewayReady = await waitForGateway(OG_INDEXER, rootHash, 60000, 1000);
+    const gatewayReady = await waitForGateway(OG_INDEXER, rootHash, 120000, 2000);
 
     // 5) Log on-chain regardless (idempotent provenance)
     const contract = new ethers.Contract(DARA_CONTRACT, ABI, signer);

@@ -14,9 +14,8 @@ async function gatewayHasFile(indexerBase: string, root: string) {
   const base = indexerBase.replace(/\/$/, "");
   const url = `${base}/file?root=${encodeURIComponent(root)}`;
   try {
-    // Ask for first byte to avoid downloading full content
-    const resp = await fetch(url, { method: "GET", headers: { Range: "bytes=0-0" } });
-    return resp.ok || resp.status === 206;
+    const resp = await fetch(url, { method: "HEAD" });
+    return resp.ok;
   } catch {
     return false;
   }
@@ -46,7 +45,7 @@ export default async function handler(req: any, res: any) {
     }
 
     // GET → wait for availability, then stream
-    await waitForGateway(INDEXER, root, 60000, 1000);
+    await waitForGateway(INDEXER, root, 120000, 2000);
 
     const upstreamUrl = `${INDEXER}/file?root=${encodeURIComponent(root)}`;
     const upstream = await fetch(upstreamUrl);
@@ -70,5 +69,6 @@ export default async function handler(req: any, res: any) {
     return res.status(500).send(`proxy error: ${e?.message || e}`);
   }
 }
+
 
 
