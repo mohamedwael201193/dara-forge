@@ -1,135 +1,111 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import os from "os";
-import path from "path";
-import fs from "fs";
-import fsp from "fs/promises";
-import Busboy from "busboy";
-
-const RPC_URL = process.env.NEXT_PUBLIC_OG_RPC_URL || "https://evmrpc-testnet.0g.ai/";
-const INDEXER_RPC = (process.env.NEXT_PUBLIC_OG_INDEXER || "https://indexer-storage-testnet-turbo.0g.ai").replace(/\/$/, "");
-const BACKEND_PK = process.env.OG_STORAGE_PRIVATE_KEY;
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  try {
-    if (req.method === "GET") {
-      return res.status(200).json({
-        ok: true,
-        route: "og-upload (vercel fn)",
-        hasPK: !!BACKEND_PK?.startsWith("0x"),
-        rpc: RPC_URL,
-        indexer: INDEXER_RPC
-      });
-    }
-    if (req.method !== "POST") {
-      res.setHeader("Allow", "GET, POST");
-      return res.status(405).send("Method Not Allowed");
-    }
-    if (!BACKEND_PK?.startsWith("0x")) {
-      return res.status(500).send("Server not configured: OG_STORAGE_PRIVATE_KEY is missing or invalid");
-    }
-
-    const ct = String(req.headers["content-type"] || "");
-    const isMultipart = ct.toLowerCase().includes("multipart/form-data");
-
-    // Create a temp file path helper
-    const makeTmpPath = (name: string) => {
-      const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "og-"));
-      return path.join(tmpDir, `${Date.now()}-${name}`);
-    };
-
-    // 1) Accept multipart uploads (recommended)
-    let tmpPath: string | null = null;
-    if (isMultipart) {
-      tmpPath = await new Promise<string>((resolve, reject) => {
-        const bb = Busboy({ headers: req.headers as any });
-        let wrote = false;
-
-        bb.on("file", (_name: string, file: any, info: any) => {
-          const filename = info?.filename || "upload.bin";
-          const p = makeTmpPath(filename);
-          const ws = fs.createWriteStream(p);
-          file.pipe(ws);
-          ws.on("finish", () => { wrote = true; resolve(p); });
-          ws.on("error", reject);
-        });
-
-        bb.on("error", reject);
-        bb.on("finish", () => {
-          if (!wrote) reject(new Error('No file provided (expected field name "file")'));
-        });
-
-        (req as any).pipe(bb);
-      }).catch((err) => {
-        throw err;
-      });
-    } else {
-      // 2) Fallback: accept raw binary body (e.g., if client posted the file directly)
-      const filename = (req.headers["x-filename"] as string) || "upload.bin";
-      const p = makeTmpPath(filename);
-      await new Promise<void>((resolve, reject) => {
-        const ws = fs.createWriteStream(p);
-        (req as any).pipe(ws);
-        ws.on("finish", () => resolve());
-        ws.on("error", reject);
-      });
-      tmpPath = p;
-    }
-
-    // 3) 0G SDK
-    const og = await import("@0glabs/0g-ts-sdk");
-    const ZgFile = (og as any).ZgFile || (og as any).default?.ZgFile;
-    const IndexerCtor = (og as any).Indexer || (og as any).IndexerClient || (og as any).default?.Indexer;
-    if (!ZgFile || !IndexerCtor) {
-      await safeUnlink(tmpPath);
-      return res.status(500).send("0G SDK exports not found (expected ZgFile, Indexer)");
-    }
-
-    // 4) Merkle tree
-    const fileObj = await ZgFile.fromFilePath(tmpPath);
-    const [tree, treeErr] = await fileObj.merkleTree();
-    if (treeErr !== null) {
-      await fileObj.close?.().catch(() => {});
-      await safeUnlink(tmpPath);
-      return res.status(500).send(`Merkle tree error: ${treeErr}`);
-    }
-    const rootHash = tree.rootHash();
-
-    // 5) ethers v5 (alias) for server-side signing
-    const ethers5mod: any = await import("ethers5");
-    const ethers5 = (ethers5mod?.default ?? ethers5mod) as any;
-    const provider = new ethers5.providers.JsonRpcProvider(RPC_URL);
-    const signer = new ethers5.Wallet(BACKEND_PK as string, provider);
-
-    try {
-      const addr = await signer.getAddress();
-      const bal = await provider.getBalance(addr);
-      console.log(`[og-upload] Using backend addr=${addr}, balance=${ethers5.utils.formatEther(bal)} OG`);
-    } catch {}
-
-    // 6) Upload via Indexer
-    const indexerClient = new IndexerCtor(INDEXER_RPC);
-    const [tx, uploadErr] = await indexerClient.upload(fileObj, RPC_URL, signer);
-
-    await fileObj.close?.().catch(() => {});
-    await safeUnlink(tmpPath);
-
-    if (uploadErr !== null) {
-      console.error("[og-upload] 0G upload error:", uploadErr);
-      return res.status(500).send(`0G upload error: ${uploadErr}`);
-    }
-
-    const txHash = typeof tx === "string" ? tx : tx?.hash || tx?.transactionHash || String(tx);
-    res.setHeader("content-type", "application/json");
-    return res.status(200).send(JSON.stringify({ rootHash, txHash }));
-  } catch (e: any) {
-    console.error("[og-upload] Error:", e);
-    return res.status(500).send(`Server error: ${e?.message || String(e)}`);
-  }
+import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
+import { ethers } from 'ethers';
+import Busboy from 'busboy';
+import { Readable } from 'node:stream';
+const ABI = [
+{ anonymous:false, inputs:[
+{ indexed:true, internalType:'uint256', name:'logId', type:'uint256' },
+{ indexed:true, internalType:'address', name:'creator', type:'address' },
+{ indexed:false, internalType:'string', name:'fileId', type:'string' },
+{ indexed:false, internalType:'uint256', name:'timestamp', type:'uint256' }
+],
+name:'LogCreated', type:'event'
+},
+{ inputs:[{ internalType:'string', name:'_fileId', type:'string' }],
+name:'logData', outputs:[], stateMutability:'nonpayable', type:'function'
+},
+{ inputs:[], name:'logCounter', outputs:[{ internalType:'uint256', name:'', type:'uint256' }], stateMutability:'view', type:'function' }
+];
+function must(name: string) {
+const v = process.env[name];
+if (!v) throw new Error(`Missing env ${name}`);
+return v;
 }
+export default async function handler(req: any, res: any) {
+if (req.method === 'GET') {
+return res.status(200).json({
+ok: true,
+route: 'og-upload (vercel fn)',
+hasPK: !!process.env.OG_STORAGE_PRIVATE_KEY,
+rpc: process.env.OG_RPC_URL,
+indexer: process.env.OG_INDEXER
+});
+}
+if (req.method !== 'POST') {
+res.setHeader('Allow', 'POST, GET');
+return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+}
+try {
+const OG_RPC_URL   = must('OG_RPC_URL');
+const OG_INDEXER   = must('OG_INDEXER');
+const DARA_CONTRACT= must('DARA_CONTRACT');
+const PRIV         = must('OG_STORAGE_PRIVATE_KEY');
+// Parse multipart/form-data; expect field name "file"
+const { buffer, filename, mimetype } =
+  await new Promise<{buffer: Buffer; filename: string; mimetype: string}>((resolve, reject) => {
+    const bb = Busboy({ headers: req.headers, limits: { fileSize: 50 * 1024 * 1024 } }); // 50MB demo limit
+    let chunks: Buffer[] = [];
+    let gotFile = false;
+    let fname = 'upload.bin';
+    let mtype = 'application/octet-stream';
 
-async function safeUnlink(p: string | null) {
-  if (!p) return;
-  try { await fsp.unlink(p); } catch {}
+    bb.on('file', (name, file, info) => {
+      if (name !== 'file') return; // ignore other fields
+      gotFile = true;
+      fname = info.filename || fname;
+      mtype = info.mimeType || mtype;
+      file.on('data', (d: Buffer) => chunks.push(d));
+      file.on('limit', () => reject(new Error('File too large')));
+    });
+    bb.on('error', reject);
+    bb.on('finish', () => {
+      if (!gotFile) return reject(new Error('No file provided (expected field name "file")'));
+      resolve({ buffer: Buffer.concat(chunks), filename: fname, mimetype: mtype });
+    });
+
+    req.pipe(bb);
+  });
+
+// 0G signer + indexer
+const provider = new ethers.JsonRpcProvider(OG_RPC_URL);
+const signer   = new ethers.Wallet(PRIV, provider);
+const indexer  = new Indexer(OG_INDEXER);
+
+// Create ZgFile from buffer
+const stream  = Readable.from(buffer);
+const zgFile  = await ZgFile.fromStream(stream, filename);
+
+// Merkle root
+const [tree, treeErr] = await zgFile.merkleTree();
+if (treeErr) {
+  await zgFile.close().catch(() => {});
+  throw new Error(`Merkle tree error: ${treeErr}`);
+}
+const rootHash = tree!.rootHash();
+
+// Upload to 0G Storage
+const [tx, upErr] = await indexer.upload(zgFile, OG_RPC_URL, signer);
+await zgFile.close().catch(() => {});
+if (upErr) throw new Error(`0G upload error: ${upErr}`);
+
+// Log on-chain
+const contract = new ethers.Contract(DARA_CONTRACT, ABI, signer);
+const tx2 = await contract.logData(rootHash);
+const receipt = await tx2.wait();
+
+return res.status(200).json({
+  ok: true,
+  filename,
+  mimetype,
+  rootHash,
+  storageTx: tx,
+  chainTx: receipt?.hash
+});
+
+} catch (err: any) {
+console.error('[og-upload] Error:', err);
+return res.status(500).json({ ok: false, error: String(err?.message || err) });
+}
 }
 
 
