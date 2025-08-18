@@ -55,7 +55,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         bb.on("error", reject);
         bb.on("finish", () => {
-          if (!wrote) reject(new Error(\'No file provided (expected field name "file")\'));
+          if (!wrote) reject(new Error('No file provided (expected field name "file")'));
         });
 
         (req as any).pipe(bb);
