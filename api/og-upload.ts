@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
       form.parse(req, (err: any, fields: any, files: any) => {
         if (err) return reject(err);
-        const file = Array.isArray(files.file) ? files.file : files.file;
+        const file = Array.isArray(files.file) ? files.file[0] : files.file;
         if (!file) return reject(new Error("No file provided"));
         
         const filename = (fields.filename as string) || file.originalFilename || "upload.bin";
