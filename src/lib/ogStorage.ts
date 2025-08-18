@@ -13,12 +13,12 @@ export type UploadResponse = {
   alreadyStored?: boolean;
   storageTx?: any;
   chainTx?: string;
-  txHash?: string;         // alias for chainTx
+  txHash?: string;
   downloadUrl?: string;
+  gatewayReady?: boolean;
   error?: string;
 };
 
-// Use XHR for true upload progress events
 export function uploadBlobTo0GStorage(
   blob: Blob,
   filename: string,
@@ -41,16 +41,16 @@ export function uploadBlobTo0GStorage(
       const text = xhr.responseText || '';
       try {
         const json = JSON.parse(text || '{}');
-        if (xhr.status >= 200 && xhr.status < 300 && json.ok) return resolve(json);
-        return reject(new Error(json.error || `HTTP ${xhr.status}`));
+        if (xhr.status >= 200 && xhr.status < 300 && json.ok) resolve(json);
+        else reject(new Error(json.error || `HTTP ${xhr.status}`));
       } catch {
-        const snippet = text.slice(0, 160).replace(/\s+/g, ' ');
-        return reject(new Error(`Server error (${xhr.status}). ${snippet || 'No response body.'}`));
+        const snippet = text.slice(0, 200).replace(/\s+/g, ' ');
+        reject(new Error(`Server error (${xhr.status}). ${snippet || 'No response body.'}`));
       }
     };
 
     xhr.onerror = () => reject(new Error('Network error during upload'));
-    xhr.send(fd); // let the browser set the multipart boundary
+    xhr.send(fd);
   });
 }
 

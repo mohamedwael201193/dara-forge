@@ -1,4 +1,3 @@
-"use client";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -28,9 +27,9 @@ import { ethers } from "ethers";
 
 export const DemoSection = () => {
   const [connectedWallet, setConnectedWallet] = useState(false);
-  const [currentDemo, setCurrentDemo] = useState<'upload' | 'compute' | 'verify'>('upload');
+  const [currentDemo, setCurrentDemo] = useState<\'upload\' | \'compute\' | \'verify\'>(\'upload\');
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [computeStatus, setComputeStatus] = useState<'idle' | 'running' | 'complete'>('idle');
+  const [computeStatus, setComputeStatus] = useState<\'idle\' | \'running\' | \'complete\'>(\'idle\');
 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>("");
@@ -45,50 +44,51 @@ export const DemoSection = () => {
   const [onchainTx, setOnchainTx] = useState<string>("");
   const [logId, setLogId] = useState<string>("");
 
+  const [stage, setStage] = useState<\'idle\' | \'dataset\' | \'manifest\'>(\'idle\');
+
   const handleRealUpload = async (file: File) => {
-    setError("");
+    setError(\'\');
     setUploadProgress(0);
     setBusy(true);
-
-    // Simulate progress up to 90% while uploading
-    let progress = 0;
-    const timer = setInterval(() => {
-      progress = Math.min(progress + 7, 90);
-      setUploadProgress(progress);
-    }, 200);
+    setStage(\'dataset\');
 
     try {
-      // 1) Upload dataset to 0G Storage
-      const ds = await uploadBlobTo0GStorage(file, file.name);
+      // 1) Dataset upload with real progress → map to 0–70%
+      const ds = await uploadBlobTo0GStorage(file, file.name, (p) =>
+        setUploadProgress(Math.min(70, Math.round(p * 0.7)))
+      );
       setDatasetRoot(ds.rootHash);
-      setDatasetTx(ds.txHash);
+      setDatasetTx(ds.txHash || ds.chainTx || \'\');
 
-      // 2) Build and upload manifest
+      // 2) Build + upload manifest → 70–100%
+      setStage(\'manifest\');
       const provider = new ethers.BrowserProvider((window as any).ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
+      const accounts = await provider.send(\'eth_requestAccounts\', []);
       const uploader = accounts[0];
 
       const manifest: DaraManifest = buildManifest(
         ds.rootHash,
-        "Wave‑1 sample dataset import",
+        \'Wave‑1 sample dataset import\',
         uploader,
-        { app: "DARA", version: "0.1" }
+        { app: \'DARA\', version: \'0.1\' }
       );
       const mHash = manifestHashHex(manifest);
       setManifestHash(mHash);
 
-      const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json");
+      const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: \'application/json\' });
+      const mu = await uploadBlobTo0GStorage(mBlob, \'manifest.json\', (p) =>
+        setUploadProgress(70 + Math.round(p * 0.30))
+      );
       setManifestRoot(mu.rootHash);
-      setManifestTx(mu.txHash);
+      setManifestTx(mu.txHash || mu.chainTx || \'\');
 
-      // Finish progress
       setUploadProgress(100);
+      setStage(\'idle\');
     } catch (e: any) {
-      setError(e.message || "Upload failed");
+      setError(e.message || \'Upload failed\');
       setUploadProgress(0);
+      setStage(\'idle\');
     } finally {
-      clearInterval(timer);
       setBusy(false);
     }
   };
@@ -136,25 +136,25 @@ export const DemoSection = () => {
 
   const demoSteps = [
     {
-      id: 'upload',
-      title: 'Data Upload',
-      description: 'Upload research data to 0G Storage',
+      id: \'upload\',
+      title: \'Data Upload\',
+      description: \'Upload research data to 0G Storage\',
       icon: Upload,
-      color: 'text-accent'
+      color: \'text-accent\'
     },
     {
-      id: 'compute',
-      title: 'AI Execution',
-      description: 'Run AI models on 0G Compute',
+      id: \'compute\',
+      title: \'AI Execution\',
+      description: \'Run AI models on 0G Compute\',
       icon: Brain,
-      color: 'text-neural-node'
+      color: \'text-neural-node\'
     },
     {
-      id: 'verify',
-      title: 'Verification',
-      description: 'Verify results on 0G Chain',
+      id: \'verify\',
+      title: \'Verification\',
+      description: \'Verify results on 0G Chain\',
       icon: Shield,
-      color: 'text-primary'
+      color: \'text-primary\'
     }
   ];
 
@@ -199,11 +199,11 @@ export const DemoSection = () => {
                     <div
                       key={step.id}
                       className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-300 
-                        ${isActive ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted/50'}`}
+                        ${isActive ? \'bg-primary/10 border border-primary/20\' : \'hover:bg-muted/50\'}`}
                       onClick={() => setCurrentDemo(step.id as any)}
                     >
                       <div className={`w-8 h-8 rounded-lg bg-gradient-primary flex items-center justify-center 
-                        ${isActive ? 'scale-110' : ''} transition-transform duration-300`}>
+                        ${isActive ? \'scale-110\' : \'\'} transition-transform duration-300`}>
                         <Icon className="w-4 h-4 text-white" />
                       </div>
                       <div>
@@ -221,7 +221,7 @@ export const DemoSection = () => {
           <div className="lg:col-span-2">
             <Card className="p-8 border-border min-h-[500px]">
               {/* Upload Demo */}
-              {currentDemo === 'upload' && (
+              {currentDemo === \'upload\' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
@@ -251,6 +251,28 @@ export const DemoSection = () => {
   </label>
 </div>
 
+{/* Progress bar (same section, shows during upload) */}
+{uploadProgress > 0 && uploadProgress < 100 && (
+  <div className="mt-4">
+    <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
+      <span>{stage === \'dataset\' ? \'Uploading dataset\' : \'Uploading manifest\'}</span>
+      <span>{uploadProgress}%</span>
+    </div>
+    <div className="relative h-3 w-full overflow-hidden rounded-full bg-border/50">
+      <div
+        className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-500 transition-[width] duration-200"
+        style={{ width: `${uploadProgress}%` }}
+      />
+      {stage === \'manifest\' && (
+        <div
+          className="pointer-events-none absolute inset-0 animate-[barberpole_1s_linear_infinite] bg-[length:1.25rem_1.25rem]"
+          style={{ backgroundImage: \'repeating-linear-gradient(45deg, rgba(255,255,255,0.12) 0 10px, transparent 10px 20px)\' }}
+        />
+      )}
+    </div>
+  </div>
+)}
+
 {datasetRoot && (
   <div className="flex items-center gap-2 text-sm mt-2">
     <CheckCircle className="w-4 h-4 text-accent" />
@@ -262,7 +284,7 @@ export const DemoSection = () => {
     <div>
       Dataset Root: <code>{datasetRoot}</code>
       {" • "}
-      <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(datasetRoot)}>
+      <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(datasetRoot, \'dataset.bin\')}>
         Open
       </a>
       {datasetTx && <> {" • "} Upload Tx: <code>{datasetTx}</code></>}
@@ -272,7 +294,7 @@ export const DemoSection = () => {
     <div>
       Manifest Root: <code>{manifestRoot}</code>
       {" • "}
-      <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(manifestRoot, "manifest.json")}>
+      <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(manifestRoot, \'manifest.json\')}>
         Open
       </a>
       {manifestTx && <> {" • "} Upload Tx: <code>{manifestTx}</code></>}
@@ -287,7 +309,7 @@ export const DemoSection = () => {
               )}
 
               {/* Compute Demo */}
-              {currentDemo === 'compute' && (
+              {currentDemo === \'compute\' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-12 h-12 rounded-xl bg-neural-node/10 flex items-center justify-center">
@@ -325,22 +347,22 @@ export const DemoSection = () => {
                   <Button
                     variant="neural"
                     onClick={simulateCompute}
-                    disabled={computeStatus === 'running'}
+                    disabled={computeStatus === \'running\'}
                     className="w-full"
                   >
-                    {computeStatus === 'idle' && (
+                    {computeStatus === \'idle\' && (
                       <>
                         <Play className="w-4 h-4 mr-2" />
                         Execute Model
                       </>
                     )}
-                    {computeStatus === 'running' && (
+                    {computeStatus === \'running\' && (
                       <>
                         <Clock className="w-4 h-4 mr-2 animate-spin" />
                         Computing on 0G Network...
                       </>
                     )}
-                    {computeStatus === 'complete' && (
+                    {computeStatus === \'complete\' && (
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
                         Computation Complete
@@ -349,7 +371,7 @@ export const DemoSection = () => {
                   </Button>
 
                   {/* Results */}
-                  {computeStatus === 'complete' && (
+                  {computeStatus === \'complete\' && (
                     <div className="mt-6 p-4 bg-neural-node/5 rounded-lg border border-neural-node/20">
                       <h4 className="font-medium mb-3">Analysis Results</h4>
                       <div className="grid grid-cols-2 gap-4 text-sm">
@@ -374,11 +396,11 @@ export const DemoSection = () => {
                       <div className="mt-4">
                         <h5 className="font-medium mb-2">Key Metric Trend:</h5>
                         <div className="w-full h-32 bg-neural-node/10 rounded-lg flex items-end justify-around p-2">
-                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '80%' }}></div>
-                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '60%' }}></div>
-                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '90%' }}></div>
-                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '70%' }}></div>
-                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: '85%' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: \'80%\' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: \'60%\' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: \'90%\' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: \'70%\' }}></div>
+                          <div className="w-4 bg-neural-node rounded-t-full" style={{ height: \'85%\' }}></div>
                         </div>
                         <p className="text-xs text-muted-foreground text-center mt-2">Simulated trend data over time</p>
                       </div>
@@ -388,7 +410,7 @@ export const DemoSection = () => {
               )}
 
               {/* Verification Demo */}
-              {currentDemo === 'verify' && (
+              {currentDemo === \'verify\' && (
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -412,39 +434,49 @@ export const DemoSection = () => {
         {busy ? "Committing…" : "Commit to 0G Chain"}
       </Button>
     </div>
-    <div className="mt-2 text-xs text-muted-foreground">
-      FileId: <code>{manifestRoot || datasetRoot || "—"}</code>
+    {onchainTx && (
+      <div className="text-xs mt-3">
+        <CheckCircle className="w-4 h-4 text-primary inline-block mr-1" />
+        <span>Transaction sent: </span>
+        <a className="underline" href={`${EXPLORER}/tx/${onchainTx}`} target="_blank" rel="noreferrer">
+          <code>{onchainTx}</code>
+        </a>
+        {logId && <span> (Log ID: <code>{logId}</code>)</span>}
+      </div>
+    )}
+    {error && <div className="text-red-500 text-xs mt-2">{error}</div>}
+  </div>
+
+  <div className="p-4 bg-card rounded-lg border border-border">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <FileText className="w-5 h-5 text-primary" />
+        <span>Verify data availability on 0G Storage</span>
+      </div>
+      <Button variant="outline" size="sm" disabled={!datasetRoot && !manifestRoot}>
+        Verify
+      </Button>
+    </div>
+    <div className="text-xs text-muted-foreground mt-2">
+      This step ensures your uploaded data is retrievable from the 0G Storage network.
     </div>
   </div>
 
-  {onchainTx && (
-    <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
-      <div className="font-medium">On‑chain Transaction</div>
-      <div className="text-sm font-mono">{onchainTx}</div>
-      <div className="mt-2">
-        <Button variant="outline" size="sm" asChild>
-          <a href={`${EXPLORER}/tx/${onchainTx}`} target="_blank" rel="noreferrer">View on Explorer</a>
-        </Button>
+  <div className="p-4 bg-card rounded-lg border border-border">
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <BarChart2 className="w-5 h-5 text-primary" />
+        <span>Audit AI computation results</span>
       </div>
-      {logId && <div className="text-xs mt-2 text-muted-foreground">Event LogCreated ID: <code>{logId}</code></div>}
+      <Button variant="outline" size="sm" disabled={computeStatus !== \'complete\'}>
+        Audit
+      </Button>
     </div>
-  )}
+    <div className="text-xs text-muted-foreground mt-2">
+      This step allows independent verification of the AI model execution.
+    </div>
+  </div>
 </div>
-
-                  {/* Collaboration Panel */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Users className="w-5 h-5 text-primary" />
-                      <span className="font-medium">Share with Collaborators</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <input 
-                        className="flex-1 px-3 py-2 bg-input border border-border rounded-lg text-sm" 
-                        placeholder="Enter researcher's wallet address"
-                      />
-                      <Button size="sm">Invite</Button>
-                    </div>
-                  </div>
                 </div>
               )}
             </Card>

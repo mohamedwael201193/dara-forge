@@ -24,7 +24,7 @@ function must(name: string) {
 
 const sleep = (ms:number)=>new Promise(r=>setTimeout(r,ms));
 
-async function isOnIndexer(indexerBase: string, root: string) {
+async function gatewayHasFile(indexerBase: string, root: string) {
   const base = indexerBase.replace(/\/$/, '');
   const url  = `${base}/file?root=${encodeURIComponent(root)}`;
   try {
@@ -33,6 +33,15 @@ async function isOnIndexer(indexerBase: string, root: string) {
   } catch {
     return false;
   }
+}
+
+async function waitForGateway(indexerBase: string, root: string, budgetMs = 8000, intervalMs = 400) {
+  const start = Date.now();
+  while (Date.now() - start < budgetMs) {
+    if (await gatewayHasFile(indexerBase, root)) return true;
+    await sleep(intervalMs);
+  }
+  return false;
 }
 
 export default async function handler(req: any, res: any) {
@@ -60,7 +69,7 @@ export default async function handler(req: any, res: any) {
   let mimetype = 'application/octet-stream';
 
   try {
-    // write incoming file to /tmp (expects field name "file")
+    // 1) Save upload to /tmp (expects field name "file")
     await new Promise<void>((resolve, reject) => {
       const bb = Busboy({ headers: req.headers, limits: { fileSize: 50 * 1024 * 1024 } });
       let gotFile = false;
@@ -82,24 +91,24 @@ export default async function handler(req: any, res: any) {
       req.pipe(bb);
     });
 
-    // 0G setup
+    // 2) Setup
     const provider = new ethers.JsonRpcProvider(OG_RPC_URL);
     const signer   = new ethers.Wallet(PRIV, provider);
     const indexer  = new Indexer(OG_INDEXER);
 
-    // Build ZgFile and root
+    // 3) Build ZgFile and root
     const zgFile = await ZgFile.fromFilePath(tmpPath!); // <= this is supported in Node
     const [tree, treeErr] = await zgFile.merkleTree();
     if (treeErr) throw new Error(`Merkle tree error: ${treeErr}`);
     const rootHash = tree!.rootHash();
     const downloadUrl = `${OG_INDEXER.replace(/\/$/, '')}/file?root=${rootHash}`;
 
-    // Upload if needed
-    let alreadyStored = await isOnIndexer(OG_INDEXER, rootHash);
+    // 4) Skip upload if already present, otherwise upload
+    let alreadyStored = await gatewayHasFile(OG_INDEXER, rootHash);
     let storageTx: any = null;
 
     if (!alreadyStored) {
-      const TIME_BUDGET_MS = 120_000;
+      const TIME_BUDGET_MS = 120_000; // you set maxDuration=180, keep margin
       const uploadPromise = (async () => {
         const [tx, upErr] = await indexer.upload(zgFile, OG_RPC_URL, signer);
         if (upErr) {
@@ -115,7 +124,8 @@ export default async function handler(req: any, res: any) {
 
       const result = await Promise.race([uploadPromise, sleep(TIME_BUDGET_MS).then(() => 'TIMEOUT')]);
       if (result === 'TIMEOUT') {
-        alreadyStored = await isOnIndexer(OG_INDEXER, rootHash);
+        // As a fallback, check gateway; if available, treat as stored
+        alreadyStored = await gatewayHasFile(OG_INDEXER, rootHash);
         if (!alreadyStored) throw new Error('0G upload taking too long; please retry.');
       } else {
         storageTx = result;
@@ -125,7 +135,10 @@ export default async function handler(req: any, res: any) {
     await zgFile.close().catch(() => {});
     if (tmpPath) await fs.unlink(tmpPath).catch(() => {});
 
-    // Log on-chain (idempotent)
+    // 4) Ensure it’s visible on the gateway (best effort)
+    const gatewayReady = await waitForGateway(OG_INDEXER, rootHash, 8000, 400);
+
+    // 5) Log on-chain regardless (idempotent provenance)
     const contract = new ethers.Contract(DARA_CONTRACT, ABI, signer);
     const chainTx  = await contract.logData(rootHash);
     const receipt  = await chainTx.wait();
@@ -139,7 +152,8 @@ export default async function handler(req: any, res: any) {
       storageTx,
       chainTx: receipt?.hash,
       txHash: receipt?.hash,            // <— alias for your UI’s datasetTx/manifestTx
-      downloadUrl                       // <— so the client can just render a working “Open” link
+      downloadUrl,                      // <INDEXER>/file?root=<root>
+      gatewayReady                      // tell the client if it’s immediately fetchable
     });
 
   } catch (err: any) {
