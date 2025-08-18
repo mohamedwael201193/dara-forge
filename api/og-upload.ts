@@ -76,15 +76,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const signer = new ethers.Wallet(BACKEND_PK as string, provider);
     const indexer = new Indexer(INDEXER_RPC);
 
-    const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer, { gasLimit: 5000000 });
+    let txResult: any;
+    try {
+      const [tx, uploadErr] = await indexer.upload(fileObj, RPC_URL, signer, { gasLimit: 5000000 });
+      if (uploadErr !== null) {
+        throw uploadErr;
+      }
+      txResult = tx;
+    } catch (uploadError: any) {
+      console.error("[og-upload] Upload error:", uploadError);
+      throw new Error(`Failed to submit transaction: ${uploadError?.message || String(uploadError)}`);
+    }
+
     await fileObj.close?.().catch(() => {});
     await fsp.unlink(tmpPath).catch(() => {});
 
-    if (uploadErr !== null) {
-      return res.status(500).send(`0G upload error: ${uploadErr}`);
-    }
-
-    const txHash = typeof tx === "string" ? tx : tx?.hash || tx?.transactionHash || String(tx);
+    const txHash = typeof txResult === "string" ? txResult : txResult?.hash || txResult?.transactionHash || String(txResult);
     
     res.setHeader("content-type", "application/json");
     return res.status(200).send(JSON.stringify({ rootHash, txHash }));
