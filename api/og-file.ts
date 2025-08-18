@@ -37,7 +37,7 @@ export default async function handler(req: any, res: any) {
     const name = (req.query?.name || req.query?.n || "").toString();
     if (!root) return res.status(400).send("root required");
 
-    const INDEXER = must("OG_INDEXER").replace(/\/$/, "");
+    const INDEXER = "https://indexer-storage-testnet-turbo.0g.ai".replace(/\/$/, "");
 
     // Fast readiness probe for your UI
     if (req.method === "HEAD") {
