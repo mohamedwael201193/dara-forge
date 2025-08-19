@@ -54,8 +54,4 @@ export function getDaraContract(signerOrProvider: any) {
 
 
 
-export function explorerTxUrl(tx: string) {
-  return `${EXPLORER}/tx/${tx}`;
-}
-
 
