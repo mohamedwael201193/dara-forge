@@ -1,11 +1,12 @@
 {
-"$schema": "https://openapi.vercel.sh/vercel.json",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/og-file.ts": { "maxDuration": 30, "memory": 256 },
+    "api/og-file.ts":    { "maxDuration": 30,  "memory": 256  },
+    "api/og-download.ts":{ "maxDuration": 60,  "memory": 1024 },
     "api/og-upload.ts": { "maxDuration": 180, "memory": 1024 },
     "api/og-events.ts": { "maxDuration": 60, "memory": 256 },
     "api/og-ready.ts": { "maxDuration": 30, "memory": 128 }
   },
-"regions": ["iad1"]
+  "regions": ["iad1"]
 }
 

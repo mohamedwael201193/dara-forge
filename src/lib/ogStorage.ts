@@ -56,3 +56,11 @@ export function uploadBlobTo0GStorage(
   });
 }
 
+
+
+export function downloadWithProofUrl(root: string, name?: string) {
+  const qs = `root=${encodeURIComponent(root)}${name ? `&name=${encodeURIComponent(name)}` : ''}`;
+  return `/api/og-download?${qs}`;
+}
+
+

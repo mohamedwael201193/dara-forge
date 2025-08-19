@@ -17,9 +17,10 @@ import {
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; 
 import { uploadBlobTo0GStorage, gatewayUrlForRoot } from "@/lib/ogStorage";
-import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
+import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
+import VerifiedBadge from "./VerifiedBadge";
 
 import { Interface, Log } from 'ethers';
 
@@ -353,17 +354,10 @@ export const DemoSection = () => {
                       <div>
                         Manifest Root: <code>{manifestRoot}</code>
                         {" • "}
-                        {checkingManifest ? (
-                          <span className="text-amber-400">Checking...</span>
-                        ) : manifestReady ? (
-                          <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(manifestRoot, "manifest.json")}>
-                            Open
-                          </a>
-                        ) : checkAttempts >= 20 ? (
-                          <span className="text-red-400">Propagation timeout (file may still be available later)</span>
-                        ) : (
-                          <span className="text-amber-400">Propagating to gateway... (attempt {checkAttempts}/20)</span>
-                        )}
+                        <a href={gatewayUrlForRoot(manifestRoot, "manifest.json")} target="_blank" rel="noreferrer" className="underline">
+                          Open
+                        </a>
+                        <VerifiedBadge expectedRoot={manifestRoot} fetchUrl={gatewayUrlForRoot(manifestRoot, "manifest.json")} />
                         {manifestTx && <> {" • "} Upload Tx: <code>{manifestTx}</code></>}
                       </div>
                     )}
