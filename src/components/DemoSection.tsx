@@ -359,7 +359,9 @@ export const DemoSection = () => {
                         </a>
                         <VerifiedBadge expectedRoot={manifestRoot} fetchUrl={gatewayUrlForRoot(manifestRoot, "manifest.json")} />
                         {manifestTx && <> {" • "} Upload Tx: <code>{manifestTx}</code></>}
-                      </div>
+                        <a href={`/api/og-download?root=${encodeURIComponent(manifestRoot)}&name=${encodeURIComponent('manifest.json')}`} className="underline" rel="noreferrer">
+                          Download with proof
+                        </a>                      </div>
                     )}
                     {manifestRoot && !manifestReady && checkAttempts < 20 && (
                       <div className="mt-2 p-3 border border-dashed border-amber-500/30 bg-amber-500/5 rounded-md">
