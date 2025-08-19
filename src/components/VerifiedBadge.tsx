@@ -20,19 +20,26 @@ export default function VerifiedBadge({ expectedRoot, fetchUrl }: Props) {
       const r = await verifyManifestUrl(expectedRoot, fetchUrl);
 
       if (!alive) return;
-      if (r.ok) { setState('ok'); return; }
+      if (r.ok) {
+        setState('ok');
+        return;
+      }
 
       const e = (r.error || '').toLowerCase();
-      const stillPropagating = e.includes('not ready') || e.includes('404');
-      if (stillPropagating && attempts.current < 30) {   // ~30 × 3s = 90s
+
+      // Treat timeouts/404 as still propagating — do not mark red.
+      const stillPropagating = e.includes('not ready') || e.includes('404') || e.includes('timeout');
+      if (stillPropagating) {
         setState('propagating');
+        // keep polling without a hard cap (or choose a larger cap, e.g., 5–10 minutes if you prefer)
         setTimeout(tick, 3000);
-      } else if (stillPropagating) {
-        setState('fail'); setErr('timeout waiting for indexer');
-      } else {
-        setState('fail'); setErr(r.error || 'mismatch');
+        return;
       }
-    };
+
+      // Only show red when the server says “mismatch” (we return 422 for that)
+      const mismatch = e.includes('422') || e.includes('mismatch');
+      setState('fail');
+      setErr(mismatch ? 'mismatch' : (r.error || 'verification failed'));    };
 
     tick();
     return () => { alive = false; };
