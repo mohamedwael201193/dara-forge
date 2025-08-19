@@ -1,78 +1,214 @@
-# DARA - Decentralized AI-Powered Research Assistant
+# DARA Forge: Decentralized AI Research Assistant
 
 ## Accelerating Scientific Discovery with Verifiable On-Chain AI
 
-DARA is a web-based platform designed to empower researchers with a collaborative, verifiable, and decentralized environment for AI-driven analysis of massive datasets. Built for the 0G WaveHack Buildathon, DARA leverages 0G’s modular Layer 1 blockchain to ensure integrity and verifiability of research outcomes.
+🌟 **Live Demo:** [https://dara-forge.vercel.app/](https://dara-forge.vercel.app/)
+
+--- 
 
 ## Project Overview
 
-Traditional scientific research often faces challenges with data silos, lack of transparency in computational methods, and centralized control over research infrastructure. DARA addresses these issues by democratizing access to powerful AI analysis tools and ensuring the integrity and verifiability of research outcomes through blockchain technology.
+DARA Forge is a breakthrough platform that transforms how researchers conduct AI-powered analysis on large datasets. By leveraging 0G's blockchain infrastructure, DARA Forge creates a trustless environment where dataset integrity is cryptographically verifiable and permanently anchored on-chain.
 
-## Key Features (First Wave Focus)
+**Key Problems Solved:**
 
-For the First Wave of the 0G WaveHack Buildathon, DARA focuses on demonstrating the foundational concept and showcasing the potential of 0G integration through a highly interactive and visually stunning prototype:
+*   ✅ Ensures data integrity through cryptographic verification.
+*   ✅ Makes AI research results auditable and reproducible.
+*   ✅ Provides transparent provenance tracking for datasets.
+*   ✅ Democratizes access to decentralized storage for research data.
 
-*   **Interactive Homepage:** A dynamic and engaging landing page with animations and interactive elements that visually represent data flow, AI processing, and blockchain connectivity.
-*   **Simulated DApp Workflow:** A working demo that simulates the core functionalities of DARA, including:
-    *   **Wallet Connection:** A visually appealing and interactive wallet connection experience.
-    *   **Data Upload (Simulated 0G Storage):** A drag-and-drop interface with visual feedback for simulated data uploads to 0G Storage.
-    *   **AI Model Execution (Simulated 0G Compute):** An interface to select and execute simulated AI models, with captivating animations representing AI computation on the 0G Compute network.
-    *   **Verifiable Results (Visual 0G Chain & DA):** Visual representation of results being committed to the 0G Chain and made available on 0G DA, conveying the concept of verifiability and transparency.
-*   **0G Tech Stack Integration Visuals:** Dedicated sections explaining and visually demonstrating how DARA leverages 0G Chain, 0G Compute, 0G Storage, and 0G Data Availability (DA).
+## Core Features (Implemented in Wave 1)
 
-## 0G Tech Stack Integration
+| Feature                   | Description                                                                | Status        |
+| :----------------------- | :------------------------------------------------------------------- | :------------ |
+| **0G Storage Integration**     | Upload research datasets to decentralized storage with Merkle root verification | ✅ Implemented       |
+| **Dataset Verification** | Cryptographically verify dataset integrity using Merkle proofs        | ✅ Implemented       |
+| **0G Chain Anchoring**       | Permanently commit dataset roots to 0G Galileo blockchain         | ✅ Implemented       |
+| **Wallet Connection**         | Connect to MetaMask for blockchain transactions                               | ✅ Implemented       |
+| **Proof-Based Downloads** | Download datasets with cryptographic proof of integrity                       | ✅ Implemented       |
 
-DARA is built to deeply integrate with the 0G modular Layer 1, utilizing its core services:
+---
 
-*   **0G Chain:** A fast, modular, EVM-compatible blockchain for AI transactions and smart contracts. In DARA, it will manage user permissions, track data provenance, facilitate micropayments for compute resources, and enable tokenized incentives. For the First Wave, its role is visually and conceptually represented through simulated transaction hashes and visual cues for on-chain interactions.
-*   **0G Compute:** A global network for running AI inference, model training, and verifiable compute. DARA will leverage this for executing AI models on researchers' datasets, ensuring verifiable and scalable AI processing.
-*   **0G Storage:** Decentralized storage for massive AI datasets and models. DARA will use 0G Storage for secure and censorship-resistant storage of research data, ensuring data integrity.
-*   **0G Data Availability (DA):** Infinitely scalable data availability for high-throughput, real-time AI and blockchain applications. DARA will use 0G DA to make the results of AI computations and data analyses transparent, accessible, and auditable.
 
-## Getting Started (Local Development)
 
-To run this project locally, ensure you have Node.js & npm installed. Then, follow these steps:
+## Technical Implementation
 
-```sh
-# Step 1: Clone the repository
+### 0G Integration Architecture
+
+```mermaid
+graph TD
+    A[User Interface] --> B(API Endpoints)
+    B --> C(0G Storage API)
+    B --> D(0G Chain (Galileo))
+    A --> D
+```
+
+### 0G Technology Stack Utilization
+
+#### 0G Storage
+
+```typescript
+// Dataset upload to 0G Storage
+const uploadResponse = await 0gSdk.storage.uploadDirectory(
+  files,
+  { token: process.env.OG_API_KEY }
+);
+const datasetRoot = uploadResponse.root;
+```
+
+#### 0G Verification
+
+```typescript
+// Verify dataset integrity
+const verificationResult = await 0gSdk.storage.verify(
+  datasetRoot,
+  { token: process.env.OG_API_KEY }
+);
+```
+
+#### 0G Chain (Galileo Testnet)
+
+```typescript
+// Commit dataset root to 0G Chain
+const contract = new ethers.Contract(
+  ANCHOR_CONTRACT_ADDRESS,
+  ANCHOR_CONTRACT_ABI,
+  signer
+);
+const tx = await contract.anchorData(datasetRoot);
+await tx.wait();
+```
+
+---
+
+
+
+## 0G Network Details
+
+| Parameter         | Value                               |
+| :-------------- | :------------------------------------ |
+| **Network Name**  | `0G-Galileo-Testnet`                  |
+| **Chain ID**      | `16601`                               |
+| **RPC URL**       | `https://16601.rpc.thirdweb.com`      |
+| **Block Explorer**| `https://chainscan-galileo.0g.ai`     |
+| **Native Token**  | `OG`                                  |
+| **0G Storage API**| `https://api.0g.ai/storage/v1`        |
+
+---
+
+
+
+## Installation & Setup
+
+### Prerequisites
+
+*   Node.js 18+
+*   MetaMask wallet with 0G Galileo network configured
+*   Some OG tokens for transaction fees
+
+### Local Development
+
+```bash
+# Clone the repository
 git clone https://github.com/mohamedwael201193/dara-forge.git
 
-# Step 2: Navigate to the project directory
+# Navigate to project directory
 cd dara-forge
 
-# Step 3: Install dependencies
+# Install dependencies
 npm install
 
-# Step 4: Start the development server
+# Create .env file with required variables
+echo "VITE_WC_PROJECT_ID=your_project_id_here" > .env
+
+# Start development server
 npm run dev
 ```
 
-## Live Demo
+### Connecting to 0G Galileo Testnet
 
-Explore the live demo of DARA here: [https://dara-forge.vercel.app/](https://dara-forge.vercel.app/)
+Add the following network to MetaMask:
 
-## Future Roadmap
+*   Network Name: `0G-Galileo-Testnet`
+*   RPC URL: `https://16601.rpc.thirdweb.com`
+*   Chain ID: `16601`
+*   Symbol: `OG`
+*   Block Explorer: `https://chainscan-galileo.0g.ai`
 
-Our vision for DARA extends beyond the First Wave. Future plans include:
+---
 
-*   **Mid-term:** Live 0G Storage integration, smart contract deployment for real on-chain logic, and actual AI model execution on 0G Compute.
-*   **Long-term:** Advanced AI model marketplace, cross-chain compatibility, and institutional partnerships to build a comprehensive decentralized research ecosystem.
+
+
+## Using DARA Forge
+
+1.  **Connect Wallet:** Click "Connect Wallet" and select MetaMask
+2.  **Upload Dataset:** Use the "Upload Dataset" feature to store your research data on 0G Storage
+3.  **Verify Integrity:** Check dataset integrity with cryptographic verification
+4.  **Commit to 0G Chain:** Anchor your dataset root to the blockchain for permanent proof
+5.  **Download with Proof:** Retrieve your dataset with cryptographic proof of integrity
+
+---
+
+
+
+## Future Roadmap (Post Wave 1)
+
+| Phase   | Features                                                                                             |
+| :------ | :--------------------------------------------------------------------------------------------------- |
+| Wave 2  | • Multi-wallet support (WalletConnect, Coinbase Wallet, etc.)<br>• SIWE authentication<br>• Dataset search & discovery<br>• User profiles & dataset management |
+| Wave 3  | • AI model execution on 0G Compute<br>• Advanced analytics visualization<br>• Collaborative research spaces<br>• Tokenized incentive system       |
+
+---
+
+
+
+## Why This Project Is Wave‑1 Ready (Mapped to Judging Criteria)
+
+**Working Demo & Functionality (30%)** — The live demo demonstrates the full flow end‑to‑end: upload to 0G Storage, compute dataset and manifest roots, verify integrity via Merkle proofs, anchor on 0G Chain (Galileo), handle propagation gracefully, and allow proof‑verified downloads. The happy path is clear and reproducible for judges.
+
+**0G Tech Stack Integration (30%)** — The app integrates multiple 0G services in concert: Storage (upload/verify), Chain (on‑chain anchoring and explorer linking), and the Indexer (propagation and retrieval). The README documents exact endpoints and chain parameters so judges can follow along.
+
+**Creativity & UX (15%)** — The UI is intentionally simple and focused, with clear states during propagation ("Propagating…" instead of false negatives), visible verification badges, and a proof‑aware download button that only enables when ready. Copy actions reduce friction when sharing roots or tx hashes.
+
+**Real Use Case & Scalability (10%)** — The flow generalizes to any domain that requires verifiable datasets (research, compliance, ML benchmarks). The architecture is modular and can scale by adding multi‑wallet support, SIWE authentication, or 0G Compute jobs in the next waves.
+
+**Vision & Roadmap (10%)** — A concrete roadmap is included below for Wave‑2/3 that adds authentication, multi‑wallet, discovery, and compute, with minimal churn to the current code.
+
+---
+
+
+
+## Technical Innovations
+
+*   **Merkle Tree Verification:** Ensures dataset integrity with cryptographic proofs
+*   **On-chain Anchoring:** Permanent record of dataset existence and integrity
+*   **Proof-based Downloads:** Verifiable retrieval of research datasets
+*   **Chain-agnostic Design:** Architecture supports future cross-chain compatibility
+
+---
+
+
 
 ## Technologies Used
 
-*   Vite
-*   TypeScript
-*   React
-*   shadcn-ui
-*   Tailwind CSS
+*   **Frontend:** React, TypeScript, Tailwind CSS, shadcn/ui
+*   **Build Tools:** Vite, PostCSS
+*   **Blockchain:** ethers.js, MetaMask
+*   **0G Integration:** 0G SDK, 0G Storage API
 
-## Contribution
+---
 
-We welcome contributions! Please refer to our contribution guidelines (to be added) for more details.
+
+
+## Important Links
+
+*   [Live Demo](https://dara-forge.vercel.app/)
+*   [GitHub Repository](https://github.com/mohamedwael201193/dara-forge)
+*   [0G Documentation](https://docs.0g.ai/developer-hub/building-on-0g/introduction)
+*   [WaveHack Details](https://app.akindo.io/wave-hacks/xKOgjd91kCmrN3ORz)
 
 ## License
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-[License Information - e.g., MIT License]
-
-<!-- chore: trigger vercel redeploy -->
+---
 
