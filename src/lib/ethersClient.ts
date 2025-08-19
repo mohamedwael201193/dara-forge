@@ -2,8 +2,11 @@
 
 import { ethers } from "ethers";
 
-export const DARA_CONTRACT = (import.meta.env.VITE_DARA_CONTRACT || "").toLowerCasexport const EXPLORER = "https://chainscan-galileo.0g.ai";galileo.0g.ai";
-
+export const DARA_CONTRACT = (import.meta.env.VITE_DARA_CONTRACT || "").toLowerCase();
+export const EXPLORER = "https://chainscan-galileo.0g.ai";
+export function explorerTxUrl(tx: string) {
+  return `${EXPLORER}/tx/${tx}`;
+}
 export const DARA_ABI = [
   {
     "anonymous": false,
