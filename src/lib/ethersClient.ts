@@ -3,7 +3,7 @@
 import { ethers } from "ethers";
 
 export const DARA_CONTRACT = (import.meta.env.VITE_DARA_CONTRACT || "").toLowerCase();
-export const EXPLORER = (import.meta.env.VITE_OG_EXPLORER || "").replace(/\/$/, "");
+export const EXPLORER = "https://chainscan-galileo.0g.ai";
 
 export const DARA_ABI = [
   {
@@ -47,6 +47,13 @@ export async function getSigner() {
 
 export function getDaraContract(signerOrProvider: any) {
   return new ethers.Contract(DARA_CONTRACT, DARA_ABI, signerOrProvider);
+}
+
+
+
+
+export function explorerTxUrl(tx: string) {
+  return `${EXPLORER}/tx/${tx}`;
 }
 
 

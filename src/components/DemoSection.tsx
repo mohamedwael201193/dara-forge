@@ -21,6 +21,30 @@ import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClie
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
 
+import { Interface, Log } from 'ethers';
+
+// Minimal ABI for your event
+const iface = new Interface([
+  'event LogCreated(uint256 id, bytes32 fileId, address indexed creator)' // adapt to your real signature
+]);
+
+export function extractAnchoredRoot(receipt: any) {
+  for (const log of receipt.logs as Log[]) {
+    try {
+      const parsed = iface.parseLog(log);
+      if (parsed?.name === 'LogCreated') {
+        // Show these in the UI
+        return {
+          id: parsed.args.id?.toString?.() ?? '',
+          fileId: String(parsed.args.fileId),
+          creator: parsed.args.creator
+        };
+      }
+    } catch {}
+  }
+  return null;
+}
+
 export const DemoSection = () => {
   const [connectedWallet, setConnectedWallet] = useState(false);
   const [currentDemo, setCurrentDemo] = useState("upload");
