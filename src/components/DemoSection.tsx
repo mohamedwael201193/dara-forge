@@ -528,7 +528,7 @@ export const DemoSection = () => {
                         <div className="text-sm font-mono">{onchainTx}</div>
                         <div className="mt-2">
                           <Button variant="outline" size="sm" asChild>
-                            <a href={`${EXPLORER}/tx/${onchainTx}`} target="_blank" rel="noreferrer">View on Explorer</a>
+  <a href={explorerTxUrl(onchainTx)} target="_blank" rel="noreferrer">View on Explorer</a>
                           </Button>
                         </div>
                         {logId && <div className="text-xs mt-2 text-muted-foreground">Event LogCreated ID: <code>{logId}</code></div>}
