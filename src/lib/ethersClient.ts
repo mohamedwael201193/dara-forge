@@ -4,9 +4,11 @@ import { ethers } from "ethers";
 
 export const DARA_CONTRACT = (import.meta.env.VITE_DARA_CONTRACT || "").toLowerCase();
 export const EXPLORER = "https://chainscan-galileo.0g.ai";
+
 export function explorerTxUrl(tx: string) {
   return `${EXPLORER}/tx/${tx}`;
 }
+
 export const DARA_ABI = [
   {
     "anonymous": false,
@@ -50,6 +52,8 @@ export async function getSigner() {
 export function getDaraContract(signerOrProvider: any) {
   return new ethers.Contract(DARA_CONTRACT, DARA_ABI, signerOrProvider);
 }
+
+
 
 
 
