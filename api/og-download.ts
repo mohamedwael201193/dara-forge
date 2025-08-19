@@ -5,6 +5,17 @@ import { readFile, unlink } from 'node:fs/promises';
 
 const DEFAULT_INDEXER = 'https://indexer-storage-testnet-turbo.0g.ai';
 
+async function gatewayReady(indexerBase: string, root: string) {
+  const url = `${indexerBase.replace(/\/$/, '')}/file?root=${encodeURIComponent(root)}`;
+  try {
+    const r = await fetch(url, { headers: { 'Cache-Control': 'no-cache', Accept: '*/*' } });
+    if (!r.ok) return false;
+    const textProbe = r.headers.get('content-type')?.includes('application/json') ? await r.clone().text() : '';
+    if (textProbe && (/"code"\s*:\s*101/.test(textProbe) || /file not found/i.test(textProbe))) return false;
+    return true;
+  } catch { return false; }
+}
+
 export default async function handler(req: any, res: any) {
   try {
     const root = String(req.query?.root || '').trim();
@@ -12,11 +23,19 @@ export default async function handler(req: any, res: any) {
     if (!root) return res.status(400).send('root required');
 
     const INDEXER_RPC = (process.env.OG_INDEXER_RPC || DEFAULT_INDEXER).replace(/\/$/, '');
-    const outPath = join(tmpdir(), `og-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
 
+    const t0 = Date.now();
+    while (!(await gatewayReady(INDEXER_RPC, root))) {
+      if (Date.now() - t0 > 12000) { // ~12s budget
+        res.setHeader('Retry-After', '4');
+        return res.status(404).send('not ready');
+      }
+      await new Promise(r => setTimeout(r, 800));
+    }
+
+    const outPath = join(tmpdir(), `og-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
     const indexer = new Indexer(INDEXER_RPC);
-    // with_proof = true → proof-verified download
-    const err = await (indexer as any).download(root, outPath, true);
+    const err = await (indexer as any).download(root, outPath, true); // with proof
     if (err !== null) return res.status(502).send(String(err));
 
     const buf = await readFile(outPath);
@@ -29,4 +48,5 @@ export default async function handler(req: any, res: any) {
     return res.status(500).send(e?.message || String(e));
   }
 }
+
 

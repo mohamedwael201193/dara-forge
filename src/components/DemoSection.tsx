@@ -350,19 +350,23 @@ export const DemoSection = () => {
                         {datasetTx && <> {" • "} Upload Tx: <code>{datasetTx}</code></>}
                       </div>
                     )}
-                    {manifestRoot && (
-                      <div>
-                        Manifest Root: <code>{manifestRoot}</code>
-                        {" • "}
-                        <a href={gatewayUrlForRoot(manifestRoot, "manifest.json")} target="_blank" rel="noreferrer" className="underline">
-                          Open
-                        </a>
-                        <VerifiedBadge expectedRoot={manifestRoot} fetchUrl={gatewayUrlForRoot(manifestRoot, "manifest.json")} />
-                        {manifestTx && <> {" • "} Upload Tx: <code>{manifestTx}</code></>}
-                        <a href={`/api/og-download?root=${encodeURIComponent(manifestRoot)}&name=${encodeURIComponent('manifest.json')}`} className="underline" rel="noreferrer">
-                          Download with proof
-                        </a>                      </div>
-                    )}
+    {manifestRoot && (
+      <div>
+        Manifest Root: <code>{manifestRoot}</code>
+        {' • '}
+        <a href={gatewayUrlForRoot(manifestRoot, 'manifest.json')} target="_blank" rel="noreferrer" className="underline">Open</a>
+        <VerifiedBadge expectedRoot={manifestRoot} fetchUrl={gatewayUrlForRoot(manifestRoot, 'manifest.json')} />
+        {manifestTx && <> {' • '} Upload Tx: <code>{manifestTx}</code></>}
+        {' • '}
+        {manifestReady ? (
+          <a href={`/api/og-download?root=${encodeURIComponent(manifestRoot)}&name=${encodeURIComponent('manifest.json')}`} className="underline" rel="noreferrer">
+            Download with proof
+          </a>
+        ) : (
+          <span title="Still propagating to Indexer" className="text-amber-500">Download with proof (waiting…)</span>
+        )}
+      </div>
+    )}
                     {manifestRoot && !manifestReady && checkAttempts < 20 && (
                       <div className="mt-2 p-3 border border-dashed border-amber-500/30 bg-amber-500/5 rounded-md">
                         <div className="text-sm font-medium mb-2">Manifest Content (Preview)</div>
