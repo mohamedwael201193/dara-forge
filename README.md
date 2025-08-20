@@ -206,9 +206,9 @@ Block Explorer URL: https://chainscan-galileo.0g.ai
 
 ---
 
-## 👥 Team
+## 👥 Developer
 
-* **Mohamed Wael** - Lead Developer
+* **Mohamed Wael** 
 
   * GitHub: [@mohamedwael201193](https://github.com/mohamedwael201193)
   * Twitter: [@Mowael777](https://twitter.com/Mowael777)
