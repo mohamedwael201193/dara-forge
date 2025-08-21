@@ -54,7 +54,7 @@ graph TD
 ### 0G Storage Integration
 
 ```typescript
-// Upload files to 0G Storage with Merkle root generation
+// Upload files to 0G Storage with Merkle root generation.
 const uploadResponse = await 0gSdk.storage.uploadDirectory(files, {
   token: process.env.OG_API_KEY
 });
