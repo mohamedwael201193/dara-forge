@@ -1,5 +1,5 @@
 
-# DARA Forge: Decentralized AI Research Assistant
+#⚡ DARA Forge: Decentralized AI Research Assistant
 
 ---
 
