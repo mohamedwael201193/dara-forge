@@ -29,6 +29,11 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@0glabs/0g-ts-sdk"],
   },
+  build: {
+    rollupOptions: {
+      external: ['@0glabs/0g-ts-sdk'],
+    }
+  }
 });
 
 
