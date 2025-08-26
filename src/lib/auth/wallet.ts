@@ -1,4 +1,4 @@
-import { OGStorageService } from '../0gStorage'
+import { uploadFileViaApi, anchorWithWallet } from '../0gStorage'
 import { OGChainService } from '../0gChain'
 
 interface WalletConnection {
@@ -10,25 +10,20 @@ interface WalletConnection {
 
 export class WalletAuth {
   private connection: WalletConnection | null = null
-  private ogStorage: OGStorageService
   private ogChain: OGChainService
 
   constructor() {
-    this.ogStorage = new OGStorageService()
     this.ogChain = new OGChainService()
   }
 
-  // FIXED: Complete wallet connection with 0G service initialization
   async connectWallet(): Promise<WalletConnection> {
     try {
-      // Check if MetaMask is available
       if (!window.ethereum) {
         throw new Error('MetaMask not found. Please install MetaMask.')
       }
 
       console.log('Connecting to MetaMask...')
       
-      // Request account access
       const accounts = await window.ethereum.request({
         method: 'eth_requestAccounts'
       })
@@ -37,7 +32,6 @@ export class WalletAuth {
         throw new Error('No accounts found')
       }
 
-      // Get provider info
       const provider = window.ethereum
       const chainId = await provider.request({ method: 'eth_chainId' })
 
@@ -48,14 +42,11 @@ export class WalletAuth {
         chainId: parseInt(chainId, 16)
       }
 
-      // CRITICAL: Initialize 0G services with wallet
-      console.log('Initializing 0G services...')
-      await this.ogStorage.initialize(provider)
+      console.log('Initializing 0G Chain service...')
       await this.ogChain.initialize(provider)
 
       console.log('Wallet connected successfully:', accounts[0])
       
-      // Listen for account/network changes
       this.setupEventListeners()
 
       return this.connection
@@ -65,61 +56,59 @@ export class WalletAuth {
     }
   }
 
-  // FIXED: Proper event handling
   private setupEventListeners(): void {
     if (!window.ethereum) return
 
-    // Handle account changes
     window.ethereum.on('accountsChanged', async (accounts: string[]) => {
       if (accounts.length === 0) {
         await this.disconnect()
       } else if (this.connection) {
         this.connection.address = accounts[0]
-        // Reinitialize services with new account
-        await this.ogStorage.initialize(window.ethereum)
         await this.ogChain.initialize(window.ethereum)
       }
     })
 
-    // Handle network changes
     window.ethereum.on('chainChanged', async (chainId: string) => {
       if (this.connection) {
         this.connection.chainId = parseInt(chainId, 16)
-        // Reinitialize services for new network
-        await this.ogStorage.initialize(window.ethereum)
         await this.ogChain.initialize(window.ethereum)
       }
     })
   }
 
-  // Disconnect wallet
   async disconnect(): Promise<void> {
     this.connection = null
     console.log('Wallet disconnected')
   }
 
-  // Get current connection
   getConnection(): WalletConnection | null {
     return this.connection
   }
 
-  // Check if connected to 0G network
   isOnOGNetwork(): boolean {
     return this.connection?.chainId === 16601
-  }
-
-  // Get 0G services
-  getStorageService(): OGStorageService {
-    return this.ogStorage
   }
 
   getChainService(): OGChainService {
     return this.ogChain
   }
 
-  // Check if services are ready
+  // Expose the upload and anchor functions directly
+  async uploadFile(file: File) {
+    if (!this.connection?.address) {
+      throw new Error('Wallet not connected for upload.')
+    }
+    return uploadFileViaApi(file, this.connection.address)
+  }
+
+  async anchorDataset(datasetId: string, rootHashHex: string, metadata: any) {
+    return anchorWithWallet(datasetId, rootHashHex, metadata)
+  }
+
   areServicesReady(): boolean {
-    return this.ogStorage.isInitialized() && this.ogChain.isInitialized()
+    // Only check chain service as storage is now function-based
+    return this.ogChain.isInitialized()
   }
 }
+
 
