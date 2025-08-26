@@ -2,8 +2,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { ProblemSolutionSection } from "@/components/ProblemSolutionSection";
 import { HowItWorksSection } from "@/components/HowItWorksSection";
 import { FeaturesSection } from "@/components/FeaturesSection";
-import { DemoSection } from "@/components/DemoSection";
-
+import { DemoApp } from "@/components/DemoApp";
 import { Footer } from "@/components/Footer";
 
 const Index = () => {
@@ -21,12 +20,22 @@ const Index = () => {
       {/* Features */}
       <FeaturesSection />
       
-      {/* Interactive Demo */}
-      <section className="mx-auto max-w-5xl px-4 py-8">
-        <DemoSection />
+      {/* Fixed 0G Integration Demo */}
+      <section id="demo" className="py-24 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Live 0G Network
+              <span className="text-gradient block">Integration Demo</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Experience real uploads to 0G Storage, cryptographic proof verification, 
+              and immutable blockchain anchoring. All operations are live on the 0G Galileo testnet.
+            </p>
+          </div>
+          <DemoApp />
+        </div>
       </section>
-      
-
       
       {/* Footer */}
       <Footer />
@@ -35,3 +44,4 @@ const Index = () => {
 };
 
 export default Index;
+
