@@ -13,7 +13,7 @@ import {
   Upload,
   Download,
   ShieldCheck,
-  Chain
+  Link
 } from 'lucide-react'
 
 export const DemoApp: React.FC = () => {
