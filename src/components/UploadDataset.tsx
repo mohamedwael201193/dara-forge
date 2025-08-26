@@ -45,23 +45,41 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
       console.log("Starting upload process...")
       setSuccess("Uploading files to 0G Storage...")
 
-      // Upload files to 0G Storage
-      const uploadResult = await uploadViaApi(files[0], walletAuth.getConnection()!.address)
-      
-      console.log("Upload result:", uploadResult)
-      setResults([uploadResult])
-      
-      if (!uploadResult.rootHash) {
-        throw new Error("File upload failed: No root hash returned")
+      // Example direct call into your API. Adjust to your variables/state names.
+      const results: Array<{ rootHash: string; txHash: string; filename: string; size: number }> = []
+      for (const f of Array.from(files)) {
+        const fd = new FormData()
+        fd.append("file", f, f.name)
+        fd.append("metadata", JSON.stringify({
+          title: f.name,
+          description: `Uploaded file: ${f.name}`,
+          contributors: [walletAuth.getConnection()!.address],
+          isPublic: true,
+        }))
+        const r = await fetch("/api/upload", {
+          method: "POST",
+          body: fd,
+          headers: { "X-Wallet-Address": walletAuth.getConnection()!.address },
+        })
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data?.success) {
+          throw new Error(data?.message || `Upload failed (${r.status})`);
+        }
+        results.push(data);
       }
 
-      setSuccess(`Successfully uploaded file to 0G Storage! Root Hash: ${uploadResult.rootHash.slice(0, 6)}...${uploadResult.rootHash.slice(-4)}`)
-      
+      const first = results[0];
+      setResults(results)
+      setSuccess(
+        results.length === 1
+          ? `Successfully uploaded file to 0G Storage! Root Hash: ${first.rootHash.slice(0, 6)}...${first.rootHash.slice(-4)}`
+          : `Successfully uploaded ${results.length} files to 0G Storage!`
+      )
     } catch (err: any) {
-      console.error("Upload failed:", err)
-      setError(`Upload failed: ${err.message}`)
+      console.error("Upload failed:", err);
+      setError(`Upload failed: ${err?.message ?? err}`);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
   }
 
@@ -301,37 +319,51 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-"Starting upload process...")
+       setUploading(true)
+    setError("")
+    setSuccess("")
+
+    try {
+      console.log("Starting upload process...")
       setSuccess("Uploading files to 0G Storage...")
 
-      // Upload files to 0G Storage
-      const uploadResult = await walletAuth.uploadFile(files[0])
-      
-      console.log("Upload result:", uploadResult)
-      setResults([uploadResult])
-      
-      if (!uploadResult.rootHash) {
-        throw new Error("File upload failed: No root hash returned")
+      // Example direct call into your API. Adjust to your variables/state names.
+      const results: Array<{ rootHash: string; txHash: string; filename: string; size: number }> = []
+      for (const f of Array.from(files)) {
+        const fd = new FormData()
+        fd.append("file", f, f.name)
+        fd.append("metadata", JSON.stringify({
+          title: f.name,
+          description: `Uploaded file: ${f.name}`,
+          contributors: [walletAuth.getConnection()!.address],
+          isPublic: true,
+        }))
+        const r = await fetch("/api/upload", {
+          method: "POST",
+          body: fd,
+          headers: { "X-Wallet-Address": walletAuth.getConnection()!.address },
+        })
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok || !data?.success) {
+          throw new Error(data?.message || `Upload failed (${r.status})`);
+        }
+        results.push(data);
       }
 
-      setSuccess(`Successfully uploaded file to 0G Storage! Root Hash: ${uploadResult.rootHash.slice(0, 6)}...${uploadResult.rootHash.slice(-4)}`)
-      
+      const first = results[0];
+      setResults(results)
+      setSuccess(
+        results.length === 1
+          ? `Successfully uploaded file to 0G Storage! Root Hash: ${first.rootHash.slice(0, 6)}...${first.rootHash.slice(-4)}`
+          : `Successfully uploaded ${results.length} files to 0G Storage!`
+      )
     } catch (err: any) {
-      console.error("Upload failed:", err)
-      setError(`Upload failed: ${err.message}`)
+      console.error("Upload failed:", err);
+      setError(`Upload failed: ${err?.message ?? err}`);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
-
-  const handleAnchorToChain = async (rootHash: string, filename: string) => {
+  }st handleAnchorToChain = async (rootHash: string, filename: string) => {
     if (!walletAuth.getConnection()?.isConnected) {
       setError("Wallet not connected for anchoring.")
       return
