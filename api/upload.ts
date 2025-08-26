@@ -23,6 +23,8 @@ export default async function handler(req: any, res: any) {
   }
 
   console.log('[upload] Request received');
+  console.log('[upload] Request headers:', req.headers);
+
   const startTime = Date.now();
   const OG_RPC_URL = must('OG_RPC_URL');
   const PRIV = must('OG_STORAGE_PRIVATE_KEY');
@@ -43,7 +45,7 @@ export default async function handler(req: any, res: any) {
         }
       });
 
-      let fileCount = 0;
+      let fileProcessed = false; // Flag to track if a file was processed
 
       busboy.on('field', (name, value) => {
         console.log(`[upload] Busboy field: ${name} = ${value}`);
@@ -60,14 +62,14 @@ export default async function handler(req: any, res: any) {
 
       busboy.on('file', (name, file, info) => {
         console.log(`[upload] Busboy file: ${name}, filename: ${info.filename}, mimetype: ${info.mimeType}`);
-        if (name !== 'file') { // This is the crucial fix: ensure we only process the 'file' field
+        if (name !== 'file') {
           console.log(`[upload] Skipping non-file field: ${name}`);
           file.resume();
           return;
         }
 
-        fileCount++;
-        const filename = info.filename || `uploaded-file-${fileCount}`;
+        fileProcessed = true; // Set flag when a file is detected
+        const filename = info.filename || `uploaded-file-${Date.now()}`;
         const safe = filename.replace(/[^\w.\-]/g, '_');
         const tmpPath = path.join(os.tmpdir(), `upload-${Date.now()}-${safe}`);
         tmpFiles.push(tmpPath);
@@ -79,9 +81,7 @@ export default async function handler(req: any, res: any) {
         writeStream.on('finish', () => {
           console.log(`[upload] File write finished for: ${tmpPath}`);
           uploadedFile = tmpPath;
-          // Resolve here only if we expect a single file upload to complete the promise
-          // If multiple files are expected, resolve in busboy.on('finish')
-          resolve(); 
+          // Do NOT resolve here. Resolve only after busboy finishes to ensure all parts are processed.
         });
 
         writeStream.on('error', (err) => {
@@ -95,14 +95,12 @@ export default async function handler(req: any, res: any) {
       });
 
       busboy.on('finish', () => {
-        console.log('[upload] Busboy finished parsing form data.');
-        if (!uploadedFile) {
-          console.error('[upload] No file was processed by busboy.on(\'file\').');
+        console.log('[upload] Busboy finished parsing form data. File processed:', fileProcessed);
+        if (!fileProcessed || !uploadedFile) {
+          console.error('[upload] No file was successfully processed or written.');
           reject(new Error('No file uploaded'));
-        }
-        // If promise was not resolved by writeStream.on('finish'), resolve here
-        if (uploadedFile) {
-          resolve();
+        } else {
+          resolve(); // Resolve the promise only when busboy finishes and a file was processed
         }
       });
 
@@ -116,7 +114,7 @@ export default async function handler(req: any, res: any) {
     });
 
     if (!uploadedFile) {
-      console.error('[upload] uploadedFile is null after promise resolution.');
+      console.error('[upload] uploadedFile is null after promise resolution. This should not happen.');
       throw new Error('No file uploaded for processing');
     }
 
