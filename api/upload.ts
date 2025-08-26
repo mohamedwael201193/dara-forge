@@ -135,10 +135,8 @@ export default async function handler(req: any, res: any) {
           }
         }
       });
-      
-      bb.on('file', (name, file, info) => {
-        if (!name.startsWith('file')) {
-          file.resume();
+           busboy.on("file", (name, file, info) => {
+        if (name !== "file") {         file.resume();
           return;
         }
         
