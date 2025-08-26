@@ -12,7 +12,7 @@ import {
   CheckCircle, 
   Upload,
   Download,
-  Verify,
+  ShieldCheck,
   Chain
 } from 'lucide-react'
 
