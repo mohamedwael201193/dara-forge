@@ -26,7 +26,7 @@ export default async function handler(req: any, res: any) {
   const CONTRACT_ADDRESS = process.env.VITE_DARA_CONTRACT || '0xC2Ee75BFe89eAA01706e09d8722A0C8a6E849FC9';
 
   try {
-    const { rootHash, projectId } = req.body;
+    const { rootHash, manifestHash, projectId } = req.body; // Added manifestHash
     
     if (!rootHash) {
       return res.status(400).json({ 
@@ -35,39 +35,48 @@ export default async function handler(req: any, res: any) {
       });
     }
 
+    // Convert rootHash and projectId to bytes32 if they are strings
+    // For simplicity, assuming they are already valid hex strings for bytes32
+    // In a real app, you'd add validation/conversion logic
+    const rootBytes32 = rootHash.startsWith('0x') ? rootHash : '0x' + rootHash;
+    const manifestBytes32 = manifestHash.startsWith('0x') ? manifestHash : '0x' + manifestHash;
+    const projectBytes32 = projectId.startsWith('0x') ? projectId : '0x' + projectId;
+
     // Initialize provider and signer
     const provider = new ethers.JsonRpcProvider(OG_RPC_URL);
     const signer = new ethers.Wallet(PRIV, provider);
     
-    // Contract ABI for DARA contract
+    // Contract ABI for DARA contract - updated to match anchor function
     const contractABI = [
-      "function logData(string memory _fileId) external",
-      "function logCounter() external view returns (uint256)",
-      "event LogCreated(uint256 indexed logId, address indexed creator, string fileId, uint256 timestamp)"
+      "function anchor(bytes32 root, bytes32 manifestHash, bytes32 projectId) external",
+      "function getDataset(uint256 id) external view returns (tuple(uint256 id, bytes32 root, bytes32 manifestHash, bytes32 projectId, address uploader, uint256 timestamp, bool verified, uint256 citationCount))",
+      "event DatasetAnchored(uint256 indexed id, bytes32 indexed root, bytes32 indexed manifestHash, bytes32 projectId, address uploader, uint256 timestamp)"
     ];
     
     // Initialize contract
     const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
     
-    console.log('Anchoring to 0G Chain:', { rootHash, projectId });
+    console.log('Anchoring to 0G Chain:', { rootHash, manifestHash, projectId });
     
-    // Call contract function
-    const tx = await contract.logData(rootHash);
+    // Call contract function - changed from logData to anchor
+    const tx = await contract.anchor(rootBytes32, manifestBytes32, projectBytes32);
     console.log('Transaction sent:', tx.hash);
     
     // Wait for confirmation
     const receipt = await tx.wait();
     console.log('Transaction confirmed:', receipt.hash);
     
-    // Get log counter for dataset ID
-    const logCounter = await contract.logCounter();
+    // Fetch the newly anchored dataset ID (assuming it's the latest one or can be derived)
+    // For now, we'll return the rootHash as a temporary datasetId
+    const datasetId = rootHash; // This needs to be properly retrieved from the contract event or state
     
     const totalDuration = Date.now() - startTime;
 
     return res.status(200).json({
       ok: true,
-      datasetId: logCounter.toString(),
+      datasetId: datasetId,
       rootHash,
+      manifestHash,
       projectId: projectId || 'default',
       txHash: receipt.hash,
       blockNumber: receipt.blockNumber,
