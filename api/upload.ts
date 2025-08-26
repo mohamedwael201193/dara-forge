@@ -16,11 +16,20 @@ export default async function handler(req: any, res: any) {
   }
 
   console.log('[upload] Request received');
-  console.log('[upload] Request headers:', req.headers);
+  // Log all headers explicitly to ensure no truncation
+  console.log('[upload] Request headers:', JSON.stringify(req.headers, null, 2));
   console.log('[upload] Environment variables (partial):', {
     OG_RPC_URL: process.env.OG_RPC_URL ? 'SET' : 'NOT_SET',
     OG_STORAGE_PRIVATE_KEY: process.env.OG_STORAGE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
   });
+
+  // Attempt to log raw body if available (Vercel might provide it in some contexts)
+  if (req.rawBody) {
+    console.log('[upload] Raw body length:', req.rawBody.length);
+    // console.log('[upload] Raw body (first 100 chars):', req.rawBody.toString('utf8').substring(0, 100));
+  } else {
+    console.log('[upload] req.rawBody is not available.');
+  }
 
   let tmpFiles: string[] = [];
   let fileMetadata: any = {};
@@ -28,6 +37,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     await new Promise<void>((resolve, reject) => {
+      console.log('[upload] Initializing Busboy');
       const busboy = Busboy({
         headers: req.headers,
         limits: {
