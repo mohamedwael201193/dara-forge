@@ -12,8 +12,8 @@ import {
   CheckCircle, 
   Upload,
   Download,
-  Verify,
-  Chain
+  ShieldCheck,
+  Link
 } from 'lucide-react'
 
 export const DemoApp: React.FC = () => {
@@ -87,7 +87,7 @@ export const DemoApp: React.FC = () => {
               
               <div className="text-center space-y-3">
                 <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
-                  <Verify className="w-8 h-8 text-green-600" />
+                  <ShieldCheck className="w-8 h-8 text-green-600" />
                 </div>
                 <h3 className="font-semibold">2. Generate Proofs</h3>
                 <p className="text-sm text-gray-600">
@@ -97,7 +97,7 @@ export const DemoApp: React.FC = () => {
               
               <div className="text-center space-y-3">
                 <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto">
-                  <Chain className="w-8 h-8 text-purple-600" />
+                  <Link className="w-8 h-8 text-purple-600" />
                 </div>
                 <h3 className="font-semibold">3. Anchor on Chain</h3>
                 <p className="text-sm text-gray-600">
@@ -208,4 +208,5 @@ export const DemoApp: React.FC = () => {
     </div>
   )
 }
+
 

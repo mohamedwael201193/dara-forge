@@ -85,31 +85,45 @@ export class OGChainService {
     }
   }
 
-  // FIXED: Anchor dataset to blockchain
-  async anchorDataset(
-    rootHash: string
-  ): Promise<DatasetAnchor> {
-    if (!this.contract || !this.signer) {
+  // Anchor dataset to blockchain via API route for better reliability
+  async anchorDataset(rootHash: string): Promise<DatasetAnchor> {
+    if (!this.signer) {
       throw new Error('Chain service not initialized')
     }
 
     try {
       console.log('Anchoring dataset to 0G Chain:', { rootHash })
       
-      // Call contract function - FIXED PARAMETERS
-      const tx = await this.contract.logData(rootHash)
-      console.log('Transaction sent:', tx.hash)
+      // Use API route for anchoring to handle any server-side requirements
+      const response = await fetch('/api/anchor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Wallet-Address': await this.signer.getAddress()
+        },
+        body: JSON.stringify({
+          rootHash,
+          projectId: 'dara-forge-default'
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Anchoring failed')
+      }
+
+      const result = await response.json()
       
-      // Wait for confirmation
-      const receipt = await tx.wait()
-      console.log('Transaction confirmed:', receipt.hash)
+      if (!result.ok) {
+        throw new Error(result.error || 'Anchoring failed')
+      }
 
       return {
-        datasetId: rootHash,
+        datasetId: result.datasetId || rootHash,
         rootHash,
         timestamp: Date.now(),
         researcher: await this.signer.getAddress(),
-        txHash: receipt.hash
+        txHash: result.txHash
       }
     } catch (error) {
       console.error('Failed to anchor dataset:', error)
@@ -117,7 +131,7 @@ export class OGChainService {
     }
   }
 
-  // Get log counter
+  // Direct contract call for simple operations
   async getLogCounter(): Promise<number> {
     if (!this.contract) {
       throw new Error('Chain service not initialized')

@@ -1,6 +1,4 @@
-import { ZgFile, Indexer } from '@0glabs/0g-ts-sdk'
-import { ethers } from 'ethers'
-
+// Browser-compatible 0G Storage service that uses API routes
 interface UploadResult {
   rootHash: string
   txHash: string
@@ -15,19 +13,8 @@ interface DownloadResult {
 }
 
 export class OGStorageService {
-  private indexer: Indexer
-  private provider: ethers.JsonRpcProvider
-  private signer: ethers.Wallet | null = null
+  private walletAddress: string | null = null
   
-  // Updated to use correct 0G endpoints
-  private readonly RPC_URL = process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/'
-  private readonly INDEXER_RPC = process.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai'
-  
-  constructor() {
-    this.provider = new ethers.JsonRpcProvider(this.RPC_URL)
-    this.indexer = new Indexer(this.INDEXER_RPC)
-  }
-
   // Initialize with wallet connection
   async initialize(walletProvider: any): Promise<void> {
     try {
@@ -35,57 +22,69 @@ export class OGStorageService {
         throw new Error('Wallet provider not found')
       }
 
-      // Create ethers provider from wallet
-      const ethersProvider = new ethers.BrowserProvider(walletProvider)
-      const signer = await ethersProvider.getSigner()
-      this.signer = signer
+      // Get wallet address for API authentication
+      const accounts = await walletProvider.request({
+        method: 'eth_requestAccounts'
+      })
       
-      console.log('0G Storage Service initialized with wallet:', await signer.getAddress())
+      if (accounts.length === 0) {
+        throw new Error('No accounts found')
+      }
+      
+      this.walletAddress = accounts[0]
+      console.log('0G Storage Service initialized with wallet:', this.walletAddress)
     } catch (error) {
       console.error('Failed to initialize 0G Storage:', error)
       throw error
     }
   }
 
-  // FIXED: Upload file to 0G Storage using correct SDK pattern
+  // Upload file to 0G Storage via API route
   async uploadFile(file: File): Promise<UploadResult> {
-    if (!this.signer) {
+    if (!this.walletAddress) {
       throw new Error('Storage service not initialized with wallet')
     }
 
     try {
       console.log('Starting file upload to 0G Storage:', file.name)
       
-      // Convert File to ZgFile - CORRECT METHOD
-      const zgFile = new ZgFile(file)
+      // Create form data for upload
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('metadata', JSON.stringify({
+        title: file.name,
+        description: `Uploaded file: ${file.name}`,
+        tags: [],
+        version: '1.0',
+        license: 'MIT',
+        domain: 'general',
+        contributors: [this.walletAddress],
+        isPublic: true
+      }))
+
+      // Upload via API route
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Wallet-Address': this.walletAddress
+        }
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Upload failed')
+      }
+
+      const result = await response.json()
       
-      // Generate Merkle tree for verification
-      const [tree, treeErr] = await zgFile.merkleTree()
-      if (treeErr !== null) {
-        throw new Error(`Error generating Merkle tree: ${treeErr}`)
+      if (!result.ok) {
+        throw new Error(result.error || 'Upload failed')
       }
-
-      const rootHash = tree?.rootHash()
-      if (!rootHash) {
-        throw new Error('Failed to generate root hash')
-      }
-
-      console.log('File Root Hash:', rootHash)
-
-      // Upload to 0G network - CORRECT SDK USAGE
-      const [tx, uploadErr] = await this.indexer.upload(zgFile, this.RPC_URL, this.signer)
-      if (uploadErr !== null) {
-        throw new Error(`Upload error: ${uploadErr}`)
-      }
-
-      console.log('Upload successful! Transaction:', tx)
-
-      // Clean up resources
-      await zgFile.close()
 
       return {
-        rootHash,
-        txHash: tx,
+        rootHash: result.rootHash,
+        txHash: result.manifest?.uploadTime || '',
         size: file.size,
         filename: file.name
       }
@@ -95,9 +94,9 @@ export class OGStorageService {
     }
   }
 
-  // FIXED: Upload multiple files with batch processing
+  // Upload multiple files with batch processing
   async uploadMultipleFiles(files: FileList | File[]): Promise<UploadResult[]> {
-    if (!this.signer) {
+    if (!this.walletAddress) {
       throw new Error('Storage service not initialized with wallet')
     }
 
@@ -123,25 +122,32 @@ export class OGStorageService {
     return results
   }
 
-  // FIXED: Download file with proper verification
+  // Download file with proper verification via API route
   async downloadFile(rootHash: string, filename: string): Promise<DownloadResult> {
     try {
       console.log('Downloading file with hash:', rootHash)
       
-      // Create output path
-      const outputPath = `./downloads/${filename}`
+      const response = await fetch(`/api/download/${rootHash}?withProof=true&filename=${encodeURIComponent(filename)}`)
       
-      // Download with Merkle proof verification - CORRECT METHOD
-      const downloadErr = await this.indexer.download(rootHash, outputPath, true)
-      
-      if (downloadErr !== null) {
-        throw new Error(`Download error: ${downloadErr}`)
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Download failed')
       }
 
-      console.log('Download successful!')
+      // For browser downloads, we'll trigger a download
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+
       return {
         success: true,
-        filePath: outputPath
+        filePath: `Downloaded: ${filename}`
       }
     } catch (error) {
       console.error('Download failed:', error)
@@ -152,21 +158,24 @@ export class OGStorageService {
     }
   }
 
-  // FIXED: Verify file integrity
+  // Verify file integrity via API route
   async verifyFile(file: File, expectedRootHash: string): Promise<boolean> {
     try {
-      const zgFile = new ZgFile(file)
-      const [tree, treeErr] = await zgFile.merkleTree()
-      
-      if (treeErr !== null) {
-        await zgFile.close()
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('expectedRootHash', expectedRootHash)
+
+      const response = await fetch('/api/verify', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
         return false
       }
 
-      const actualRootHash = tree?.rootHash()
-      await zgFile.close()
-      
-      return actualRootHash === expectedRootHash
+      const result = await response.json()
+      return result.verified === true
     } catch (error) {
       console.error('Verification failed:', error)
       return false
@@ -175,15 +184,15 @@ export class OGStorageService {
 
   // Check if service is ready
   isInitialized(): boolean {
-    return this.signer !== null
+    return this.walletAddress !== null
   }
 
-  // Get signer address
+  // Get wallet address
   async getAddress(): Promise<string> {
-    if (!this.signer) {
+    if (!this.walletAddress) {
       throw new Error('Storage service not initialized')
     }
-    return await this.signer.getAddress()
+    return this.walletAddress
   }
 }
 
