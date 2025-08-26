@@ -1,11 +1,18 @@
-import Busboy from 'busboy';
+import { Uploader, ZgFile } from '@0glabs/0g-ts-sdk';
+import formidable from 'formidable';
 import os from 'node:os';
 import path from 'node:path';
-import { createWriteStream, promises as fs } from 'node:fs';
+import { promises as fs } from 'node:fs';
+
+function must(name: string) {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing env ${name}`);
+  return v;
+}
 
 export const config = {
   api: {
-    bodyParser: false, // Disable body parsing, as we're using busboy
+    bodyParser: false, // Disable body parsing, as we're using formidable
   },
 };
 
@@ -16,111 +23,122 @@ export default async function handler(req: any, res: any) {
   }
 
   console.log('[upload] Request received');
-  // Log all headers explicitly to ensure no truncation
   console.log('[upload] Request headers:', JSON.stringify(req.headers, null, 2));
   console.log('[upload] Environment variables (partial):', {
     OG_RPC_URL: process.env.OG_RPC_URL ? 'SET' : 'NOT_SET',
     OG_STORAGE_PRIVATE_KEY: process.env.OG_STORAGE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
   });
 
-  // Attempt to log raw body if available (Vercel might provide it in some contexts)
-  if (req.rawBody) {
-    console.log('[upload] Raw body length:', req.rawBody.length);
-    // console.log('[upload] Raw body (first 100 chars):', req.rawBody.toString('utf8').substring(0, 100));
-  } else {
-    console.log('[upload] req.rawBody is not available.');
-  }
+  const startTime = Date.now();
+  const OG_RPC_URL = must('OG_RPC_URL');
+  const PRIV = must('OG_STORAGE_PRIVATE_KEY');
 
-  let tmpFiles: string[] = [];
   let fileMetadata: any = {};
-  let uploadedFile: string | null = null;
+  let uploadedFilePath: string | null = null;
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      console.log('[upload] Initializing Busboy');
-      const busboy = Busboy({
-        headers: req.headers,
-        limits: {
-          fileSize: 100 * 1024 * 1024,
-          files: 10
-        }
-      });
-
-      let fileProcessed = false;
-
-      busboy.on('field', (name, value) => {
-        console.log(`[upload] Busboy field: ${name} = ${value}`);
-        if (name === 'metadata') {
-          try {
-            fileMetadata = JSON.parse(value);
-            console.log('[upload] Parsed metadata:', fileMetadata);
-          } catch (e) {
-            console.error('[upload] Invalid metadata JSON:', e);
-            reject(new Error('Invalid metadata JSON'));
-          }
-        }
-      });
-
-      busboy.on('file', (name, file, info) => {
-        console.log(`[upload] Busboy file: ${name}, filename: ${info.filename}, mimetype: ${info.mimeType}`);
-        if (name !== 'file') {
-          console.log(`[upload] Skipping non-file field: ${name}`);
-          file.resume();
-          return;
-        }
-
-        fileProcessed = true;
-        const filename = info.filename || `uploaded-file-${Date.now()}`;
-        const safe = filename.replace(/[^\w.\-]/g, '_');
-        const tmpPath = path.join(os.tmpdir(), `upload-${Date.now()}-${safe}`);
-        tmpFiles.push(tmpPath);
-
-        console.log(`[upload] Writing file to: ${tmpPath}`);
-        const writeStream = createWriteStream(tmpPath);
-        file.pipe(writeStream);
-
-        writeStream.on('finish', () => {
-          console.log(`[upload] File write finished for: ${tmpPath}`);
-          uploadedFile = tmpPath;
-        });
-
-        writeStream.on('error', (err) => {
-          console.error(`[upload] Write stream error for ${tmpPath}:`, err);
-          reject(err);
-        });
-        file.on('error', (err) => {
-          console.error(`[upload] File stream error for ${tmpPath}:`, err);
-          reject(err);
-        });
-      });
-
-      busboy.on('finish', () => {
-        console.log('[upload] Busboy finished parsing form data. File processed:', fileProcessed);
-        if (!fileProcessed || !uploadedFile) {
-          console.error('[upload] No file was successfully processed or written.');
-          reject(new Error('No file uploaded'));
-        } else {
-          resolve();
-        }
-      });
-
-      busboy.on('error', (err) => {
-        console.error('[upload] Busboy error:', err);
-        reject(err);
-      });
-      
-      req.pipe(busboy);
-      console.log('[upload] Request piped to Busboy.');
+    const form = formidable({
+      uploadDir: os.tmpdir(),
+      keepExtensions: true,
+      maxFileSize: 100 * 1024 * 1024, // 100MB
+      multiples: false, // Only expect one file for now
+      filename: (name, ext, part, form) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        return `${part.originalFilename}-${uniqueSuffix}${ext}`;
+      },
     });
 
-    // Simplified for debugging: remove 0G SDK interaction for now
-    // This part will be re-added once file upload is confirmed working
-    console.log('[upload] File received successfully (temporarily skipping 0G SDK interaction).');
-    res.status(200).json({ ok: true, message: 'File received for debugging.' });
+    const [fields, files] = await form.parse(req);
+
+    console.log('[upload] Formidable parsed fields:', fields);
+    console.log('[upload] Formidable parsed files:', files);
+
+    if (fields.metadata && fields.metadata.length > 0) {
+      try {
+        fileMetadata = JSON.parse(fields.metadata[0]);
+        console.log('[upload] Parsed metadata:', fileMetadata);
+      } catch (e) {
+        console.error('[upload] Invalid metadata JSON:', e);
+        throw new Error('Invalid metadata JSON');
+      }
+    }
+
+    const fileArray = files.file; // 'file' is the field name from frontend
+    if (!fileArray || fileArray.length === 0) {
+      console.error('[upload] No file found in formidable parsing.');
+      throw new Error('No file uploaded');
+    }
+
+    const file = fileArray[0];
+    uploadedFilePath = file.filepath;
+    console.log('Processing uploaded file:', uploadedFilePath);
+
+    // Initialize uploader
+    const uploader = new Uploader(OG_RPC_URL, PRIV);
+
+    // Create ZgFile from the uploaded file
+    const zgFile = await ZgFile.fromFilePath(uploadedFilePath);
+
+    // Upload to 0G Storage
+    const uploadResult = await uploader.upload(zgFile, fileMetadata);
+
+    // Close the ZgFile after upload
+    await zgFile.close();
+
+    // Clean up temporary file
+    if (uploadedFilePath) {
+      await fs.unlink(uploadedFilePath).catch(() => {});
+    }
+
+    const totalDuration = Date.now() - startTime;
+
+    // Anchor to blockchain via internal API call
+    const anchorResponse = await fetch(`${req.headers.origin}/api/anchor`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Wallet-Address': req.headers['x-wallet-address'] // Pass wallet address for auth
+      },
+      body: JSON.stringify({
+        rootHash: uploadResult.root,
+        manifestHash: uploadResult.manifest?.hash || '0x0000000000000000000000000000000000000000000000000000000000000000',
+        projectId: fileMetadata.projectId || '0x0000000000000000000000000000000000000000000000000000000000000000' // Default or derive
+      })
+    });
+
+    const anchorResult = await anchorResponse.json();
+
+    if (!anchorResponse.ok || !anchorResult.ok) {
+      console.error('Failed to anchor to blockchain:', anchorResult.error);
+      // Still return success for upload, but indicate anchoring failed
+      return res.status(200).json({
+        ok: true,
+        message: 'File uploaded to 0G Storage, but anchoring to blockchain failed.',
+        root: uploadResult.root,
+        manifest: uploadResult.manifest,
+        performance: {
+          uploadDuration: totalDuration,
+          totalDuration: totalDuration
+        },
+        anchoringError: anchorResult.error
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      root: uploadResult.root,
+      manifest: uploadResult.manifest,
+      performance: {
+        uploadDuration: totalDuration,
+        totalDuration: totalDuration
+      },
+      blockchain: anchorResult
+    });
 
   } catch (err: any) {
-    for (const tmpFile of tmpFiles) {
-      await fs.unlink(tmpFile).catch(() => {});
+    // Clean up temporary file on error
+    if (uploadedFilePath) {
+      await fs.unlink(uploadedFilePath).catch(() => {});
     }
 
     console.error('[upload] Error:', err);
@@ -129,6 +147,7 @@ export default async function handler(req: any, res: any) {
       ok: false,
       error: String(err?.message || err),
       timestamp: new Date().toISOString(),
+      duration: Date.now() - startTime
     });
   }
 }
