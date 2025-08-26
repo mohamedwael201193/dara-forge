@@ -1,154 +1,105 @@
-import { Uploader, ZgFile } from '@0glabs/0g-ts-sdk';
-import formidable from 'formidable';
-import os from 'node:os';
-import path from 'node:path';
-import { promises as fs } from 'node:fs';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
+import formidable, { File as FormidableFile } from 'formidable';
+import fs from 'fs/promises';
+import path from 'path';
+import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
+import { ethers } from 'ethers';
 
-function must(name: string) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env ${name}`);
-  return v;
+// Vercel + Vite: this is fine to leave here (Next-specific config is ignored, harmless)
+export const config = { api: { bodyParser: false } };
+
+function parseForm(req: VercelRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
+  return new Promise((resolve, reject) => {
+    const form = formidable({
+      uploadDir: '/tmp',
+      keepExtensions: true,
+      multiples: false,
+      // sanitize filenames
+      filename: (name, ext, part) => `${Date.now()}-${(part.originalFilename || 'upload').replace(/[^\w.\-]+/g, '_')}`,
+    });
+    form.parse(req, (err, fields, files) => (err ? reject(err) : resolve({ fields, files })));
+  });
 }
 
-export const config = {
-  api: {
-    bodyParser: false, // Disable body parsing, as we're using formidable
-  },
-};
-
-export default async function handler(req: any, res: any) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
-    return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+    res.status(405).json({ success: false, message: 'Method not allowed' });
+    return;
   }
 
-  console.log('[upload] Request received');
-  console.log('[upload] Request headers:', JSON.stringify(req.headers, null, 2));
-  console.log('[upload] Environment variables (partial):', {
-    OG_RPC_URL: process.env.OG_RPC_URL ? 'SET' : 'NOT_SET',
-    OG_STORAGE_PRIVATE_KEY: process.env.OG_STORAGE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
-  });
-
-  const startTime = Date.now();
-  const OG_RPC_URL = must('OG_RPC_URL');
-  const PRIV = must('OG_STORAGE_PRIVATE_KEY');
-
-  let fileMetadata: any = {};
-  let uploadedFilePath: string | null = null;
-
   try {
-    const form = formidable({
-      uploadDir: os.tmpdir(),
-      keepExtensions: true,
-      maxFileSize: 100 * 1024 * 1024, // 100MB
-      multiples: false, // Only expect one file for now
-      filename: (name, ext, part, form) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        return `${part.originalFilename}-${uniqueSuffix}${ext}`;
-      },
-    });
+    console.log('[upload] Request received');
 
-    const [fields, files] = await form.parse(req);
+    const OG_RPC = (process.env.OG_RPC_URL || process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/').replace(/\/+$/, '/');
+    const INDEXER = (process.env.OG_INDEXER || process.env.OG_INDEXER_RPC || process.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai').replace(/\/+$/, '');
+    const PRIV = process.env.OG_STORAGE_PRIVATE_KEY;
 
-    console.log('[upload] Formidable parsed fields:', fields);
-    console.log('[upload] Formidable parsed files:', files);
+    console.log('[upload] Env check:', { OG_RPC: OG_RPC ? 'SET' : 'MISSING', INDEXER: INDEXER ? 'SET' : 'MISSING', PRIV: PRIV ? 'SET' : 'MISSING' });
+    if (!PRIV) return res.status(500).json({ success: false, message: 'Missing OG_STORAGE_PRIVATE_KEY' });
 
-    if (fields.metadata && fields.metadata.length > 0) {
-      try {
-        fileMetadata = JSON.parse(fields.metadata[0]);
-        console.log('[upload] Parsed metadata:', fileMetadata);
-      } catch (e) {
-        console.error('[upload] Invalid metadata JSON:', e);
-        throw new Error('Invalid metadata JSON');
-      }
+    // Parse multipart with Formidable (waits until file fully written)
+    const { fields, files } = await parseForm(req);
+    const fileField = (files.file as FormidableFile) || (Array.isArray(files.file) && (files.file as FormidableFile[])[0]);
+
+    if (!fileField || !('filepath' in fileField) || !fileField.filepath) {
+      return res.status(400).json({ success: false, message: 'No file provided' });
     }
 
-    const fileArray = files.file; // 'file' is the field name from frontend
-    if (!fileArray || fileArray.length === 0) {
-      console.error('[upload] No file found in formidable parsing.');
-      throw new Error('No file uploaded');
+    const filepath = fileField.filepath;
+    const stat = await fs.stat(filepath).catch(() => null);
+    if (!stat || stat.size === 0) {
+      return res.status(500).json({ success: false, message: 'Failed to persist file' });
+    }
+    console.log('[upload] File on disk:', filepath, 'bytes:', stat.size);
+
+    // Build metadata if provided
+    let metadata: any = {};
+    if (fields.metadata && typeof fields.metadata === 'string') {
+      try { metadata = JSON.parse(fields.metadata); } catch {}
     }
 
-    const file = fileArray[0];
-    uploadedFilePath = file.filepath;
-    console.log('Processing uploaded file:', uploadedFilePath);
+    // 0G SDK usage
+    const provider = new ethers.JsonRpcProvider(OG_RPC);
+    const signer = new ethers.Wallet(PRIV.startsWith('0x') ? PRIV : `0x${PRIV}`, provider);
 
-    // Initialize uploader
-    const uploader = new Uploader(OG_RPC_URL, PRIV);
+    const indexer = new Indexer(INDEXER); // IMPORTANT: use Indexer instance, not "uploader"
+    const zgFile = await ZgFile.fromFilePath(filepath);
 
-    // Create ZgFile from the uploaded file
-    const zgFile = await ZgFile.fromFilePath(uploadedFilePath);
+    const [tree, treeErr] = await zgFile.merkleTree();
+    if (treeErr) {
+      await zgFile.close();
+      await fs.unlink(filepath).catch(() => {});
+      return res.status(500).json({ success: false, message: `Merkle error: ${treeErr}` });
+    }
 
-    // Upload to 0G Storage
-    const uploadResult = await uploader.upload(zgFile, fileMetadata);
+    const rootHash = tree?.rootHash();
+    if (!rootHash) {
+      await zgFile.close();
+      await fs.unlink(filepath).catch(() => {});
+      return res.status(500).json({ success: false, message: 'No root hash produced' });
+    }
 
-    // Close the ZgFile after upload
+    const [txHash, uploadErr] = await indexer.upload(zgFile, OG_RPC, signer);
     await zgFile.close();
+    await fs.unlink(filepath).catch(() => {});
 
-    // Clean up temporary file
-    if (uploadedFilePath) {
-      await fs.unlink(uploadedFilePath).catch(() => {});
-    }
-
-    const totalDuration = Date.now() - startTime;
-
-    // Anchor to blockchain via internal API call
-    const anchorResponse = await fetch(`${req.headers.origin}/api/anchor`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Wallet-Address': req.headers['x-wallet-address'] // Pass wallet address for auth
-      },
-      body: JSON.stringify({
-        rootHash: uploadResult.root,
-        manifestHash: uploadResult.manifest?.hash || '0x0000000000000000000000000000000000000000000000000000000000000000',
-        projectId: fileMetadata.projectId || '0x0000000000000000000000000000000000000000000000000000000000000000' // Default or derive
-      })
-    });
-
-    const anchorResult = await anchorResponse.json();
-
-    if (!anchorResponse.ok || !anchorResult.ok) {
-      console.error('Failed to anchor to blockchain:', anchorResult.error);
-      // Still return success for upload, but indicate anchoring failed
-      return res.status(200).json({
-        ok: true,
-        message: 'File uploaded to 0G Storage, but anchoring to blockchain failed.',
-        root: uploadResult.root,
-        manifest: uploadResult.manifest,
-        performance: {
-          uploadDuration: totalDuration,
-          totalDuration: totalDuration
-        },
-        anchoringError: anchorResult.error
-      });
+    if (uploadErr) {
+      return res.status(500).json({ success: false, message: `0G upload failed: ${uploadErr}` });
     }
 
     return res.status(200).json({
-      ok: true,
-      root: uploadResult.root,
-      manifest: uploadResult.manifest,
-      performance: {
-        uploadDuration: totalDuration,
-        totalDuration: totalDuration
-      },
-      blockchain: anchorResult
-    });
-
-  } catch (err: any) {
-    // Clean up temporary file on error
-    if (uploadedFilePath) {
-      await fs.unlink(uploadedFilePath).catch(() => {});
-    }
-
-    console.error('[upload] Error:', err);
-
-    return res.status(500).json({
-      ok: false,
-      error: String(err?.message || err),
+      success: true,
+      rootHash,
+      txHash,
+      filename: (fileField.originalFilename || 'file'),
+      size: stat.size,
+      metadata,
       timestamp: new Date().toISOString(),
-      duration: Date.now() - startTime
+      handler: 'vercel-function',
     });
+  } catch (e: any) {
+    console.error('[upload] error:', e);
+    return res.status(500).json({ success: false, message: e?.message || 'Upload failed' });
   }
 }
 
