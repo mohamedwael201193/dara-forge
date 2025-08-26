@@ -1,14 +1,7 @@
-import { Uploader, ZgFile } from '@0glabs/0g-ts-sdk';
 import Busboy from 'busboy';
 import os from 'node:os';
 import path from 'node:path';
 import { createWriteStream, promises as fs } from 'node:fs';
-
-function must(name: string) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env ${name}`);
-  return v;
-}
 
 export const config = {
   api: {
@@ -24,28 +17,26 @@ export default async function handler(req: any, res: any) {
 
   console.log('[upload] Request received');
   console.log('[upload] Request headers:', req.headers);
-
-  const startTime = Date.now();
-  const OG_RPC_URL = must('OG_RPC_URL');
-  const PRIV = must('OG_STORAGE_PRIVATE_KEY');
+  console.log('[upload] Environment variables (partial):', {
+    OG_RPC_URL: process.env.OG_RPC_URL ? 'SET' : 'NOT_SET',
+    OG_STORAGE_PRIVATE_KEY: process.env.OG_STORAGE_PRIVATE_KEY ? 'SET' : 'NOT_SET',
+  });
 
   let tmpFiles: string[] = [];
   let fileMetadata: any = {};
   let uploadedFile: string | null = null;
 
   try {
-    // Parse multipart form data
     await new Promise<void>((resolve, reject) => {
-      console.log('[upload] Initializing Busboy');
       const busboy = Busboy({
         headers: req.headers,
         limits: {
-          fileSize: 100 * 1024 * 1024, // 100MB per file
-          files: 10 // Max 10 files for batch upload
+          fileSize: 100 * 1024 * 1024,
+          files: 10
         }
       });
 
-      let fileProcessed = false; // Flag to track if a file was processed
+      let fileProcessed = false;
 
       busboy.on('field', (name, value) => {
         console.log(`[upload] Busboy field: ${name} = ${value}`);
@@ -68,7 +59,7 @@ export default async function handler(req: any, res: any) {
           return;
         }
 
-        fileProcessed = true; // Set flag when a file is detected
+        fileProcessed = true;
         const filename = info.filename || `uploaded-file-${Date.now()}`;
         const safe = filename.replace(/[^\w.\-]/g, '_');
         const tmpPath = path.join(os.tmpdir(), `upload-${Date.now()}-${safe}`);
@@ -81,7 +72,6 @@ export default async function handler(req: any, res: any) {
         writeStream.on('finish', () => {
           console.log(`[upload] File write finished for: ${tmpPath}`);
           uploadedFile = tmpPath;
-          // Do NOT resolve here. Resolve only after busboy finishes to ensure all parts are processed.
         });
 
         writeStream.on('error', (err) => {
@@ -100,7 +90,7 @@ export default async function handler(req: any, res: any) {
           console.error('[upload] No file was successfully processed or written.');
           reject(new Error('No file uploaded'));
         } else {
-          resolve(); // Resolve the promise only when busboy finishes and a file was processed
+          resolve();
         }
       });
 
@@ -113,77 +103,12 @@ export default async function handler(req: any, res: any) {
       console.log('[upload] Request piped to Busboy.');
     });
 
-    if (!uploadedFile) {
-      console.error('[upload] uploadedFile is null after promise resolution. This should not happen.');
-      throw new Error('No file uploaded for processing');
-    }
-
-    console.log('Processing uploaded file:', uploadedFile);
-
-    // Initialize uploader
-    const uploader = new Uploader(OG_RPC_URL, PRIV);
-
-    // Create ZgFile from the uploaded file
-    const zgFile = await ZgFile.fromFilePath(uploadedFile);
-
-    // Upload to 0G Storage
-    const uploadResult = await uploader.upload(zgFile, fileMetadata);
-
-    // Close the ZgFile after upload
-    await zgFile.close();
-
-    // Clean up temporary files
-    for (const tmpFile of tmpFiles) {
-      await fs.unlink(tmpFile).catch(() => {});
-    }
-
-    const totalDuration = Date.now() - startTime;
-
-    // Anchor to blockchain via internal API call
-    const anchorResponse = await fetch(`${req.headers.origin}/api/anchor`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Wallet-Address': req.headers['x-wallet-address'] // Pass wallet address for auth
-      },
-      body: JSON.stringify({
-        rootHash: uploadResult.root,
-        manifestHash: uploadResult.manifest?.hash || '0x0000000000000000000000000000000000000000000000000000000000000000',
-        projectId: fileMetadata.projectId || '0x0000000000000000000000000000000000000000000000000000000000000000' // Default or derive
-      })
-    });
-
-    const anchorResult = await anchorResponse.json();
-
-    if (!anchorResponse.ok || !anchorResult.ok) {
-      console.error('Failed to anchor to blockchain:', anchorResult.error);
-      // Still return success for upload, but indicate anchoring failed
-      return res.status(200).json({
-        ok: true,
-        message: 'File uploaded to 0G Storage, but anchoring to blockchain failed.',
-        root: uploadResult.root,
-        manifest: uploadResult.manifest,
-        performance: {
-          uploadDuration: totalDuration,
-          totalDuration: totalDuration
-        },
-        anchoringError: anchorResult.error
-      });
-    }
-
-    return res.status(200).json({
-      ok: true,
-      root: uploadResult.root,
-      manifest: uploadResult.manifest,
-      performance: {
-        uploadDuration: totalDuration,
-        totalDuration: totalDuration
-      },
-      blockchain: anchorResult
-    });
+    // Simplified for debugging: remove 0G SDK interaction for now
+    // This part will be re-added once file upload is confirmed working
+    console.log('[upload] File received successfully (temporarily skipping 0G SDK interaction).');
+    res.status(200).json({ ok: true, message: 'File received for debugging.' });
 
   } catch (err: any) {
-    // Clean up temporary files on error
     for (const tmpFile of tmpFiles) {
       await fs.unlink(tmpFile).catch(() => {});
     }
@@ -194,7 +119,6 @@ export default async function handler(req: any, res: any) {
       ok: false,
       error: String(err?.message || err),
       timestamp: new Date().toISOString(),
-      duration: Date.now() - startTime
     });
   }
 }
