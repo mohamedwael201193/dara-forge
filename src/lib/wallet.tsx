@@ -6,60 +6,10 @@ import { Chain } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
-// 1. Get projectId from https://cloud.reown.com
-const projectId = import.meta.env.VITE_WC_PROJECT_ID || 'your-project-id';
-
-// 2. Create a metadata object - optional
-const metadata = {
-  name: 'DARA Forge',
-  description: 'Decentralized AI Research Assistant',
-  url: 'https://dara-forge.vercel.app', // origin must match your domain & subdomain
-  icons: ['https://avatars.githubusercontent.com/u/179229932']
-};
-
-// 3. Set the networks - create mutable array from readonly networks
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum, zeroGGalileoTestnet];
-
-// 4. Create Wagmi Adapter
-const wagmiAdapter = new WagmiAdapter({
-  networks,
-  projectId,
-  ssr: false // Set to true if used in server-side rendering context
-});
-
-// 5. Create modal
-const modal = createAppKit({
-  adapters: [wagmiAdapter],
-  networks,
-  projectId,
-  metadata,
-  features: {
-    analytics: true, // Optional - defaults to your Cloud configuration
-  }
-});
-
-// 6. Create query client
-const queryClient = new QueryClient();
-
-export function WalletProviders({ children }: { children: React.ReactNode }) {
-  return (
-    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        {children}
-      </QueryClientProvider>
-    </WagmiProvider>
-  );
-}
-
-export const wagmiConfig = wagmiAdapter.wagmiConfig;
-export { modal };
-
-
-
 const zeroGGalileoTestnet: Chain = {
   id: 16601,
   name: '0G-Galileo-Testnet',
-  network: '0g-galileo-testnet',
+  network: '0g-galileo-testnet', // Re-added network property
   nativeCurrency: {
     decimals: 18,
     name: '0G',
@@ -82,3 +32,51 @@ const zeroGGalileoTestnet: Chain = {
   testnet: true,
 };
 
+// 1. Get projectId from https://cloud.reown.com
+const projectId = import.meta.env.VITE_WC_PROJECT_ID || 'your-project-id';
+
+// 2. Create a metadata object - optional
+const metadata = {
+  name: 'DARA Forge',
+  description: 'Decentralized AI Research Assistant',
+  url: 'https://dara-forge.vercel.app', // origin must match your domain & subdomain
+  icons: ['https://avatars.githubusercontent.com/u/179229932']
+};
+
+// 3. Set the networks - create mutable array from readonly networks
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [zeroGGalileoTestnet, mainnet, arbitrum];
+
+// 4. Create Wagmi Adapter
+const wagmiAdapter = new WagmiAdapter({
+  networks,
+  projectId,
+  ssr: false // Set to true if used in server-side rendering context
+});
+
+// 5. Create modal
+const modal = createAppKit({
+  adapters: [wagmiAdapter],
+  networks,
+  projectId,
+  metadata,
+  defaultChain: zeroGGalileoTestnet, // Set 0G-Galileo-Testnet as default
+  features: {
+    analytics: true, // Optional - defaults to your Cloud configuration
+  }
+});
+
+// 6. Create query client
+const queryClient = new QueryClient();
+
+export function WalletProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <WagmiProvider config={wagmiAdapter.wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+}
+
+export const wagmiConfig = wagmiAdapter.wagmiConfig;
+export { modal };
