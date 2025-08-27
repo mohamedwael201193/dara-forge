@@ -232,26 +232,23 @@ export const Wave2DemoSection = () => {
       const accounts = await provider.send("eth_requestAccounts", []);
       const uploader = accounts[0];
 
-      const enhancedManifest: DaraManifest = buildManifest(
-        ds.rootHash,
-        datasetMetadata.title,
+      const enhancedManifest: DaraManifest = buildManifest({
+        rootHash: ds.rootHash,
+        title: datasetMetadata.title,
         uploader,
-        {
-          app: "DARA",
-          version: "2.0",
-          description: datasetMetadata.description,
-          tags: datasetMetadata.tags.split(',').map(tag => tag.trim()),
-          datasetVersion: datasetMetadata.version,
-          license: datasetMetadata.license,
-          isPublic: datasetMetadata.isPublic,
-          fileSize: selectedFile.size,
-          fileName: selectedFile.name,
-          mimeType: selectedFile.type,
-          uploadTime: new Date().toISOString(),
-          network: "0G Galileo Testnet",
-          wave: "Wave 2 Enhanced"
-        }
-      );
+        app: "DARA",
+        version: "2.0",
+        description: datasetMetadata.description,
+        tags: datasetMetadata.tags.split(',').map(tag => tag.trim()),
+        datasetVersion: datasetMetadata.version,
+        license: datasetMetadata.license,
+        isPublic: datasetMetadata.isPublic,
+        fileSize: selectedFile.size,
+        fileName: selectedFile.name,
+        mimeType: selectedFile.type,
+        uploadTime: new Date().toISOString(),
+        sourceUrl: datasetMetadata.sourceUrl || ""
+      });
 
       const mBlob = new Blob([JSON.stringify(enhancedManifest, null, 2)], { 
         type: "application/json"

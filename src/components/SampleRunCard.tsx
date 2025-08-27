@@ -36,9 +36,12 @@ export default function SampleRunCard() {
       const provider = getBrowserProvider();
       const accounts: string[] = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
       const uploader = accounts[0];
-      const manifest: DaraManifest = buildManifest(ds.rootHash, "Wave‑1 sample dataset import", uploader, {
+      const manifest: DaraManifest = buildManifest({
+        rootHash: ds.rootHash,
+        title: "Wave‑1 sample dataset import",
+        uploader,
         app: "DARA",
-        version: "0.1",
+        version: "0.1"
       });
       const mHash = manifestHashHex(manifest);
       setManifestHash(mHash);

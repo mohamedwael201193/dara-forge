@@ -99,12 +99,13 @@ export const DemoSection = () => {
       const accounts = await provider.send("eth_requestAccounts", []);
       const uploader = accounts[0];
 
-      const manifest: DaraManifest = buildManifest(
-        ds.rootHash,
-        "Wave‑1 sample dataset import",
+      const manifest: DaraManifest = buildManifest({
+        rootHash: ds.rootHash,
+        title: "Wave‑1 sample dataset import",
         uploader,
-        { app: "DARA", version: "0.1" }
-      );
+        app: "DARA",
+        version: "0.1"
+      });
       const mHash = manifestHashHex(manifest);
       setManifestHash(mHash);
 
@@ -349,12 +350,13 @@ export const DemoSection = () => {
                         <div className="text-sm font-medium mb-2">Manifest Content (Preview)</div>
                         <pre className="text-xs overflow-auto max-h-32 bg-black/20 p-2 rounded">
                           {JSON.stringify(
-                            buildManifest(
-                              datasetRoot, 
-                              "Wave‑1 sample dataset import", 
-                              "your-address", 
-                              { app: "DARA", version: "0.1" }
-                            ), 
+                            buildManifest({
+                              rootHash: datasetRoot, 
+                              title: "Wave‑1 sample dataset import", 
+                              uploader: "your-address", 
+                              app: "DARA", 
+                              version: "0.1"
+                            }), 
                             null, 
                             2
                           )}

@@ -38,7 +38,13 @@ export default function DarkOgUploader() {
 
       // 2) Build manifest and upload it
       const uploader = await ensureWallet();
-      const manifest: DaraManifest = buildManifest(rootHash, "Wave‑1 sample dataset import", uploader, { app: "DARA", version: "0.1" });
+      const manifest: DaraManifest = buildManifest({ 
+        rootHash, 
+        title: "Wave‑1 sample dataset import", 
+        uploader, 
+        app: "DARA", 
+        version: "0.1" 
+      });
       const mHash = manifestHashHex(manifest);
       setManifestHash(mHash);
 
