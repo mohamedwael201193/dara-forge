@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,10 +11,12 @@ import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2
 import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
 import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
+import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
 
 export const UploadDataset: React.FC<UploadDatasetProps> = () => {
+  const { address, isConnected } = useAppKitAccount()
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])
@@ -22,28 +25,6 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState("")
   const [error, setError] = useState("")
-
-  const checkWalletConnection = () => {
-    if (typeof window !== 'undefined' && (window as any).ethereum) {
-      return (window as any).ethereum.selectedAddress;
-    }
-    return null;
-  };
-
-  const connectWallet = async () => {
-    try {
-      if (typeof window !== 'undefined' && (window as any).ethereum) {
-        await (window as any).ethereum.request({ 
-          method: 'eth_requestAccounts' 
-        });
-        window.location.reload();
-      } else {
-        setError('Please install MetaMask or another Web3 wallet');
-      }
-    } catch (error) {
-      setError('Failed to connect wallet. Please try again.');
-    }
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files)
@@ -70,8 +51,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       return
     }
 
-    const connectedAddress = checkWalletConnection();
-    if (!connectedAddress) {
+    if (!isConnected || !address) {
       setError("Please connect your wallet first")
       return
     }
@@ -108,7 +88,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       const manifest: DaraManifest = buildManifest({
         rootHash: uploadResults[0].rootHash,
         title: datasetTitle,
-        uploader: connectedAddress,
+        uploader: address,
         app: "DARA",
         version: "1.0",
         description: datasetDescription,
@@ -158,21 +138,42 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     }
   }
 
-  const connectedAddress = checkWalletConnection();
-
   return (
     <div className="space-y-6">
       {/* Connection Status */}
-      {!connectedAddress && (
+      {!isConnected && (
         <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
           <CardContent className="p-6 text-center space-y-4">
             <AlertCircle className="w-12 h-12 mx-auto text-yellow-400" />
             <div>
               <h3 className="text-lg font-semibold text-white mb-2">Wallet Connection Required</h3>
               <p className="text-slate-300 mb-4">Connect your wallet to upload datasets to 0G Storage</p>
-              <Button onClick={connectWallet} className="bg-blue-600 hover:bg-blue-700">
-                Connect Wallet
-              </Button>
+              <ConnectWalletButton />
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* User Info */}
+      {isConnected && address && (
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500/20 rounded-full flex items-center justify-center border border-blue-500/30">
+                  <span className="text-blue-400 font-semibold text-sm">
+                    {address.slice(2, 4).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-white font-medium">Connected Wallet</p>
+                  <p className="text-slate-400 text-sm">{address}</p>
+                </div>
+              </div>
+              <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                Authenticated
+              </Badge>
             </div>
           </CardContent>
         </Card>
@@ -264,7 +265,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
           <Button
             onClick={handleUpload}
-            disabled={uploading || !connectedAddress || !files || files.length === 0}
+            disabled={uploading || !isConnected || !files || files.length === 0}
             className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           >
             {uploading ? (
