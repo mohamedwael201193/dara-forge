@@ -1,19 +1,18 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-
-  Brain, 
-  Users, 
-  Coins, 
-  Shield, 
-  Zap, 
-  Globe, 
+import {
+  Brain,
+  Users,
+  Coins,
+  Shield,
+  Zap,
+  Globe,
   Lock,
   ChevronRight,
   Folder,
-  Database 
-} from "lucide-react";
+  Database
+} from '@/lib/icons';
 
 export const FeaturesSection = () => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);

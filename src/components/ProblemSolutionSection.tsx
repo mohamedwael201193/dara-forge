@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Shield, Users, Zap, ChevronRight } from "lucide-react";
+import { AlertTriangle, Shield, Users, Zap, ChevronRight } from "@/lib/icons";
 
 export const ProblemSolutionSection = () => {
   const [activeTab, setActiveTab] = useState<'problems' | 'solutions'>('problems');

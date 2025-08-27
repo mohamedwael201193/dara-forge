@@ -11,8 +11,11 @@ import { Upload,
   Link,
   MessageSquareText,
   Folder,
-  Network
-} from 'lucide-react'
+  Network,
+  Shield,
+  Send,
+  CheckCircle
+} from '@/lib/icons'
 import { SummarizeDataset } from './SummarizeDataset'
 
 export const DemoApp: React.FC = () => {

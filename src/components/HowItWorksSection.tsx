@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Brain, Share, Cpu, Shield, Globe, Folder } from "lucide-react";
+import { Upload, Brain, Share, Cpu, Shield, Globe, Folder } from "@/lib/icons";
 
 export const HowItWorksSection = () => {
   const [activeStep, setActiveStep] = useState(0);

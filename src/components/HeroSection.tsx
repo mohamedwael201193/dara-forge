@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Brain, Network, Folder } from "lucide-react";
+import { ArrowRight, Brain, Network, Folder } from "@/lib/icons";
 import heroImage from "@/assets/hero-neural-network.jpg";
 
 export const HeroSection = () => {

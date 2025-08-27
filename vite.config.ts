@@ -30,6 +30,7 @@ export default defineConfig({
     exclude: ["@0glabs/0g-ts-sdk"],
   },
   build: {
+    sourcemap: true, // temporary while polishing
     rollupOptions: {
       external: ['@0glabs/0g-ts-sdk'],
     }

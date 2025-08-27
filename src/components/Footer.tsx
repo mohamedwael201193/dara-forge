@@ -1,5 +1,5 @@
 import React from 'react';
-import { type LucideIcon, Shield, Zap, Folder, Users } from 'lucide-react';
+import { type LucideIcon, Shield, Zap, Folder, Users } from '@/lib/icons';
 
 type Feature = {
   name: string;
