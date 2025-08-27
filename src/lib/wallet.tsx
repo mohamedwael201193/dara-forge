@@ -16,8 +16,8 @@ const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 };
 
-// 3. Set the networks - explicitly type as AppKitNetwork array
-const networks: AppKitNetwork[] = [mainnet, arbitrum];
+// 3. Set the networks - use tuple type to match required format
+const networks = [mainnet, arbitrum] as const;
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
