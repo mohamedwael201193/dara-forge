@@ -87,7 +87,7 @@ export const DemoSection = () => {
 
     try {
       // 1) Dataset upload with real progress → map to 0–70%
-      const ds = await uploadBlobTo0GStorage(file, file.name, (p) =>
+      const ds = await uploadBlobTo0GStorage(file, file.name, (p: any) =>
         setUploadProgress(Math.min(70, Math.round(p * 0.7)))
       );
       setDatasetRoot(ds.rootHash);
@@ -112,7 +112,7 @@ export const DemoSection = () => {
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { 
         type: "application/json"  // Explicit content type
       });
-      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json", (p) =>
+      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json", (p: any) =>
         setUploadProgress(70 + Math.round(p * 0.30))
       );
       setManifestRoot(mu.rootHash);
@@ -154,7 +154,7 @@ export const DemoSection = () => {
       // Parse LogCreated event
       const iface = new ethers.Interface(DARA_ABI as any);
       for (const log of receipt.logs) {
-        if (log.address.toLowerCase() === contract.target.toLowerCase()) {
+        if (String(log.address).toLowerCase() === String(contract.target).toLowerCase()) {
           try {
             const parsed = iface.parseLog(log);
             if (parsed?.name === "LogCreated") {

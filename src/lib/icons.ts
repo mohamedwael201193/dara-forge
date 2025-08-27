@@ -1,3 +1,4 @@
+// src/lib/icons.ts
 export type { LucideIcon } from 'lucide-react';
 export {
   Shield,
@@ -21,6 +22,13 @@ export {
   ArrowRight,
   Share,
   Cpu,
-  AlertTriangle
+  AlertTriangle,
+  // New ones required by the current build:
+  Loader2,
+  AlertCircle,
+  ExternalLink,
+  Wallet,
+  Copy
 } from 'lucide-react';
+
 

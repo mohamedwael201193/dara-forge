@@ -71,7 +71,7 @@ export default function SampleRunCard() {
       const iface = new ethers.Interface(DARA_ABI as any);
       let id = "";
       for (const log of receipt.logs) {
-        if (log.address.toLowerCase() === contract.target.toLowerCase()) {
+        if (String(log.address).toLowerCase() === String(contract.target).toLowerCase()) {
           try {
             const parsed = iface.parseLog(log);
             if (parsed?.name === "LogCreated") {

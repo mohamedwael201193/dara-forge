@@ -1,4 +1,5 @@
 type Hex = `0x${string}`;
+
 type PublishResult = {
   rootHash: Hex;
   txHash: Hex;
@@ -12,46 +13,25 @@ function randomHex(bytes = 32): Hex {
   ) as Hex;
 }
 
-export function gatewayUrlForRoot(root: string) {
+export function gatewayUrlForRoot(root: string, ..._rest: any[]) {
   return `https://gateway.0g.example/${root}`;
 }
 
-export function downloadWithProofUrl(root: string) {
+export function downloadWithProofUrl(root: string, ..._rest: any[]) {
   return `https://gateway.0g.example/${root}?withProof=1`;
 }
 
-// Accept extra args to satisfy calls like (file, onProgress, onDone)
-export async function uploadBlobTo0GStorageViaBrowser(
-  _blob: Blob,
-  ..._rest: any[]
-): Promise<PublishResult> {
-  return {
-    rootHash: randomHex(),
-    txHash: randomHex(),
-    chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32)
-  };
+// Accept extra callback/progress args so all current call sites type-check
+export async function uploadBlobTo0GStorageViaBrowser(_blob: Blob, ..._rest: any[]): Promise<PublishResult> {
+  return { rootHash: randomHex(), txHash: randomHex(), chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32) };
 }
 
-export async function uploadFileTo0GStorageViaBrowser(
-  _file: File,
-  ..._rest: any[]
-): Promise<PublishResult> {
-  return {
-    rootHash: randomHex(),
-    txHash: randomHex(),
-    chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32)
-  };
+export async function uploadFileTo0GStorageViaBrowser(_file: File, ..._rest: any[]): Promise<PublishResult> {
+  return { rootHash: randomHex(), txHash: randomHex(), chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32) };
 }
 
-export async function uploadBlobTo0GStorage(
-  _blob: Blob,
-  ..._rest: any[]
-): Promise<PublishResult> {
-  return {
-    rootHash: randomHex(),
-    txHash: randomHex(),
-    chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32)
-  };
+export async function uploadBlobTo0GStorage(_blob: Blob, ..._rest: any[]): Promise<PublishResult> {
+  return { rootHash: randomHex(), txHash: randomHex(), chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32) };
 }
 
 

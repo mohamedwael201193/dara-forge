@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { uploadViaApi } from "@/lib/upload-api"
+
 import {
   Card,
   CardHeader,
@@ -17,6 +17,7 @@ import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 interface UploadDatasetProps {}
 
 export const UploadDataset: React.FC<UploadDatasetProps> = () => {
+  const { open } = useAppKit();
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])
@@ -101,8 +102,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     return `https://chainscan-galileo.0g.ai/tx/${txHash}`
   }
 
-  const connection = walletAuth.getConnection()
-  const isConnected = connection?.isConnected || false
+  const { isConnected, address } = useAppKitAccount();
   const isOnOGNetwork = walletAuth.isOnOGNetwork()
 
   return (
@@ -128,7 +128,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
               ) : (
                 <AlertCircle className="w-4 h-4 text-red-500" />
               )}
-              <span>Wallet: {isConnected ? `Connected (${connection?.address.slice(0, 6)}...${connection?.address.slice(-4)})` : "Not connected"}</span>
+              <span>Wallet: {isConnected ? `Connected (${address?.slice(0, 6)}...${address?.slice(-4)})` : "Not connected"}</span>
             </div>
             <div className="flex items-center gap-2">
               {isOnOGNetwork ? (
@@ -139,12 +139,12 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
               <span>Network: {isOnOGNetwork ? "0G Galileo Testnet" : "Wrong network"}</span>
             </div>
             <div className="flex items-center gap-2">
-              {walletAuth.areServicesReady() ? (
+              {isConnected ? (
                 <CheckCircle className="w-4 h-4 text-green-500" />
               ) : (
                 <AlertCircle className="w-4 h-4 text-red-500" />
               )}
-              <span>0G Services: {walletAuth.areServicesReady() ? "Ready" : "Not initialized"}</span>
+              <span>0G Services: {isConnected ? "Ready" : "Not initialized"}</span>
             </div>
           </div>
         </div>

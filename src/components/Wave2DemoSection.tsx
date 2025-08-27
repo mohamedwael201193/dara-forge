@@ -219,7 +219,7 @@ export const Wave2DemoSection = () => {
     try {
       // 1) Upload dataset to 0G Storage
       setSuccess("🚀 Uploading to 0G Storage Network...");
-      const ds = await uploadBlobTo0GStorage(selectedFile, selectedFile.name, (p) =>
+      const ds = await uploadBlobTo0GStorage(selectedFile, selectedFile.name, (p: any) =>
         setUploadProgress(Math.min(60, Math.round(p * 0.6)))
       );
       setDatasetRoot(ds.rootHash);
@@ -256,7 +256,7 @@ export const Wave2DemoSection = () => {
       const mBlob = new Blob([JSON.stringify(enhancedManifest, null, 2)], { 
         type: "application/json"
       });
-      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json", (p) =>
+      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json", (p: any) =>
         setUploadProgress(60 + Math.round(p * 0.30))
       );
       setManifestRoot(mu.rootHash);
@@ -355,9 +355,9 @@ export const Wave2DemoSection = () => {
   };
 
   const filteredDatasets = datasets.filter(dataset =>
-    dataset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dataset.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    dataset.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    String(dataset.name).toLowerCase().includes(String(searchQuery).toLowerCase()) ||
+    String(dataset.description).toLowerCase().includes(String(searchQuery).toLowerCase()) ||
+    dataset.tags.some(tag => String(tag).toLowerCase().includes(String(searchQuery).toLowerCase()))
   );
 
   return (
