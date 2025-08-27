@@ -24,7 +24,7 @@ export default function DarkOgUploader() {
     const provider = new ethers.BrowserProvider((window as any).ethereum);
     const accounts = await provider.send("eth_requestAccounts", []);
     const addr = ethers.getAddress(accounts[0]);
-    setWallet(addr);
+    setWallet(addr ?? '');
     return addr;
   }
 
@@ -67,7 +67,7 @@ export default function DarkOgUploader() {
       // parse event
       const iface = new ethers.Interface(DARA_ABI as any);
       for (const log of receipt.logs) {
-        if (log.address.toLowerCase() === contract.target.toLowerCase()) {
+        if (String(log.address).toLowerCase() === String(contract.target).toLowerCase()) {
           try {
             const parsed = iface.parseLog(log);
             if (parsed?.name === "LogCreated") {

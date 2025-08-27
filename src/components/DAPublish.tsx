@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Loader2, Send } from 'lucide-react'
 
 interface DAPublishProps {
@@ -72,7 +73,7 @@ export const DAPublish: React.FC<DAPublishProps> = () => {
           <Input
             id="rootHash"
             value={rootHash}
-            onChange={(e) => setRootHash(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRootHash(e.target.value)}
             placeholder="Enter root hash (e.g., 0x123...)"
             disabled={loading}
           />
@@ -82,7 +83,7 @@ export const DAPublish: React.FC<DAPublishProps> = () => {
           <Textarea
             id="metadata"
             value={metadata}
-            onChange={(e) => setMetadata(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setMetadata(e.target.value)}
             placeholder="Enter metadata as JSON (optional)"
             rows={5}
             disabled={loading}
@@ -115,4 +116,5 @@ export const DAPublish: React.FC<DAPublishProps> = () => {
     </Card>
   )
 }
+
 

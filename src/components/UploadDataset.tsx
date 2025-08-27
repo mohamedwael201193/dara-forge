@@ -13,11 +13,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Upload, CheckCircle, AlertCircle, ExternalLink } from "lucide-react"
 
-interface UploadDatasetProps {
-  walletAuth: WalletAuth
-}
+interface UploadDatasetProps {}
 
-export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
+export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])

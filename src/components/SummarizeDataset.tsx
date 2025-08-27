@@ -72,7 +72,7 @@ export const SummarizeDataset: React.FC<SummarizeDatasetProps> = () => {
           <Textarea
             id="inputText"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInputText(e.target.value)}
             placeholder="Paste your dataset description or any text here..."
             rows={8}
             disabled={loading}

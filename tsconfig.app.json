@@ -8,6 +8,7 @@
     "paths": {
       "@/*": ["src/*"]
     },
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "strict": true,
     "isolatedModules": true,
@@ -20,4 +21,3 @@
   },
   "include": ["src", "api"]
 }
-

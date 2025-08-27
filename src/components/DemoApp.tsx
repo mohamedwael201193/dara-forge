@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { WalletAuth } from '@/lib/auth/wallet'
-import { WalletConnector } from './WalletConnector'
+import ConnectWalletButton from '@/components/ConnectWalletButton';
+
 import { UploadDataset } from './UploadDataset'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -17,22 +17,10 @@ import { Upload,
   CheckCircle
 } from '@/lib/icons'
 import { SummarizeDataset } from './SummarizeDataset'
+import DAPublish from '@/components/DAPublish';
 
 export const DemoApp: React.FC = () => {
-  const [walletAuth] = useState(() => new WalletAuth())
-  const [isConnected, setIsConnected] = useState(false)
 
-  useEffect(() => {
-    // Check for existing connection on mount
-    const connection = walletAuth.getConnection()
-    if (connection?.isConnected) {
-      setIsConnected(true)
-    }
-  }, [])
-
-  const handleConnectionChange = (connected: boolean) => {
-    setIsConnected(connected)
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -127,7 +115,7 @@ export const DemoApp: React.FC = () => {
               <Shield className="w-4 h-4" />
               Connect Wallet
             </TabsTrigger>
-            <TabsTrigger value="upload" disabled={!isConnected} className="flex items-center gap-2">
+            <TabsTrigger value="upload" className="flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Upload Dataset
             </TabsTrigger>
@@ -142,26 +130,11 @@ export const DemoApp: React.FC = () => {
           </TabsList>
           
           <TabsContent value="connect" className="mt-6">
-            <WalletConnector 
-              walletAuth={walletAuth} 
-              onConnectionChange={handleConnectionChange}
-            />
+            <ConnectWalletButton />
           </TabsContent>
           
           <TabsContent value="upload" className="mt-6">
-            {isConnected ? (
-              <UploadDataset walletAuth={walletAuth} />
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Shield className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Wallet Connection Required</h3>
-                  <p className="text-gray-600">
-                    Please connect your wallet first to upload datasets to 0G Network
-                  </p>
-                </CardContent>
-              </Card>
-            )}
+            <UploadDataset />
           </TabsContent>
 
           <TabsContent value="summarize" className="mt-6">

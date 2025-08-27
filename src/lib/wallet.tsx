@@ -1,19 +1,27 @@
+// src/lib/wallet.tsx
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider, type Config } from 'wagmi';
-import { http, defineChain } from 'viem';
 import { createAppKit } from '@reown/appkit';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
+import { defineChain } from '@reown/appkit/networks';
+import type { AppKitNetwork } from '@reown/appkit';
+import { WagmiProvider, type Config } from 'wagmi';
 
-const projectId = import.meta.env.VITE_WC_PROJECT_ID as string;
+const projectId = import.meta.env.VITE_WC_PROJECT_ID;
+if (!projectId) {
+  // For local dev clarity; in prod, this simply leaves the modal non-functional
+  // but we don't want to crash runtime
+  console.warn('Missing VITE_WC_PROJECT_ID env var');
+}
 
-const ogGalileo = defineChain({
+const ogGalileo: AppKitNetwork = defineChain({
   id: 16601,
+  caipNetworkId: 'eip155:16601',
+  chainNamespace: 'eip155',
   name: '0G-Galileo-Testnet',
   nativeCurrency: { name: 'OG', symbol: 'OG', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://16601.rpc.thirdweb.com/'] },
-    public:  { http: ['https://16601.rpc.thirdweb.com/'] }
+    default: { http: ['https://16601.rpc.thirdweb.com/'] }
   },
   blockExplorers: {
     default: { name: 'ChainScan', url: 'https://chainscan-galileo.0g.ai' }
@@ -21,15 +29,13 @@ const ogGalileo = defineChain({
   testnet: true
 });
 
-const networks = [ogGalileo] as const;
+const networks: AppKitNetwork[] = [ogGalileo];
 
 const wagmiAdapter = new WagmiAdapter({
-  projectId,
-  networks,
-  transports: { [ogGalileo.id]: http('https://16601.rpc.thirdweb.com/') }
+  projectId: projectId || 'missing',
+  networks
 });
 
-// Exported Wagmi config if you need wagmi actions elsewhere
 export const wagmiConfig = wagmiAdapter.wagmiConfig as Config;
 
 const metadata = {
@@ -41,9 +47,9 @@ const metadata = {
 
 createAppKit({
   adapters: [wagmiAdapter],
-  projectId,
+  projectId: projectId || 'missing',
   networks,
-  defaultNetwork: ogGalileo as any,
+  defaultNetwork: ogGalileo,
   metadata
 });
 
@@ -56,5 +62,4 @@ export function WalletProviders({ children }: { children: React.ReactNode }) {
     </WagmiProvider>
   );
 }
-
 
