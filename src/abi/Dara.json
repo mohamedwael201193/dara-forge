@@ -1,0 +1,10 @@
+[
+  {
+    "type": "function",
+    "name": "anchorData",
+    "stateMutability": "nonpayable",
+    "inputs": [{ "name": "root", "type": "bytes32" }],
+    "outputs": []
+  }
+]
+
