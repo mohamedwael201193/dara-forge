@@ -20,7 +20,6 @@ interface UploadDatasetProps {
 export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
-  const [anchoring, setAnchoring] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [datasetTitle, setDatasetTitle] = useState("")
   const [datasetDescription, setDatasetDescription] = useState("")
@@ -62,7 +61,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
       const results: Array<{ rootHash: string; txHash: string; filename: string; size: number }> = []
       for (const f of Array.from(files)) {
         const fd = new FormData()
-        fd.append("file", f, f.name) // Ensure key is 'file'
+        fd.append("file", f, f.name) // Ensure key is \'file\'
         fd.append("metadata", JSON.stringify({
           title: f.name,
           description: `Uploaded file: ${f.name}`,
@@ -99,45 +98,6 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
       setError(`Upload failed: ${err?.message ?? err}`);
     } finally {
       setUploading(false);
-    }
-  }
-
-  const handleAnchorToChain = async (rootHash: string, filename: string) => {
-    if (!walletAuth.getConnection()?.isConnected) {
-      setError("Wallet not connected for anchoring.")
-      return
-    }
-
-    setAnchoring(true)
-    setError("")
-
-    try {
-      console.log("Anchoring to 0G Chain...")
-      setSuccess("Anchoring dataset to 0G Chain...")
-
-      // Anchor to blockchain
-      const anchorResult = await walletAuth.anchorDataset(
-        datasetTitle.trim() || filename, // Use dataset title or filename as datasetId
-        rootHash,
-        { description: datasetDescription }
-      )
-      
-      console.log("Anchor result:", anchorResult)
-      
-      // Update results with anchor info
-      setResults(prev => prev.map(result => 
-        result.rootHash === rootHash 
-          ? { ...result, anchored: true, txHash: anchorResult.txHash }
-          : result
-      ))
-
-      setSuccess(`Dataset "${filename}" successfully anchored to 0G Chain! Transaction: ${anchorResult.txHash.slice(0, 6)}...${anchorResult.txHash.slice(-4)}`)
-      
-    } catch (err: any) {
-      console.error("Anchoring failed:", err)
-      setError(`Anchoring failed: ${err.message}`)
-    } finally {
-      setAnchoring(false)
     }
   }
 
@@ -302,18 +262,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
                       </div>
                     )}
 
-                    {!result.anchored && (
-                      <Button
-                        onClick={() => handleAnchorToChain(result.rootHash, result.filename)}
-                        disabled={anchoring}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {anchoring ? "Anchoring..." : "Anchor to 0G Chain"}
-                      </Button>
-                    )}
-
-                    {result.anchored && result.txHash && (
+                    {result.txHash && (
                       <div className="flex items-center gap-2">
                         <CheckCircle className="w-4 h-4 text-green-500" />
                         <span className="text-sm text-green-600">Anchored to 0G Chain</span>
