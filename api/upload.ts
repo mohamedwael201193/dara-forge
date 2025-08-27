@@ -21,6 +21,17 @@ function parseForm(req: VercelRequest): Promise<{ fields: formidable.Fields; fil
   });
 }
 
+// Normalize across 'file', 'files', 'file[]', etc.
+function pickFirstFile(fsObj: formidable.Files): FormidableFile | null {
+  for (const v of Object.values(fsObj)) {
+    const arr = Array.isArray(v) ? v : [v];
+    for (const f of arr) {
+      if (f && (f as any).filepath) return f as any;
+    }
+  }
+  return null;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     res.status(405).json({ success: false, message: 'Method not allowed' });
@@ -39,10 +50,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Parse multipart with Formidable (waits until file fully written)
     const { fields, files } = await parseForm(req);
-    const fileField = (files.file as FormidableFile) || (Array.isArray(files.file) && (files.file as FormidableFile[])[0]);
+    const fileKeys = Object.keys(files || {});
+    console.log('[upload] files keys:', fileKeys);
 
-    if (!fileField || !('filepath' in fileField) || !fileField.filepath) {
-      return res.status(400).json({ success: false, message: 'No file provided' });
+    const fileField = pickFirstFile(files);
+
+    if (!fileField) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file provided',
+        receivedKeys: fileKeys,
+      });
     }
 
     const filepath = fileField.filepath;

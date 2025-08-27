@@ -62,13 +62,19 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
       const results: Array<{ rootHash: string; txHash: string; filename: string; size: number }> = []
       for (const f of Array.from(files)) {
         const fd = new FormData()
-        fd.append("file", f, f.name)
+        fd.append("file", f, f.name) // Ensure key is 'file'
         fd.append("metadata", JSON.stringify({
           title: f.name,
           description: `Uploaded file: ${f.name}`,
           contributors: [walletAuth.getConnection()!.address],
           isPublic: true,
         }))
+
+        // Debug: see exactly what you’re sending
+        for (const [k, v] of fd.entries()) {
+          console.log("FormData entry:", k, v instanceof File ? v.name : String(v));
+        }
+
         const r = await fetch("/api/upload", {
           method: "POST",
           body: fd,
@@ -339,4 +345,5 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
     </Card>
   )
 }
+
 
