@@ -164,12 +164,12 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     <div className="space-y-6">
       {/* Connection Status */}
       {!connectedAddress && (
-        <Card className="bg-white border-slate-200 shadow-sm">
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
           <CardContent className="p-6 text-center space-y-4">
-            <AlertCircle className="w-12 h-12 mx-auto text-yellow-500" />
+            <AlertCircle className="w-12 h-12 mx-auto text-yellow-400" />
             <div>
-              <h3 className="text-lg font-semibold text-slate-900 mb-2">Wallet Connection Required</h3>
-              <p className="text-slate-600 mb-4">Connect your wallet to upload datasets to 0G Storage</p>
+              <h3 className="text-lg font-semibold text-white mb-2">Wallet Connection Required</h3>
+              <p className="text-slate-300 mb-4">Connect your wallet to upload datasets to 0G Storage</p>
               <Button onClick={connectWallet} className="bg-blue-600 hover:bg-blue-700">
                 Connect Wallet
               </Button>
@@ -179,13 +179,13 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       )}
 
       {/* Upload Form */}
-      <Card className="bg-white border-slate-200 shadow-sm">
+      <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-slate-900">
-            <Upload className="w-5 h-5 text-blue-500" />
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Upload className="w-5 h-5 text-blue-400" />
             Upload Dataset to 0G Storage
           </CardTitle>
-          <CardDescription className="text-slate-600">
+          <CardDescription className="text-slate-300">
             Upload your research datasets with cryptographic proofs and blockchain anchoring
           </CardDescription>
         </CardHeader>
@@ -193,46 +193,46 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="title" className="text-slate-900">Dataset Title *</Label>
+                <Label htmlFor="title" className="text-white">Dataset Title *</Label>
                 <Input
                   id="title"
                   value={datasetTitle}
                   onChange={(e) => setDatasetTitle(e.target.value)}
                   placeholder="Enter dataset title"
-                  className="border-slate-300"
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
                 />
               </div>
               <div>
-                <Label htmlFor="description" className="text-slate-900">Description</Label>
+                <Label htmlFor="description" className="text-white">Description</Label>
                 <Textarea
                   id="description"
                   value={datasetDescription}
                   onChange={(e) => setDatasetDescription(e.target.value)}
                   placeholder="Describe your dataset"
-                  className="border-slate-300 h-24"
+                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 h-24"
                 />
               </div>
             </div>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="files" className="text-slate-900">Select Files *</Label>
+                <Label htmlFor="files" className="text-white">Select Files *</Label>
                 <Input
                   id="files"
                   type="file"
                   multiple
                   onChange={handleFileChange}
-                  className="border-slate-300"
+                  className="bg-slate-700 border-slate-600 text-white file:bg-slate-600 file:text-white file:border-0 file:rounded-md file:px-3 file:py-1"
                 />
               </div>
               {files && files.length > 0 && (
                 <div className="space-y-2">
-                  <Label className="text-slate-900">Selected Files:</Label>
+                  <Label className="text-white">Selected Files:</Label>
                   <div className="space-y-1">
                     {Array.from(files).map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm text-slate-600">
-                        <FileText className="w-4 h-4" />
+                      <div key={index} className="flex items-center gap-2 text-sm text-slate-300">
+                        <FileText className="w-4 h-4 text-blue-400" />
                         <span>{file.name}</span>
-                        <span className="text-slate-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                        <span className="text-slate-400">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
                       </div>
                     ))}
                   </div>
@@ -242,10 +242,10 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           </div>
 
           {error && (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-4 bg-red-900/50 border border-red-700 rounded-lg backdrop-blur-sm">
               <div className="flex items-center gap-2">
-                <AlertCircle className="w-5 h-5 text-red-500" />
-                <span className="text-red-700">{error}</span>
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <span className="text-red-300">{error}</span>
               </div>
             </div>
           )}
@@ -254,10 +254,10 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600">{currentStep}</span>
-                  <span className="text-slate-600">{uploadProgress.toFixed(0)}%</span>
+                  <span className="text-slate-300">{currentStep}</span>
+                  <span className="text-slate-300">{uploadProgress.toFixed(0)}%</span>
                 </div>
-                <Progress value={uploadProgress} className="h-2" />
+                <Progress value={uploadProgress} className="h-2 bg-slate-700" />
               </div>
             </div>
           )}
@@ -284,63 +284,63 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
       {/* Results */}
       {results.length > 0 && (
-        <Card className="bg-white border-slate-200 shadow-sm">
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-slate-900">
-              <CheckCircle className="w-5 h-5 text-green-500" />
+            <CardTitle className="flex items-center gap-2 text-white">
+              <CheckCircle className="w-5 h-5 text-green-400" />
               Upload Results
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {results.map((result, index) => (
-                <div key={index} className="p-4 bg-slate-50 rounded-lg space-y-3">
+                <div key={index} className="p-4 bg-slate-700/50 rounded-lg space-y-3 backdrop-blur-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-blue-500" />
-                      <span className="font-medium text-slate-900">{result.file}</span>
+                      <FileText className="w-4 h-4 text-blue-400" />
+                      <span className="font-medium text-white">{result.file}</span>
                       {result.isManifest && (
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200">
+                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
                           Manifest
                         </Badge>
                       )}
                     </div>
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-slate-400">
                       {(result.size / 1024 / 1024).toFixed(2)} MB
                     </span>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <Label className="text-slate-600">Root Hash:</Label>
+                      <Label className="text-slate-400">Root Hash:</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <code className="text-green-600 bg-slate-100 px-2 py-1 rounded text-xs">
+                        <code className="text-green-400 bg-slate-900 px-2 py-1 rounded text-xs">
                           {result.rootHash.slice(0, 20)}...
                         </code>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => copyToClipboard(result.rootHash, 'Root hash')}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 hover:bg-slate-600"
                         >
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-slate-400" />
                         </Button>
                       </div>
                     </div>
                     
                     <div>
-                      <Label className="text-slate-600">Storage TX:</Label>
+                      <Label className="text-slate-400">Storage TX:</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <code className="text-blue-600 bg-slate-100 px-2 py-1 rounded text-xs">
+                        <code className="text-blue-400 bg-slate-900 px-2 py-1 rounded text-xs">
                           {result.txHash?.slice(0, 20)}...
                         </code>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => copyToClipboard(result.txHash, 'Transaction hash')}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 hover:bg-slate-600"
                         >
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-slate-400" />
                         </Button>
                       </div>
                     </div>
@@ -348,26 +348,26 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
                   {result.blockchainTx && (
                     <div>
-                      <Label className="text-slate-600">Blockchain TX:</Label>
+                      <Label className="text-slate-400">Blockchain TX:</Label>
                       <div className="flex items-center gap-2 mt-1">
-                        <code className="text-purple-600 bg-slate-100 px-2 py-1 rounded text-xs">
+                        <code className="text-purple-400 bg-slate-900 px-2 py-1 rounded text-xs">
                           {result.blockchainTx.slice(0, 20)}...
                         </code>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => copyToClipboard(result.blockchainTx, 'Blockchain transaction')}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 hover:bg-slate-600"
                         >
-                          <Copy className="w-3 h-3" />
+                          <Copy className="w-3 h-3 text-slate-400" />
                         </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => window.open(explorerTxUrl(result.blockchainTx), '_blank')}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 hover:bg-slate-600"
                         >
-                          <ExternalLink className="w-3 h-3" />
+                          <ExternalLink className="w-3 h-3 text-slate-400" />
                         </Button>
                       </div>
                     </div>
@@ -378,7 +378,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => window.open(result.gatewayUrl, '_blank')}
-                      className="border-slate-300 text-slate-600 hover:bg-slate-50"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
                       Gateway
@@ -387,7 +387,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                       size="sm"
                       variant="outline"
                       onClick={() => window.open(result.downloadUrl, '_blank')}
-                      className="border-slate-300 text-slate-600 hover:bg-slate-50"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
                       Download with Proof
