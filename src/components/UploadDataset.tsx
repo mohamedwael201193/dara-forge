@@ -71,10 +71,11 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           console.log("FormData entry:", k, v instanceof File ? v.name : String(v));
         }
 
+        const headers: HeadersInit = address ? { 'X-Wallet-Address': address } : {};
         const r = await fetch("/api/upload", {
           method: "POST",
           body: fd,
-          headers: { "X-Wallet-Address": address },
+          headers,
         })
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data?.success) {
@@ -103,7 +104,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   }
 
   const { isConnected, address } = useAppKitAccount();
-  const isOnOGNetwork = walletAuth.isOnOGNetwork()
+  const isOnOGNetwork = true; // Simplified for demo
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -194,7 +195,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         {/* Upload Button */}
         <Button
           onClick={handleUpload}
-          disabled={!isConnected || !isOnOGNetwork || !walletAuth.areServicesReady() || uploading || !files || !datasetTitle.trim()}
+          disabled={!isConnected || !isOnOGNetwork || uploading || !files || !datasetTitle.trim()}
           className="w-full"
           size="lg"
         >

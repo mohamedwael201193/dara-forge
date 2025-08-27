@@ -1,3 +1,4 @@
+// src/lib/ogStorage.ts
 type Hex = `0x${string}`;
 
 type PublishResult = {
@@ -8,9 +9,7 @@ type PublishResult = {
 
 function randomHex(bytes = 32): Hex {
   const arr = Array.from({ length: bytes }, () => Math.floor(Math.random() * 256));
-  return (
-    '0x' + arr.map(b => b.toString(16).padStart(2, '0')).join('')
-  ) as Hex;
+  return ('0x' + arr.map(b => b.toString(16).padStart(2, '0')).join('')) as Hex;
 }
 
 export function gatewayUrlForRoot(root: string, ..._rest: any[]) {
@@ -33,5 +32,4 @@ export async function uploadFileTo0GStorageViaBrowser(_file: File, ..._rest: any
 export async function uploadBlobTo0GStorage(_blob: Blob, ..._rest: any[]): Promise<PublishResult> {
   return { rootHash: randomHex(), txHash: randomHex(), chainTx: 'https://chainscan-galileo.0g.ai/tx/' + randomHex(32) };
 }
-
 
