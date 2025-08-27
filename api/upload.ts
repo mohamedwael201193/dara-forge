@@ -80,6 +80,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const provider = new ethers.JsonRpcProvider(OG_RPC);
     const signer = new ethers.Wallet(PRIV.startsWith('0x') ? PRIV : `0x${PRIV}`, provider);
 
+    // 1) Confirm chain
+    const net = await provider.getNetwork();
+    if (Number(net.chainId) !== 16601) {
+      console.error('[upload] Wrong chain:', net.chainId);
+      return res.status(400).json({
+        success: false,
+        message: `Wrong EVM RPC: expected 16601 (Galileo), got ${net.chainId}. Set OG_RPC to https://evmrpc-testnet.0g.ai or https://16601.rpc.thirdweb.com.`,
+      });
+    }
+
+    // 2) Log server wallet
+    console.log('[upload] server signer:', signer.address);
+
+    // 3) Show balance and soft-guard
+    const bal = await provider.getBalance(signer.address);
+    console.log('[upload] server balance (OG):', ethers.formatEther(bal));
+    if (bal < ethers.parseEther('0.005')) {
+      return res.status(402).json({
+        success: false,
+        message: `Server wallet (${signer.address}) has low OG balance (${ethers.formatEther(bal)}). Use the faucet, then retry.`,
+      });
+    }
+
     const indexer = new Indexer(INDEXER); // IMPORTANT: use Indexer instance, not "uploader"
     const zgFile = await ZgFile.fromFilePath(filepath);
 
