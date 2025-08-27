@@ -8,11 +8,15 @@ import './index.css';
 
 import { WalletProviders } from './lib/wallet'
 
+import ErrorBoundary from './components/ErrorBoundary';
+
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <WalletProviders>
-      <App />
-    </WalletProviders>
+    <ErrorBoundary>
+      <WalletProviders>
+        <App />
+      </WalletProviders>
+    </ErrorBoundary>
   </React.StrictMode>
 );
 

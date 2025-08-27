@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Brain, Share, Database, Cpu, Shield, Globe } from "lucide-react";
+import { Upload, Brain, Share, Cpu, Shield, Globe, Folder } from "lucide-react";
 
 export const HowItWorksSection = () => {
   const [activeStep, setActiveStep] = useState(0);
@@ -69,7 +69,7 @@ export const HowItWorksSection = () => {
     },
     {
       name: "0G Storage",
-      icon: Database,
+      icon: Folder,
       description: "Distributed data storage system",
       role: "Dataset storage, redundancy, encryption"
     },

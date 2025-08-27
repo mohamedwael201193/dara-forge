@@ -6,7 +6,7 @@ import {
   Twitter, 
   Mail, 
   ExternalLink,
-  Database,
+
   Shield,
   Users,
   Zap
@@ -29,7 +29,7 @@ export const Footer = () => {
   const ogComponents = [
     { name: "0G Chain", icon: Shield, desc: "EVM-compatible blockchain" },
     { name: "0G Compute", icon: Zap, desc: "Decentralized AI computation" },
-    { name: "0G Storage", icon: Database, desc: "Distributed data storage" },
+    { name: "0G Storage", icon  Folder, desc: "Distributed data storage" },
     { name: "0G DA", icon: Users, desc: "Data availability layer" }
   ];
 

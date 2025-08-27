@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Brain, Database, Network } from "lucide-react";
+import { ArrowRight, Brain, Network, Folder } from "lucide-react";
 import heroImage from "@/assets/hero-neural-network.jpg";
 
 export const HeroSection = () => {
@@ -57,7 +57,7 @@ export const HeroSection = () => {
         {/* Feature Pills */}
         <div className="flex flex-wrap justify-center gap-4 mb-10 animate-slide-up">
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/50 border border-border">
-            <Database className="w-4 h-4 text-accent" />
+            <Folder className="w-4 h-4 text-accent" />
             <span className="text-sm font-medium">Decentralized Storage</span>
           </div>
           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-card/50 border border-border">

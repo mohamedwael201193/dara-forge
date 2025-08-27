@@ -9,7 +9,9 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "isolatedModules": true,
+    "strict": true,
+    "types": ["vite/client", "node"]
   },
   "include": ["src", "api"]
 }
