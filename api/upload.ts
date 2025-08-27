@@ -3,6 +3,10 @@ import formidable from 'formidable';
 import fs from 'node:fs/promises';
 import { ethers } from 'ethers';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
+import zlib from 'node:zlib';
+import { promisify } from 'node:util';
+
+const gzip = promisify(zlib.gzip);
 
 export const config = { api: { bodyParser: false } };
 
@@ -67,9 +71,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const bal = await provider.getBalance(signer.address);
     console.info('[upload] server balance (OG):', ethers.formatEther(bal));
 
+    // Gzip compression logic
+    let pathForUpload = tmpPath;
+    let effectiveSize = stat.size;
+    const LEAF_BYTES = 256;
+    const hardLeafLimit = 64;
+
+    // Only gzip if we’d exceed 64 leaves on conservative math
+    if (Math.ceil(stat.size / LEAF_BYTES) > hardLeafLimit) {
+      const raw = await fs.readFile(tmpPath);
+      const gz = await gzip(raw, { level: zlib.constants.Z_BEST_COMPRESSION });
+      // If compression helps, use it; otherwise fall back to original
+      if (gz.length < stat.size && Math.ceil(gz.length / LEAF_BYTES) <= hardLeafLimit) {
+        const gzPath = `${tmpPath}.gz`;
+        await fs.writeFile(gzPath, gz);
+        pathForUpload = gzPath;
+        effectiveSize = gz.length;
+        console.info(`[upload] gzip applied: ${stat.size} -> ${effectiveSize} bytes`);
+      } else {
+        console.info(`[upload] gzip skipped (no benefit): would be ${gz.length} bytes`);
+      }
+    }
+
     // Use the documented pattern: 1-arg constructor + upload(file, rpc, signer)
     const indexer = new Indexer(INDEXER);
-    const zgFile = await ZgFile.fromFilePath(tmpPath);
+    const zgFile = await ZgFile.fromFilePath(pathForUpload);
 
     const [tree, tErr] = await zgFile.merkleTree();
     if (tErr) throw tErr;
@@ -90,10 +116,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({
       success: true,
       filename: file.originalFilename || 'file',
-      size: stat.size,
+      size: effectiveSize,
       rootHash,
       txHash,
       explorer: `https://chainscan-galileo.0g.ai/tx/${txHash}`,
+      contentEncoding: pathForUpload.endsWith('.gz') ? 'gzip' : 'identity',
     });
   } catch (err: any) {
     console.error('[upload] Fatal error:', err);
