@@ -9,7 +9,6 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 const zeroGGalileoTestnet: Chain = {
   id: 16601,
   name: '0G-Galileo-Testnet',
-  network: '0g-galileo-testnet', // Re-added network property
   nativeCurrency: {
     decimals: 18,
     name: '0G',
@@ -59,7 +58,6 @@ const modal = createAppKit({
   networks,
   projectId,
   metadata,
-  defaultChain: zeroGGalileoTestnet, // Set 0G-Galileo-Testnet as default
   features: {
     analytics: true, // Optional - defaults to your Cloud configuration
   }
