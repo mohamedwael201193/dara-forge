@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { uploadViaApi } from "@/lib/upload-api"
 
 interface UploadDatasetProps {
@@ -318,7 +319,8 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
                     <span className="text-sm">Upload failed</span>
                   </div>
                 )}
-              </div>            ))}
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
