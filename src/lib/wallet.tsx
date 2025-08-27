@@ -16,8 +16,8 @@ const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 };
 
-// 3. Set the networks - use tuple type to match required format
-const networks = [mainnet, arbitrum] as const;
+// 3. Set the networks - create mutable array from readonly networks
+const networks = [...[mainnet, arbitrum]];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
