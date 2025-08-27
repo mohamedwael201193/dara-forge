@@ -30,23 +30,23 @@ const metadata = {
   icons: ['https://dara-forge.vercel.app/icon.png']
 };
 
+// Initialize AppKit immediately at module load
 let appKitInstance: any = null;
 
+try {
+  appKitInstance = createAppKit({
+    adapters: [wagmiAdapter],
+    projectId: projectId || 'missing',
+    networks,
+    defaultNetwork: ogGalileo as any,
+    metadata
+  });
+  console.log('AppKit initialized successfully at module load');
+} catch (error) {
+  console.error('Failed to initialize AppKit at module load:', error);
+}
+
 export function initializeAppKit() {
-  if (!appKitInstance) {
-    try {
-      appKitInstance = createAppKit({
-        adapters: [wagmiAdapter],
-        projectId: projectId || 'missing',
-        networks,
-        defaultNetwork: ogGalileo as any,
-        metadata
-      });
-      console.log('AppKit initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize AppKit:', error);
-    }
-  }
   return appKitInstance;
 }
 

@@ -1,36 +1,85 @@
-import { useState } from "react"
-
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Upload, CheckCircle, AlertCircle, ExternalLink } from "@/lib/icons"
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
+import React, { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
+import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons"
+import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
+import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
+import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 
 interface UploadDatasetProps {}
 
 export const UploadDataset: React.FC<UploadDatasetProps> = () => {
-  const { open } = useAppKit();
+  const [isAppKitReady, setIsAppKitReady] = useState(false);
+  const [appKit, setAppKit] = useState<any>(null);
+  const [account, setAccount] = useState<any>(null);
+  
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])
   const [datasetTitle, setDatasetTitle] = useState("")
   const [datasetDescription, setDatasetDescription] = useState("")
-  const [error, setError] = useState<string>("")
-  const [success, setSuccess] = useState<string>("")
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [currentStep, setCurrentStep] = useState("")
+  const [error, setError] = useState("")
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    // Wait for AppKit to be available
+    const checkAppKit = async () => {
+      try {
+        const { useAppKit, useAppKitAccount } = await import('@reown/appkit/react');
+        setAppKit({ useAppKit, useAppKitAccount });
+        setIsAppKitReady(true);
+      } catch (error) {
+        console.warn('AppKit not available:', error);
+        // Retry after a delay
+        setTimeout(checkAppKit, 1000);
+      }
+    };
+
+    checkAppKit();
+  }, []);
+
+  useEffect(() => {
+    if (isAppKitReady && appKit) {
+      try {
+        const { useAppKitAccount } = appKit;
+        const accountData = useAppKitAccount();
+        setAccount(accountData);
+      } catch (error) {
+        console.warn('Failed to get account data:', error);
+      }
+    }
+  }, [isAppKitReady, appKit]);
+
+  const handleConnect = async () => {
+    if (appKit) {
+      try {
+        const { useAppKit } = appKit;
+        const { open } = useAppKit();
+        open({ view: 'Connect', namespace: 'eip155' });
+      } catch (error) {
+        console.warn('Failed to open connect modal:', error);
+      }
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files)
-    setResults([]) // Clear previous results
     setError("")
-    setSuccess("")
+  }
+
+  const copyToClipboard = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      // You could add a toast notification here
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
   }
 
   const handleUpload = async () => {
@@ -44,252 +93,344 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       return
     }
 
-    
+    if (!account?.isConnected) {
+      setError("Please connect your wallet first")
+      return
+    }
 
     setUploading(true)
     setError("")
-    setSuccess("")
+    setResults([])
+    setUploadProgress(0)
 
     try {
-      console.log("Starting upload process...")
-      setSuccess("Uploading files to 0G Storage...")
+      const uploadResults = []
 
-      // Example direct call into your API. Adjust to your variables/state names.
-      const uploadResults: Array<{ success: boolean; rootHash: string; txHash: string; filename: string; size: number; note?: string; explorer?: string }> = []
-      for (const f of Array.from(files)) {
-        const fd = new FormData()
-        fd.append("file", f, f.name) // Ensure key is \'file\'
-        fd.append("metadata", JSON.stringify({
-          title: f.name,
-          description: `Uploaded file: ${f.name}`,
-          contributors: [address],
-          isPublic: true,
-        }))
-
-        // Debug: see exactly what you’re sending
-        for (const [k, v] of fd.entries()) {
-          console.log("FormData entry:", k, v instanceof File ? v.name : String(v));
-        }
-
-        const headers: HeadersInit = address ? { 'X-Wallet-Address': address } : {};
-        const r = await fetch("/api/upload", {
-          method: "POST",
-          body: fd,
-          headers,
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        setCurrentStep(`Uploading ${file.name} to 0G Storage...`)
+        
+        const result = await uploadBlobTo0GStorage(file, file.name, (progress) => {
+          const fileProgress = (i / files.length) * 100 + (progress / files.length)
+          setUploadProgress(Math.min(90, fileProgress))
         })
-        const data = await r.json().catch(() => ({}));
-        if (!r.ok || !data?.success) {
-          throw new Error(data?.message || `Upload failed (${r.status})`);
-        }
-        uploadResults.push(data);
+
+        uploadResults.push({
+          file: file.name,
+          size: file.size,
+          rootHash: result.rootHash,
+          txHash: result.txHash || result.chainTx,
+          gatewayUrl: gatewayUrlForRoot(result.rootHash),
+          downloadUrl: downloadWithProofUrl(result.rootHash)
+        })
       }
 
-      setResults(uploadResults)
-      setSuccess(
-        uploadResults.length === 1
-          ? `Successfully uploaded file to 0G Storage! Root Hash: ${uploadResults[0].rootHash.slice(0, 6)}...${uploadResults[0].rootHash.slice(-4)}`
-          : `Successfully uploaded ${uploadResults.length} files to 0G Storage!`
-      )
+      // Create manifest
+      setCurrentStep("Creating dataset manifest...")
+      const manifest: DaraManifest = buildManifest({
+        rootHash: uploadResults[0].rootHash,
+        title: datasetTitle,
+        uploader: account.address,
+        app: "DARA",
+        version: "1.0",
+        description: datasetDescription,
+        files: uploadResults.map(r => ({
+          name: r.file,
+          rootHash: r.rootHash,
+          size: uploadResults.find(ur => ur.file === r.file)?.size || 0
+        }))
+      })
+
+      const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' })
+      const manifestResult = await uploadBlobTo0GStorage(manifestBlob, 'manifest.json', (progress) => {
+        setUploadProgress(90 + progress * 0.05)
+      })
+
+      // Anchor on blockchain
+      setCurrentStep("Anchoring on 0G Chain...")
+      const signer = await getSigner()
+      const contract = getDaraContract(signer)
+      const tx = await contract.logData(manifestResult.rootHash)
+      const receipt = await tx.wait()
+      const txHash = (receipt as any).hash || (receipt as any).transactionHash
+
+      setUploadProgress(100)
+      setCurrentStep("Upload completed successfully!")
+
+      setResults([
+        ...uploadResults,
+        {
+          file: 'manifest.json',
+          size: manifestBlob.size,
+          rootHash: manifestResult.rootHash,
+          txHash: manifestResult.txHash || manifestResult.chainTx,
+          gatewayUrl: gatewayUrlForRoot(manifestResult.rootHash),
+          downloadUrl: downloadWithProofUrl(manifestResult.rootHash),
+          isManifest: true,
+          blockchainTx: txHash
+        }
+      ])
+
     } catch (err: any) {
-      console.error("Upload failed:", err);
-      setError(`Upload failed: ${err?.message ?? err}`);
+      setError(`Upload failed: ${err.message || 'Unknown error'}`)
+      console.error('Upload error:', err)
     } finally {
-      setUploading(false);
+      setUploading(false)
+      setCurrentStep("")
     }
   }
 
-  const getExplorerUrl = (txHash: string) => {
-    // Assuming 0G Chain Explorer URL structure
-    return `https://chainscan-galileo.0g.ai/tx/${txHash}`
+  if (!isAppKitReady) {
+    return (
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardContent className="p-8 text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-400" />
+          <p className="text-slate-300">Loading wallet connection...</p>
+        </CardContent>
+      </Card>
+    );
   }
 
-  const { isConnected, address } = useAppKitAccount();
-  const isOnOGNetwork = true; // Simplified for demo
-
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Upload className="w-6 h-6" />
-          Upload Dataset to 0G Network
-        </CardTitle>
-        <CardDescription>
-          Upload your research datasets to 0G Storage and anchor them on 0G Chain for permanent verification
-        </CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {/* Connection Status */}
-        <div className="p-4 border rounded-lg">
-          <h3 className="font-semibold mb-2">Connection Status</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2">
-              {isConnected ? (
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-red-500" />
-              )}
-              <span>Wallet: {isConnected ? `Connected (${address?.slice(0, 6)}...${address?.slice(-4)})` : "Not connected"}</span>
+    <div className="space-y-6">
+      {/* Connection Status */}
+      {!account?.isConnected && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardContent className="p-6 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 mx-auto text-yellow-400" />
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-2">Wallet Connection Required</h3>
+              <p className="text-slate-300 mb-4">Connect your wallet to upload datasets to 0G Storage</p>
+              <Button onClick={handleConnect} className="bg-blue-600 hover:bg-blue-700">
+                Connect Wallet
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              {isOnOGNetwork ? (
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-red-500" />
-              )}
-              <span>Network: {isOnOGNetwork ? "0G Galileo Testnet" : "Wrong network"}</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Upload Form */}
+      <Card className="bg-slate-800/50 border-slate-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Upload className="w-5 h-5 text-blue-400" />
+            Upload Dataset to 0G Storage
+          </CardTitle>
+          <CardDescription className="text-slate-300">
+            Upload your research datasets with cryptographic proofs and blockchain anchoring
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title" className="text-white">Dataset Title *</Label>
+                <Input
+                  id="title"
+                  value={datasetTitle}
+                  onChange={(e) => setDatasetTitle(e.target.value)}
+                  placeholder="Enter dataset title"
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description" className="text-white">Description</Label>
+                <Textarea
+                  id="description"
+                  value={datasetDescription}
+                  onChange={(e) => setDatasetDescription(e.target.value)}
+                  placeholder="Describe your dataset"
+                  className="bg-slate-700 border-slate-600 text-white h-24"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              {isConnected ? (
-                <CheckCircle className="w-4 h-4 text-green-500" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-red-500" />
-              )}
-              <span>0G Services: {isConnected ? "Ready" : "Not initialized"}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Dataset Metadata */}
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="title">Dataset Title *</Label>
-            <Input
-              id="title"
-              value={datasetTitle}
-              onChange={(e) => setDatasetTitle(e.target.value)}
-              placeholder="Enter dataset title"
-              disabled={uploading}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={datasetDescription}
-              onChange={(e) => setDatasetDescription(e.target.value)}
-              placeholder="Describe your dataset"
-              disabled={uploading}
-            />
-          </div>
-        </div>
-
-        {/* File Selection */}
-        <div>
-          <Label htmlFor="files">Select Files *</Label>
-          <Input
-            id="files"
-            type="file"
-            onChange={handleFileSelect}
-            disabled={uploading}
-            className="cursor-pointer"
-          />
-          {files && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Selected {files.length} file(s)
-            </p>
-          )}
-        </div>
-
-        {/* Upload Button */}
-        <Button
-          onClick={handleUpload}
-          disabled={!isConnected || !isOnOGNetwork || uploading || !files || !datasetTitle.trim()}
-          className="w-full"
-          size="lg"
-        >
-          {uploading ? (
-            <>
-              <Upload className="w-4 h-4 mr-2 animate-spin" />
-              Uploading to 0G Storage...
-            </>
-          ) : (
-            <>
-              <Upload className="w-4 h-4 mr-2" />
-              Upload to 0G Storage
-            </>
-          )}
-        </Button>
-
-        {/* Status Messages */}
-        {error && (
-          <div className="p-4 border border-red-200 bg-red-50 rounded-lg flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-red-500" />
-            <span className="text-red-700">{error}</span>
-          </div>
-        )}
-
-        {success && (
-          <div className="p-4 border border-green-200 bg-green-50 rounded-lg flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <span className="text-green-700">{success}</span>
-          </div>
-        )}
-
-        {/* Upload Results */}
-        {results.length > 0 && (
-          <div className="space-y-4">
-            <h3 className="font-semibold">Upload Results</h3>
-            {results.map((result, index) => (
-              <div key={index} className="p-4 border rounded-lg space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{result.filename}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {(result.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="files" className="text-white">Select Files *</Label>
+                <Input
+                  id="files"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="bg-slate-700 border-slate-600 text-white"
+                />
+              </div>
+              {files && files.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-white">Selected Files:</Label>
+                  <div className="space-y-1">
+                    {Array.from(files).map((file, index) => (
+                      <div key={index} className="flex items-center gap-2 text-sm text-slate-300">
+                        <FileText className="w-4 h-4" />
+                        <span>{file.name}</span>
+                        <span className="text-slate-500">({(file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                
-                {result.rootHash && (
-                  <>
+              )}
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-4 bg-red-900/50 border border-red-700 rounded-lg">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="w-5 h-5 text-red-400" />
+                <span className="text-red-300">{error}</span>
+              </div>
+            </div>
+          )}
+
+          {uploading && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-300">{currentStep}</span>
+                  <span className="text-slate-300">{uploadProgress.toFixed(0)}%</span>
+                </div>
+                <Progress value={uploadProgress} className="h-2" />
+              </div>
+            </div>
+          )}
+
+          <Button
+            onClick={handleUpload}
+            disabled={uploading || !account?.isConnected || !files || files.length === 0}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+          >
+            {uploading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Uploading...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4 mr-2" />
+                Upload to 0G Storage
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Results */}
+      {results.length > 0 && (
+        <Card className="bg-slate-800/50 border-slate-700">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <CheckCircle className="w-5 h-5 text-green-400" />
+              Upload Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {results.map((result, index) => (
+                <div key={index} className="p-4 bg-slate-700/50 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-blue-400" />
+                      <span className="font-medium text-white">{result.file}</span>
+                      {result.isManifest && (
+                        <Badge className="bg-purple-500/20 text-purple-300 border-purple-500/30">
+                          Manifest
+                        </Badge>
+                      )}
+                    </div>
+                    <span className="text-sm text-slate-400">
+                      {(result.size / 1024 / 1024).toFixed(2)} MB
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <Label className="text-xs">Root Hash</Label>
-                      <p className="text-sm font-mono bg-muted p-2 rounded break-all">
-                        {result.rootHash}
-                      </p>
+                      <Label className="text-slate-400">Root Hash:</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-green-400 bg-slate-900 px-2 py-1 rounded text-xs">
+                          {result.rootHash.slice(0, 20)}...
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(result.rootHash, 'Root hash')}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                     
-                    {result.txHash && (
-                      <div>
-                        <Label className="text-xs">Storage Transaction</Label>
-                        <p className="text-sm font-mono bg-muted p-2 rounded">
-                          {result.txHash}
-                        </p>
-                      </div>
-                    )}
-
-                    {result.txHash && (
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
-                        <span className="text-sm text-green-600">Anchored to 0G Chain</span>
-                        <a
-                          href={result.explorer}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:underline flex items-center gap-1"
+                    <div>
+                      <Label className="text-slate-400">Storage TX:</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-blue-400 bg-slate-900 px-2 py-1 rounded text-xs">
+                          {result.txHash?.slice(0, 20)}...
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(result.txHash, 'Transaction hash')}
+                          className="h-6 w-6 p-0"
                         >
-                          View on Explorer
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
+                          <Copy className="w-3 h-3" />
+                        </Button>
                       </div>
-                    )}
-                    {result.note && <div className="text-amber-600 text-sm">{result.note}</div>}
-                  </>
-                )}
-
-                {!result.rootHash && (
-                  <div className="flex items-center gap-2 text-red-600">
-                    <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm">Upload failed</span>
+                    </div>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+                  {result.blockchainTx && (
+                    <div>
+                      <Label className="text-slate-400">Blockchain TX:</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <code className="text-purple-400 bg-slate-900 px-2 py-1 rounded text-xs">
+                          {result.blockchainTx.slice(0, 20)}...
+                        </code>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyToClipboard(result.blockchainTx, 'Blockchain transaction')}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => window.open(explorerTxUrl(result.blockchainTx), '_blank')}
+                          className="h-6 w-6 p-0"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(result.gatewayUrl, '_blank')}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Gateway
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(result.downloadUrl, '_blank')}
+                      className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Download with Proof
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   )
 }
-
 
