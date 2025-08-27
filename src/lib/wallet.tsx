@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createAppKit } from '@reown/appkit';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
@@ -35,24 +35,22 @@ const metadata = {
   icons: ['https://dara-forge.vercel.app/icon.png']
 };
 
-let appKitInitialized = false;
+// Initialize AppKit immediately but safely
+try {
+  createAppKit({
+    adapters: [wagmiAdapter],
+    projectId: projectId || 'missing',
+    networks,
+    defaultNetwork: ogGalileo as any,
+    metadata
+  });
+} catch (error) {
+  console.warn('AppKit initialization failed:', error);
+}
 
 const queryClient = new QueryClient();
 
 export function WalletProviders({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    if (!appKitInitialized) {
-      createAppKit({
-        adapters: [wagmiAdapter],
-        projectId: projectId || 'missing',
-        networks,
-        defaultNetwork: ogGalileo as any,
-        metadata
-      });
-      appKitInitialized = true;
-    }
-  }, []);
-
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>

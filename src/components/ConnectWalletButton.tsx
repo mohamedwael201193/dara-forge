@@ -4,21 +4,30 @@ import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 import { Button } from '@/components/ui/button';
 
 export default function ConnectWalletButton() {
-  const { open } = useAppKit();
-  const { isConnected, address } = useAppKitAccount();
+  try {
+    const { open } = useAppKit();
+    const { isConnected, address } = useAppKitAccount();
 
-  if (isConnected) {
+    if (isConnected) {
+      return (
+        <Button variant="outline" onClick={() => open({ view: 'Account', namespace: 'eip155' })}>
+          {address?.slice(0, 6)}…{address?.slice(-4)}
+        </Button>
+      );
+    }
+
     return (
-      <Button variant="outline" onClick={() => open({ view: 'Account', namespace: 'eip155' })}>
-        {address?.slice(0, 6)}…{address?.slice(-4)}
+      <Button onClick={() => open({ view: 'Connect', namespace: 'eip155' })}>
+        Connect Wallet
+      </Button>
+    );
+  } catch (error) {
+    console.warn('AppKit hooks not available:', error);
+    return (
+      <Button disabled>
+        Wallet Loading...
       </Button>
     );
   }
-
-  return (
-    <Button onClick={() => open({ view: 'Connect', namespace: 'eip155' })}>
-      Connect Wallet
-    </Button>
-  );
 }
 
