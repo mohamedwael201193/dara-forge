@@ -2,6 +2,7 @@ import React from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiProvider } from 'wagmi';
 import { arbitrum, mainnet, type AppKitNetwork } from '@reown/appkit/networks';
+import { Chain } from 'wagmi/chains';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 
@@ -17,7 +18,7 @@ const metadata = {
 };
 
 // 3. Set the networks - create mutable array from readonly networks
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum];
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum, zeroGGalileoTestnet];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
@@ -52,4 +53,32 @@ export function WalletProviders({ children }: { children: React.ReactNode }) {
 
 export const wagmiConfig = wagmiAdapter.wagmiConfig;
 export { modal };
+
+
+
+const zeroGGalileoTestnet: Chain = {
+  id: 16601,
+  name: '0G-Galileo-Testnet',
+  network: '0g-galileo-testnet',
+  nativeCurrency: {
+    decimals: 18,
+    name: '0G',
+    symbol: 'OG',
+  },
+  rpcUrls: {
+    default: {
+      http: ['https://16601.rpc.thirdweb.com'],
+    },
+    public: {
+      http: ['https://16601.rpc.thirdweb.com'],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: '0G Chainscan',
+      url: 'https://chainscan-galileo.0g.ai',
+    },
+  },
+  testnet: true,
+};
 
