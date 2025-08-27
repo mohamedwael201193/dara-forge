@@ -85,7 +85,8 @@ export const Wave2DemoSection = () => {
     tags: "",
     version: "1.0.0",
     license: "MIT",
-    isPublic: true
+    isPublic: true,
+    sourceUrl: ""
   });
 
   const [datasetRoot, setDatasetRoot] = useState<string>("");
