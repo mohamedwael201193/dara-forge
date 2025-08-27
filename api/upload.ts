@@ -10,11 +10,21 @@ export const config = { api: { bodyParser: false } };
 
 const gzip = promisify(zlib.gzip);
 
-// Galileo constants from docs
+// Galileo testnet facts from docs
 const GALILEO = {
   chainId: 16601,
   flow: '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628',
 };
+
+const LEAF_BYTES = 256;
+const HARD_LEAF_LIMIT = 64;
+
+// Optional built-in fallback indexer (you can also provide OG_INDEXER_ALT in Vercel)
+const DEFAULT_INDEXER_FALLBACK = 'https://indexer-storage-testnet-turbo.0g.ai/';
+
+function fmt(e: any) {
+  return e?.shortMessage || e?.reason || e?.message || String(e);
+}
 
 function parseForm(req: VercelRequest) {
   const form = formidable({ keepExtensions: true, uploadDir: '/tmp' });
@@ -29,10 +39,8 @@ function pickFirstFile(files: formidable.Files) {
   }
   return null;
 }
-const fmt = (e: any) => e?.shortMessage || e?.reason || e?.message || String(e);
 
-// Query Indexer REST to confirm majority-finalization by root hash
-async function confirmFinalized(indexerUrl: string, cid: string, minOk = 2): Promise<{ ok: boolean; nodes: any[] }> {
+async function confirmFinalized(indexerUrl: string, cid: string, minOk = 2) {
   const base = indexerUrl.replace(/\/$/, '');
   const paths = [`/files/info?cid=${cid}`, `/file/info/${cid}`];
   for (const path of paths) {
@@ -53,28 +61,46 @@ async function confirmFinalized(indexerUrl: string, cid: string, minOk = 2): Pro
       if (okCount >= Math.min(minOk, nodes.length || minOk)) return { ok: true, nodes };
     } catch { /* try next */ }
   }
-  return { ok: false, nodes: [] };
+  return { ok: false, nodes: [] as any[] };
+}
+
+async function canonicalUpload(indexerUrl: string, rpc: string, signer: ethers.Wallet, filePath: string) {
+  const indexer = new Indexer(indexerUrl.replace(/\/$/, ''));
+  const zgFile = await ZgFile.fromFilePath(filePath);
+  try {
+    const [tree, tErr] = await zgFile.merkleTree();
+    if (tErr) throw tErr;
+    const rootHash = tree!.rootHash();
+    const [txHash, uploadErr] = await indexer.upload(zgFile, rpc, signer);
+    return { rootHash, txHash: txHash || null, err: uploadErr || null };
+  } finally {
+    await zgFile.close();
+  }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  console.info('[upload] Request received');
-
-  // Prevent caching of responses
   res.setHeader('Cache-Control', 'no-store');
+  console.info('[upload] Request received');
 
   try {
     if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-    // Strict, server-only envs. Do NOT read VITE_* here.
-    const OG_RPC = process.env.OG_RPC;                    // e.g., https://16601.rpc.thirdweb.com/
-    const INDEXER = process.env.OG_INDEXER;               // e.g., https://indexer-storage-testnet-standard.0g.ai/
+    // Server-only envs (do not read VITE_* here)
+    const OG_RPC = process.env.OG_RPC; // https://16601.rpc.thirdweb.com/
+    const INDEXER = process.env.OG_INDEXER; // https://indexer-storage-testnet-standard.0g.ai/
+    const INDEXER_ALT = process.env.OG_INDEXER_ALT || DEFAULT_INDEXER_FALLBACK;
     const PRIV = process.env.OG_STORAGE_PRIVATE_KEY;
 
-    console.info('[upload] Env check:', { OG_RPC: OG_RPC ? 'SET' : 'MISSING', INDEXER: INDEXER ? 'SET' : 'MISSING', PRIV: PRIV ? 'SET' : 'MISSING' });
+    console.info('[upload] Env check:', {
+      OG_RPC: OG_RPC ? 'SET' : 'MISSING',
+      INDEXER: INDEXER ? 'SET' : 'MISSING',
+      PRIV: PRIV ? 'SET' : 'MISSING',
+    });
     if (!OG_RPC || !INDEXER || !PRIV) {
       return res.status(500).json({ success: false, message: 'Missing OG_RPC / OG_INDEXER / OG_STORAGE_PRIVATE_KEY' });
     }
 
+    // Parse form and pick file
     const { files } = await parseForm(req);
     const file = pickFirstFile(files);
     if (!file?.filepath) return res.status(400).json({ success: false, message: 'No file provided' });
@@ -84,14 +110,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.info('[upload] File on disk:', tmpPath, 'bytes:', stat.size);
     console.info('[upload] ethers version:', (ethers as any).version || 'unknown');
 
-    // Preflight RPC: must be Galileo and Flow must have bytecode
+    // RPC preflight: must be Galileo and Flow must have bytecode
     const provider = new ethers.JsonRpcProvider(OG_RPC);
     const net = await provider.getNetwork();
     if (Number(net.chainId) !== GALILEO.chainId) {
       return res.status(400).json({ success: false, message: `Wrong RPC chainId: ${net.chainId}. Expected ${GALILEO.chainId} (Galileo)` });
     }
-    const flowCode = await provider.getCode(GALILEO.flow);
-    if (!flowCode || flowCode === '0x') {
+    const code = await provider.getCode(GALILEO.flow);
+    if (!code || code === '0x') {
       return res.status(400).json({ success: false, message: `No Flow bytecode at ${GALILEO.flow} on this RPC` });
     }
 
@@ -99,8 +125,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.info('[upload] server signer:', signer.address);
     console.info('[upload] server balance (OG):', ethers.formatEther(await provider.getBalance(signer.address)));
 
-    // Gzip preflight to stay under conservative 64-leaf limit for small text files
-    const LEAF_BYTES = 256, HARD_LEAF_LIMIT = 64;
+    // Gzip preflight to stay <= 64 leaves for tiny text files
     let pathForUpload = tmpPath;
     let effectiveSize = stat.size;
     if (Math.ceil(stat.size / LEAF_BYTES) > HARD_LEAF_LIMIT) {
@@ -115,19 +140,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    const indexer = new Indexer(INDEXER.replace(/\/$/, ''));
-    const zgFile = await ZgFile.fromFilePath(pathForUpload);
+    // Try primary indexer
+    let { rootHash, txHash, err } = await canonicalUpload(INDEXER, OG_RPC, signer, pathForUpload);
 
-    const [tree, tErr] = await zgFile.merkleTree();
-    if (tErr) throw tErr;
-    const rootHash = tree!.rootHash();
-    console.info('[upload] Prepared root:', rootHash);
+    // If 503/overload or “too many data writing”, try fallback indexer once
+    const msg = err ? fmt(err) : '';
+    if (err && (/503|Service Unavailable/i.test(msg) || /too many data writing/i.test(msg))) {
+      console.warn('[upload] Primary indexer busy; retrying with fallback indexer...');
+      ({ rootHash, txHash, err } = await canonicalUpload(INDEXER_ALT, OG_RPC, signer, pathForUpload));
+    }
 
-    // Canonical SDK call (TS SDK docs/starter kit pattern)
-    const [txHash, uploadErr] = await indexer.upload(zgFile, OG_RPC, signer);
-    await zgFile.close();
-
-    if (!uploadErr) {
+    if (!err) {
       return res.status(200).json({
         success: true,
         filename: file.originalFilename || 'file',
@@ -139,13 +162,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       });
     }
 
-    const msg = fmt(uploadErr);
-    console.error('[upload] 0G upload failed:', msg);
-
-    // If a storage node throttled, accept success when majority finalized
-    if (/too many data writing/i.test(msg)) {
-      const { ok, nodes } = await confirmFinalized(INDEXER, rootHash);
-      if (ok) {
+    // If a node throttled, accept success when majority finalized on any indexer
+    if (/too many data writing/i.test(fmt(err))) {
+      const primary = await confirmFinalized(INDEXER, rootHash);
+      const secondary = INDEXER_ALT && INDEXER_ALT !== INDEXER ? await confirmFinalized(INDEXER_ALT, rootHash) : { ok: false, nodes: [] };
+      if (primary.ok || secondary.ok) {
         return res.status(200).json({
           success: true,
           filename: file.originalFilename || 'file',
@@ -154,17 +175,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           txHash: txHash || null,
           explorer: txHash ? `https://chainscan-galileo.0g.ai/tx/${txHash}` : null,
           note: 'Upload finalized on enough storage nodes; one node hit a temporary write-limit.',
-          nodes,
+          nodes: primary.ok ? primary.nodes : secondary.nodes,
           contentEncoding: pathForUpload.endsWith('.gz') ? 'gzip' : 'identity',
         });
       }
     }
 
-    // If you ever see "data: ''", it means the RPC or Flow preflight failed; but we already check those above.
-    return res.status(500).json({ success: false, message: `0G upload failed: ${msg}` });
-  } catch (err: any) {
-    console.error('[upload] Fatal error:', err);
-    return res.status(500).json({ success: false, message: fmt(err) });
+    // Propagate the failure
+    return res.status(500).json({ success: false, message: `0G upload failed: ${fmt(err)}` });
+  } catch (e: any) {
+    console.error('[upload] Fatal error:', e);
+    return res.status(500).json({ success: false, message: fmt(e) });
   }
 }
 
