@@ -5,16 +5,13 @@ import { UploadDataset } from './UploadDataset'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { 
-  Database, 
-  Shield, 
-  Network, 
-  CheckCircle, 
-  Upload,
+import { Upload,
   Download,
   ShieldCheck,
-  Link
+  Link,
+  MessageSquareText
 } from 'lucide-react'
+import { SummarizeDataset } from './SummarizeDataset'
 
 export const DemoApp: React.FC = () => {
   const [walletAuth] = useState(() => new WalletAuth())
@@ -120,7 +117,7 @@ export const DemoApp: React.FC = () => {
 
         {/* Main Interface */}
         <Tabs defaultValue="connect" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="connect" className="flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Connect Wallet
@@ -128,6 +125,14 @@ export const DemoApp: React.FC = () => {
             <TabsTrigger value="upload" disabled={!isConnected} className="flex items-center gap-2">
               <Upload className="w-4 h-4" />
               Upload Dataset
+            </TabsTrigger>
+            <TabsTrigger value="summarize" className="flex items-center gap-2">
+              <MessageSquareText className="w-4 h-4" />
+              Summarize Dataset
+            </TabsTrigger>
+            <TabsTrigger value="da-publish" className="flex items-center gap-2">
+              <Send className="w-4 h-4" />
+              DA Publish
             </TabsTrigger>
           </TabsList>
           
@@ -152,6 +157,14 @@ export const DemoApp: React.FC = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="summarize" className="mt-6">
+            <SummarizeDataset />
+          </TabsContent>
+
+          <TabsContent value="da-publish" className="mt-6">
+            <DAPublish />
           </TabsContent>
         </Tabs>
 
