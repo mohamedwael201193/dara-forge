@@ -1,12 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import formidable, { File as FormidableFile } from 'formidable';
+import formidable from 'formidable';
 import fs from 'node:fs/promises';
 import { ethers } from 'ethers';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 
 export const config = { api: { bodyParser: false } };
-
-const FLOW_GALILEO = '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628'; // Galileo Flow
 
 function parseForm(req: VercelRequest) {
   const form = formidable({ keepExtensions: true, uploadDir: '/tmp' });
@@ -18,7 +16,7 @@ function parseForm(req: VercelRequest) {
 function pickFirstFile(files: formidable.Files) {
   for (const v of Object.values(files || {})) {
     const arr = Array.isArray(v) ? v : [v];
-    for (const f of arr) if (f && (f as any).filepath) return f as FormidableFile;
+    for (const f of arr) if (f && (f as any).filepath) return f as formidable.File;
   }
   return null;
 }
@@ -28,20 +26,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-    const OG_RPC = process.env.OG_RPC_URL || process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/';
-    const INDEXER = process.env.OG_INDEXER || process.env.OG_INDEXER_RPC || process.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai';
+    // Accept multiple env names you already have in Vercel
+    const OG_RPC =
+      process.env.OG_RPC ||
+      process.env.OG_RPC_URL ||
+      process.env.VITE_OG_RPC ||
+      process.env.VITE_OG_RPC_ALT;
+    const INDEXER =
+      process.env.OG_INDEXER ||
+      process.env.OG_INDEXER_RPC ||
+      process.env.VITE_OG_INDEXER;
     const PRIV = process.env.OG_STORAGE_PRIVATE_KEY;
 
-    console.info('[upload] Env check:', { OG_RPC: OG_RPC ? 'SET' : 'MISSING', INDEXER: INDEXER ? 'SET' : 'MISSING', PRIV: PRIV ? 'SET' : 'MISSING' });
-    if (!OG_RPC || !INDEXER || !PRIV) return res.status(500).json({ success: false, message: 'Missing OG_RPC / INDEXER / OG_STORAGE_PRIVATE_KEY' });
+    console.info('[upload] Env check:', {
+      OG_RPC: OG_RPC ? 'SET' : 'MISSING',
+      INDEXER: INDEXER ? 'SET' : 'MISSING',
+      PRIV: PRIV ? 'SET' : 'MISSING',
+    });
+    if (!OG_RPC || !INDEXER || !PRIV) {
+      return res.status(500).json({ success: false, message: 'Missing OG_RPC / INDEXER / OG_STORAGE_PRIVATE_KEY' });
+    }
 
     const { files } = await parseForm(req);
     const file = pickFirstFile(files);
-    if (!file) return res.status(400).json({ success: false, message: 'No file provided' });
+    if (!file?.filepath) return res.status(400).json({ success: false, message: 'No file provided' });
 
     const tmpPath = (file as any).filepath as string;
     const stat = await fs.stat(tmpPath);
     console.info('[upload] File on disk:', tmpPath, 'bytes:', stat.size);
+    console.info('[upload] ethers version:', (ethers as any).version || 'unknown');
 
     const provider = new ethers.JsonRpcProvider(OG_RPC);
     const net = await provider.getNetwork();
@@ -53,25 +66,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.info('[upload] server signer:', signer.address);
     const bal = await provider.getBalance(signer.address);
     console.info('[upload] server balance (OG):', ethers.formatEther(bal));
-    if (bal < ethers.parseEther('0.005')) {
-      return res.status(402).json({ success: false, message: `Server wallet low balance: ${ethers.formatEther(bal)} OG` });
-    }
 
-    // Important: wire all params, including Flow address, into the Indexer once.
-    const indexer = new Indexer(INDEXER, OG_RPC, PRIV, FLOW_GALILEO);
-
+    // Use the documented pattern: 1-arg constructor + upload(file, rpc, signer)
+    const indexer = new Indexer(INDEXER);
     const zgFile = await ZgFile.fromFilePath(tmpPath);
+
     const [tree, tErr] = await zgFile.merkleTree();
     if (tErr) throw tErr;
     const rootHash = tree!.rootHash();
     console.info('[upload] Prepared root:', rootHash);
 
-    // Canonical call; do not manually construct or send any tx
-    const [txHash, uploadErr] = await indexer.upload(zgFile);
+    const [txHash, uploadErr] = await indexer.upload(zgFile, OG_RPC, signer);
+    await zgFile.close();
+
     if (uploadErr) {
       console.error('[upload] 0G upload failed:', uploadErr);
-      // Also print fee in OG if available in your logs, for your "< 0.0001" audit
-      return res.status(500).json({ success: false, message: `0G upload failed: ${uploadErr?.shortMessage || uploadErr?.reason || String(uploadErr)}` });
+      return res.status(500).json({
+        success: false,
+        message: `0G upload failed: ${uploadErr?.shortMessage || uploadErr?.reason || String(uploadErr)}`,
+      });
     }
 
     return res.status(200).json({
