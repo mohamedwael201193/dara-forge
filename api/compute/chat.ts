@@ -2,10 +2,13 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { ethers } from 'ethers'
 import { createZGComputeNetworkBroker } from '@0glabs/0g-serving-broker'
 
-export default async function handler(req: VercelResponse, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-    const { messages, modelHint } = req.body || {}
+    if (req.method !== 'POST') {
+      res.status(405).json({ error: 'Method not allowed' });
+      return;
+    }
+    const { messages, modelHint } = (req.body as any) || {};
     const rpc = process.env.OG_COMPUTE_RPC || 'https://evmrpc-testnet.0g.ai'
     const pk  = process.env.OG_COMPUTE_PRIVATE_KEY
     if (!pk) return res.status(500).json({ error: 'Missing OG_COMPUTE_PRIVATE_KEY' })
