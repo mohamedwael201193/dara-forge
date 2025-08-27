@@ -29,7 +29,8 @@ export {
   ExternalLink,
   Wallet,
   Copy,
-  FileText
+  FileText,
+  User
 } from 'lucide-react';
 
 
