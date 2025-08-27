@@ -29,7 +29,7 @@ const ogGalileoTestnet = {
 } as const;
 
 // 1. Get projectId from https://cloud.reown.com
-const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || 'your-project-id';
+const projectId = import.meta.env.VITE_WC_PROJECT_ID || 'your-project-id';
 
 // 2. Create a metadata object - optional
 const metadata = {
