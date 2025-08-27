@@ -10,7 +10,9 @@ import {
   Zap, 
   Globe, 
   Lock,
-  ChevronRight 
+  ChevronRight,
+  Folder,
+  Database 
 } from "lucide-react";
 
 export const FeaturesSection = () => {

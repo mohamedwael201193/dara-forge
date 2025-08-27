@@ -10,7 +10,8 @@ import { Upload,
   ShieldCheck,
   Link,
   MessageSquareText,
-  Folder
+  Folder,
+  Network
 } from 'lucide-react'
 import { SummarizeDataset } from './SummarizeDataset'
 
