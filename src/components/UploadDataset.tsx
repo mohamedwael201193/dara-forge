@@ -58,7 +58,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
       setSuccess("Uploading files to 0G Storage...")
 
       // Example direct call into your API. Adjust to your variables/state names.
-      const results: Array<{ rootHash: string; txHash: string; filename: string; size: number }> = []
+      const uploadResults: Array<{ success: boolean; rootHash: string; txHash: string; filename: string; size: number; note?: string; explorer?: string }> = []
       for (const f of Array.from(files)) {
         const fd = new FormData()
         fd.append("file", f, f.name) // Ensure key is \'file\'
@@ -83,15 +83,14 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
         if (!r.ok || !data?.success) {
           throw new Error(data?.message || `Upload failed (${r.status})`);
         }
-        results.push(data);
+        uploadResults.push(data);
       }
 
-      const first = results[0];
-      setResults(results)
+      setResults(uploadResults)
       setSuccess(
-        results.length === 1
-          ? `Successfully uploaded file to 0G Storage! Root Hash: ${first.rootHash.slice(0, 6)}...${first.rootHash.slice(-4)}`
-          : `Successfully uploaded ${results.length} files to 0G Storage!`
+        uploadResults.length === 1
+          ? `Successfully uploaded file to 0G Storage! Root Hash: ${uploadResults[0].rootHash.slice(0, 6)}...${uploadResults[0].rootHash.slice(-4)}`
+          : `Successfully uploaded ${uploadResults.length} files to 0G Storage!`
       )
     } catch (err: any) {
       console.error("Upload failed:", err);
@@ -267,7 +266,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
                         <CheckCircle className="w-4 h-4 text-green-500" />
                         <span className="text-sm text-green-600">Anchored to 0G Chain</span>
                         <a
-                          href={getExplorerUrl(result.txHash)}
+                          href={result.explorer}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-blue-600 hover:underline flex items-center gap-1"
@@ -277,6 +276,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = ({ walletAuth }) => {
                         </a>
                       </div>
                     )}
+                    {result.note && <div className="text-amber-600 text-sm">{result.note}</div>}
                   </>
                 )}
 
