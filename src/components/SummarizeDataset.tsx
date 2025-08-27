@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Loader2, MessageSquareText } from 'lucide-react'
+import { Label } from "@/components/ui/label"
+
+
+import { Loader2, MessageSquareText } from "@/lib/icons"
+
 
 interface SummarizeDatasetProps {
   // Add any necessary props here, e.g., walletAuth if needed for future features

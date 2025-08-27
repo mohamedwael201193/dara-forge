@@ -1,38 +1,21 @@
-import stringify from "json-stable-stringify";
-import { keccak_256 } from "js-sha3";
-
-export type DaraManifest = {
-  version: string;
+export type DatasetManifest = {
+  title: string;
+  description: string;
+  hash: string;
   timestamp: number;
-  creator: string;
-  dataset: {
-    root: string;
-    description: string;
-  };
-  meta: Record<string, any>;
 };
 
-export function buildManifest(
-  datasetRoot: string,
-  description: string,
-  creator: string,
-  meta: Record<string, any> = {}
-): DaraManifest {
+export function createManifest(data: Partial<DatasetManifest>): DatasetManifest {
   return {
-    version: "1.0",
-    timestamp: Math.floor(Date.now() / 1000),
-    creator,
-    dataset: {
-      root: datasetRoot,
-      description
-    },
-    meta
+    title: data.title ?? 'Untitled Dataset',
+    description: data.description ?? '',
+    hash: data.hash ?? '',
+    timestamp: Date.now()
   };
 }
 
-export function manifestHashHex(m: DaraManifest): `0x${string}` {
-  const canonical = stringify(m);
-  return `0x${keccak_256(canonical)}`;
+export function validateManifest(m: DatasetManifest) {
+  return Boolean(m.title && m.hash);
 }
 
 

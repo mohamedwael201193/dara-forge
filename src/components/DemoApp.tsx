@@ -5,19 +5,10 @@ import { UploadDataset } from './UploadDataset'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Upload,
-  Download,
-  ShieldCheck,
-  Link,
-  MessageSquareText,
-  Folder,
-  Network,
-  Shield,
-  Send,
-  CheckCircle
-} from '@/lib/icons'
+import { Upload, Download, ShieldCheck, Link, MessageSquareText, Network, Shield, Send, CheckCircle, Brain, Coins, Globe, Lock, ChevronRight, ArrowRight, Share, Cpu, AlertTriangle } from "@/lib/icons";
 import { SummarizeDataset } from './SummarizeDataset'
-import DAPublish from '@/components/DAPublish';
+import { DAPublish } from "@/components/DAPublish";
+
 
 export const DemoApp: React.FC = () => {
 

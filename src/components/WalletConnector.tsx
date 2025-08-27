@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { WalletAuth } from '@/lib/auth/wallet'
-import { Wallet, CheckCircle, AlertCircle, ExternalLink } from 'lucide-react'
+import { Wallet, CheckCircle, AlertCircle, ExternalLink } from "@/lib/icons"
 
 interface WalletConnectorProps {
   walletAuth: WalletAuth

@@ -33,8 +33,8 @@ export default function DarkOgUploader() {
     try {
       // 1) Upload file to 0G Storage
       const { rootHash, txHash } = await uploadBlobTo0GStorage(file, file.name);
-      setDatasetRoot(rootHash);
-      setDatasetTx(txHash);
+      setDatasetRoot(rootHash ?? "");
+      setDatasetTx(txHash ?? "");
 
       // 2) Build manifest and upload it
       const uploader = await ensureWallet();
@@ -71,7 +71,7 @@ export default function DarkOgUploader() {
           try {
             const parsed = iface.parseLog(log);
             if (parsed?.name === "LogCreated") {
-              setLogId(parsed.args?.logId?.toString?.() || "");
+              setLogId(parsed.args?.logId?.toString?.() ?? "");
               break;
             }
           } catch {}

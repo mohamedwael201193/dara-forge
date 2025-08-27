@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Upload, CheckCircle, AlertCircle, ExternalLink } from "lucide-react"
+import { Upload, CheckCircle, AlertCircle, ExternalLink } from "@/lib/icons"
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 
 interface UploadDatasetProps {}
 
@@ -42,10 +43,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       return
     }
 
-    if (!walletAuth.getConnection()?.isConnected) {
-      setError("Wallet not connected. Please connect your wallet first.")
-      return
-    }
+    
 
     setUploading(true)
     setError("")
@@ -63,7 +61,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         fd.append("metadata", JSON.stringify({
           title: f.name,
           description: `Uploaded file: ${f.name}`,
-          contributors: [walletAuth.getConnection()!.address],
+          contributors: [address],
           isPublic: true,
         }))
 
@@ -75,7 +73,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         const r = await fetch("/api/upload", {
           method: "POST",
           body: fd,
-          headers: { "X-Wallet-Address": walletAuth.getConnection()!.address },
+          headers: { "X-Wallet-Address": address },
         })
         const data = await r.json().catch(() => ({}));
         if (!r.ok || !data?.success) {

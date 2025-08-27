@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Wallet, CheckCircle, ExternalLink, Copy } from 'lucide-react';
+import { Wallet, CheckCircle, ExternalLink, Copy } from '@/lib/icons';
 import { useToast } from '@/hooks/use-toast';
 
 export const WalletConnect = () => {
