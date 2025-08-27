@@ -1,146 +1,90 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import formidable, { File as FormidableFile } from 'formidable';
-import fs from 'fs/promises';
-import path from 'path';
-import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
+import fs from 'node:fs/promises';
 import { ethers } from 'ethers';
+import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 
-// Vercel + Vite: this is fine to leave here (Next-specific config is ignored, harmless)
 export const config = { api: { bodyParser: false } };
 
-function parseForm(req: VercelRequest): Promise<{ fields: formidable.Fields; files: formidable.Files }> {
-  return new Promise((resolve, reject) => {
-    const form = formidable({
-      uploadDir: '/tmp',
-      keepExtensions: true,
-      multiples: false,
-      // sanitize filenames
-      filename: (name, ext, part) => `${Date.now()}-${(part.originalFilename || 'upload').replace(/[^\w.\-]+/g, '_')}`,
-    });
-    form.parse(req, (err, fields, files) => (err ? reject(err) : resolve({ fields, files })));
+const FLOW_GALILEO = '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628'; // Galileo Flow
+
+function parseForm(req: VercelRequest) {
+  const form = formidable({ keepExtensions: true, uploadDir: '/tmp' });
+  return new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
+    form.parse(req as any, (err, fields, files) => (err ? reject(err) : resolve({ fields, files })));
   });
 }
 
-// Normalize across 'file', 'files', 'file[]', etc.
-function pickFirstFile(fsObj: formidable.Files): FormidableFile | null {
-  for (const v of Object.values(fsObj)) {
+function pickFirstFile(files: formidable.Files) {
+  for (const v of Object.values(files || {})) {
     const arr = Array.isArray(v) ? v : [v];
-    for (const f of arr) {
-      if (f && (f as any).filepath) return f as any;
-    }
+    for (const f of arr) if (f && (f as any).filepath) return f as FormidableFile;
   }
   return null;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ success: false, message: 'Method not allowed' });
-    return;
-  }
-
+  console.info('[upload] Request received');
   try {
-    console.log('[upload] Request received');
+    if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-    const OG_RPC = (process.env.OG_RPC_URL || process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/').replace(/\/+$/, '/');
-    const INDEXER = (process.env.OG_INDEXER || process.env.OG_INDEXER_RPC || process.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai').replace(/\/+$/, '');
+    const OG_RPC = process.env.OG_RPC_URL || process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/';
+    const INDEXER = process.env.OG_INDEXER || process.env.OG_INDEXER_RPC || process.env.VITE_OG_INDEXER || 'https://indexer-storage-testnet-turbo.0g.ai';
     const PRIV = process.env.OG_STORAGE_PRIVATE_KEY;
 
-    console.log('[upload] Env check:', { OG_RPC: OG_RPC ? 'SET' : 'MISSING', INDEXER: INDEXER ? 'SET' : 'MISSING', PRIV: PRIV ? 'SET' : 'MISSING' });
-    if (!PRIV) return res.status(500).json({ success: false, message: 'Missing OG_STORAGE_PRIVATE_KEY' });
+    console.info('[upload] Env check:', { OG_RPC: OG_RPC ? 'SET' : 'MISSING', INDEXER: INDEXER ? 'SET' : 'MISSING', PRIV: PRIV ? 'SET' : 'MISSING' });
+    if (!OG_RPC || !INDEXER || !PRIV) return res.status(500).json({ success: false, message: 'Missing OG_RPC / INDEXER / OG_STORAGE_PRIVATE_KEY' });
 
-    // Parse multipart with Formidable (waits until file fully written)
-    const { fields, files } = await parseForm(req);
-    const fileKeys = Object.keys(files || {});
-    console.log('[upload] files keys:', fileKeys);
+    const { files } = await parseForm(req);
+    const file = pickFirstFile(files);
+    if (!file) return res.status(400).json({ success: false, message: 'No file provided' });
 
-    const fileField = pickFirstFile(files);
+    const tmpPath = (file as any).filepath as string;
+    const stat = await fs.stat(tmpPath);
+    console.info('[upload] File on disk:', tmpPath, 'bytes:', stat.size);
 
-    if (!fileField) {
-      return res.status(400).json({
-        success: false,
-        message: 'No file provided',
-        receivedKeys: fileKeys,
-      });
-    }
-
-    const filepath = fileField.filepath;
-    const stat = await fs.stat(filepath).catch(() => null);
-    if (!stat || stat.size === 0) {
-      return res.status(500).json({ success: false, message: 'Failed to persist file' });
-    }
-    console.log('[upload] File on disk:', filepath, 'bytes:', stat.size);
-
-    // Build metadata if provided
-    let metadata: any = {};
-    if (fields.metadata && typeof fields.metadata === 'string') {
-      try { metadata = JSON.parse(fields.metadata); } catch {}
-    }
-
-    // 0G SDK usage
     const provider = new ethers.JsonRpcProvider(OG_RPC);
-    const signer = new ethers.Wallet(PRIV.startsWith('0x') ? PRIV : `0x${PRIV}`, provider);
-
-    // 1) Confirm chain
     const net = await provider.getNetwork();
     if (Number(net.chainId) !== 16601) {
-      console.error('[upload] Wrong chain:', net.chainId);
-      return res.status(400).json({
-        success: false,
-        message: `Wrong EVM RPC: expected 16601 (Galileo), got ${net.chainId}. Set OG_RPC to https://evmrpc-testnet.0g.ai or https://16601.rpc.thirdweb.com.`,
-      });
+      return res.status(400).json({ success: false, message: `Wrong RPC chainId: ${net.chainId}, expected 16601 (Galileo)` });
     }
 
-    // 2) Log server wallet
-    console.log('[upload] server signer:', signer.address);
-
-    // 3) Show balance and soft-guard
+    const signer = new ethers.Wallet(PRIV, provider);
+    console.info('[upload] server signer:', signer.address);
     const bal = await provider.getBalance(signer.address);
-    console.log('[upload] server balance (OG):', ethers.formatEther(bal));
+    console.info('[upload] server balance (OG):', ethers.formatEther(bal));
     if (bal < ethers.parseEther('0.005')) {
-      return res.status(402).json({
-        success: false,
-        message: `Server wallet (${signer.address}) has low OG balance (${ethers.formatEther(bal)}). Use the faucet, then retry.`,
-      });
+      return res.status(402).json({ success: false, message: `Server wallet low balance: ${ethers.formatEther(bal)} OG` });
     }
 
-    const indexer = new Indexer(INDEXER); // IMPORTANT: use Indexer instance, not "uploader"
-    const zgFile = await ZgFile.fromFilePath(filepath);
+    // Important: wire all params, including Flow address, into the Indexer once.
+    const indexer = new Indexer(INDEXER, OG_RPC, PRIV, FLOW_GALILEO);
 
-    const [tree, treeErr] = await zgFile.merkleTree();
-    if (treeErr) {
-      await zgFile.close();
-      await fs.unlink(filepath).catch(() => {});
-      return res.status(500).json({ success: false, message: `Merkle error: ${treeErr}` });
-    }
+    const zgFile = await ZgFile.fromFilePath(tmpPath);
+    const [tree, tErr] = await zgFile.merkleTree();
+    if (tErr) throw tErr;
+    const rootHash = tree!.rootHash();
+    console.info('[upload] Prepared root:', rootHash);
 
-    const rootHash = tree?.rootHash();
-    if (!rootHash) {
-      await zgFile.close();
-      await fs.unlink(filepath).catch(() => {});
-      return res.status(500).json({ success: false, message: 'No root hash produced' });
-    }
-
-    const [txHash, uploadErr] = await indexer.upload(zgFile, OG_RPC, signer);
-    await zgFile.close();
-    await fs.unlink(filepath).catch(() => {});
-
+    // Canonical call; do not manually construct or send any tx
+    const [txHash, uploadErr] = await indexer.upload(zgFile);
     if (uploadErr) {
-      return res.status(500).json({ success: false, message: `0G upload failed: ${uploadErr}` });
+      console.error('[upload] 0G upload failed:', uploadErr);
+      // Also print fee in OG if available in your logs, for your "< 0.0001" audit
+      return res.status(500).json({ success: false, message: `0G upload failed: ${uploadErr?.shortMessage || uploadErr?.reason || String(uploadErr)}` });
     }
 
     return res.status(200).json({
       success: true,
+      filename: file.originalFilename || 'file',
+      size: stat.size,
       rootHash,
       txHash,
-      filename: (fileField.originalFilename || 'file'),
-      size: stat.size,
-      metadata,
-      timestamp: new Date().toISOString(),
-      handler: 'vercel-function',
+      explorer: `https://chainscan-galileo.0g.ai/tx/${txHash}`,
     });
-  } catch (e: any) {
-    console.error('[upload] error:', e);
-    return res.status(500).json({ success: false, message: e?.message || 'Upload failed' });
+  } catch (err: any) {
+    console.error('[upload] Fatal error:', err);
+    return res.status(500).json({ success: false, message: err?.shortMessage || err?.reason || err?.message || String(err) });
   }
 }
 

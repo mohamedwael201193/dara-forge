@@ -50,7 +50,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
-    "ethers": "^6.8.0",
+    "ethers": "^6.13.2",
     "ethers5": "npm:ethers@^5.7.2",
     "formidable": "^3.5.0",
     "input-otp": "^1.4.2",
