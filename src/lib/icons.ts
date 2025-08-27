@@ -28,7 +28,8 @@ export {
   AlertCircle,
   ExternalLink,
   Wallet,
-  Copy
+  Copy,
+  FileText
 } from 'lucide-react';
 
 

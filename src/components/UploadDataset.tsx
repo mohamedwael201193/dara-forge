@@ -104,13 +104,13 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     setUploadProgress(0)
 
     try {
-      const uploadResults = []
+      const uploadResults: any[] = []
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         setCurrentStep(`Uploading ${file.name} to 0G Storage...`)
         
-        const result = await uploadBlobTo0GStorage(file, file.name, (progress) => {
+        const result = await uploadBlobTo0GStorage(file, file.name, (progress: any) => {
           const fileProgress = (i / files.length) * 100 + (progress / files.length)
           setUploadProgress(Math.min(90, fileProgress))
         })
@@ -142,7 +142,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       })
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' })
-      const manifestResult = await uploadBlobTo0GStorage(manifestBlob, 'manifest.json', (progress) => {
+      const manifestResult = await uploadBlobTo0GStorage(manifestBlob, 'manifest.json', (progress: any) => {
         setUploadProgress(90 + progress * 0.05)
       })
 
