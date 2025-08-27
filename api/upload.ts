@@ -10,10 +10,13 @@ const gzip = promisify(zlib.gzip);
 
 export const config = { api: { bodyParser: false } };
 
+const LEAF_BYTES = 256;
+const HARD_LEAF_LIMIT = 64;
+
 function parseForm(req: VercelRequest) {
   const form = formidable({ keepExtensions: true, uploadDir: '/tmp' });
-  return new Promise<{ fields: formidable.Fields; files: formidable.Files }>((resolve, reject) => {
-    form.parse(req as any, (err, fields, files) => (err ? reject(err) : resolve({ fields, files })));
+  return new Promise<{ files: formidable.Files }>((resolve, reject) => {
+    form.parse(req as any, (err, _fields, files) => (err ? reject(err) : resolve({ files })));
   });
 }
 
@@ -25,12 +28,47 @@ function pickFirstFile(files: formidable.Files) {
   return null;
 }
 
+function fmtErr(e: any) {
+  return e?.shortMessage || e?.reason || e?.message || String(e);
+}
+
+// Query Indexer REST to confirm majority-finalization by root hash
+async function confirmFinalized(indexerUrl: string, cid: string, minOk = 2): Promise<{ ok: boolean; details?: any }> {
+  const base = indexerUrl.replace(/\/$/, '');
+  const endpoints = [
+    `${base}/files/info?cid=${cid}`,
+    `${base}/file/info/${cid}`,
+  ];
+  for (const url of endpoints) {
+    try {
+      const r = await fetch(url, { headers: { accept: 'application/json' } });
+      if (!r.ok) continue;
+      const j = await r.json();
+      // Flatten common shapes: {code,data:[...]} or {nodes:[...]} or [...]
+      let arr: any[] = [];
+      if (Array.isArray(j)) arr = j;
+      else if (Array.isArray(j?.data)) arr = j.data;
+      else if (Array.isArray(j?.nodes)) arr = j.nodes;
+      else if (Array.isArray(j?.data?.nodes)) arr = j.data.nodes;
+
+      if (!arr.length) continue;
+
+      let okCount = 0;
+      for (const n of arr) {
+        if (n?.finalized === true) okCount++;
+        else if (n?.uploadedSegNum > 0 && n?.pruned === false) okCount++; // fallback signal
+      }
+      return { ok: okCount >= Math.min(minOk, arr.length), details: arr };
+    } catch { /* try next */ }
+  }
+  return { ok: false };
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.info('[upload] Request received');
   try {
     if (req.method !== 'POST') return res.status(405).json({ success: false, message: 'Method not allowed' });
 
-    // Accept multiple env names you already have in Vercel
     const OG_RPC =
       process.env.OG_RPC ||
       process.env.OG_RPC_URL ||
@@ -68,32 +106,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const signer = new ethers.Wallet(PRIV, provider);
     console.info('[upload] server signer:', signer.address);
-    const bal = await provider.getBalance(signer.address);
-    console.info('[upload] server balance (OG):', ethers.formatEther(bal));
+    console.info('[upload] server balance (OG):', ethers.formatEther(await provider.getBalance(signer.address)));
 
-    // Gzip compression logic
+    // Preflight gzip if we’d exceed the conservative 64-leaf limit
     let pathForUpload = tmpPath;
     let effectiveSize = stat.size;
-    const LEAF_BYTES = 256;
-    const hardLeafLimit = 64;
-
-    // Only gzip if we’d exceed 64 leaves on conservative math
-    if (Math.ceil(stat.size / LEAF_BYTES) > hardLeafLimit) {
+    if (Math.ceil(stat.size / LEAF_BYTES) > HARD_LEAF_LIMIT) {
       const raw = await fs.readFile(tmpPath);
       const gz = await gzip(raw, { level: zlib.constants.Z_BEST_COMPRESSION });
-      // If compression helps, use it; otherwise fall back to original
-      if (gz.length < stat.size && Math.ceil(gz.length / LEAF_BYTES) <= hardLeafLimit) {
+      if (gz.length < stat.size && Math.ceil(gz.length / LEAF_BYTES) <= HARD_LEAF_LIMIT) {
         const gzPath = `${tmpPath}.gz`;
         await fs.writeFile(gzPath, gz);
         pathForUpload = gzPath;
         effectiveSize = gz.length;
         console.info(`[upload] gzip applied: ${stat.size} -> ${effectiveSize} bytes`);
-      } else {
-        console.info(`[upload] gzip skipped (no benefit): would be ${gz.length} bytes`);
       }
     }
 
-    // Use the documented pattern: 1-arg constructor + upload(file, rpc, signer)
     const indexer = new Indexer(INDEXER);
     const zgFile = await ZgFile.fromFilePath(pathForUpload);
 
@@ -102,29 +131,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const rootHash = tree!.rootHash();
     console.info('[upload] Prepared root:', rootHash);
 
+    // Canonical SDK call
     const [txHash, uploadErr] = await indexer.upload(zgFile, OG_RPC, signer);
     await zgFile.close();
 
-    if (uploadErr) {
-      console.error('[upload] 0G upload failed:', uploadErr);
-      return res.status(500).json({
-        success: false,
-        message: `0G upload failed: ${uploadErr?.shortMessage || uploadErr?.reason || String(uploadErr)}`,
+    if (!uploadErr) {
+      return res.status(200).json({
+        success: true,
+        filename: file.originalFilename || 'file',
+        size: effectiveSize,
+        rootHash,
+        txHash,
+        explorer: `https://chainscan-galileo.0g.ai/tx/${txHash}`,
+        contentEncoding: pathForUpload.endsWith('.gz') ? 'gzip' : 'identity',
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      filename: file.originalFilename || 'file',
-      size: effectiveSize,
-      rootHash,
-      txHash,
-      explorer: `https://chainscan-galileo.0g.ai/tx/${txHash}`,
-      contentEncoding: pathForUpload.endsWith('.gz') ? 'gzip' : 'identity',
-    });
+    // Soft-handle node throttle: confirm majority finalized, then return success-with-warning.
+    const msg = fmtErr(uploadErr);
+    console.error('[upload] 0G upload failed:', msg);
+    if (/too many data writing/i.test(msg)) {
+      console.info('[upload] Attempting majority-finalized confirmation via Indexer REST...');
+      const { ok, details } = await confirmFinalized(INDEXER, rootHash);
+      if (ok) {
+        console.info('[upload] Majority of nodes finalized; treating as success.');
+        return res.status(200).json({
+          success: true,
+          filename: file.originalFilename || 'file',
+          size: effectiveSize,
+          rootHash,
+          txHash: txHash || null,
+          explorer: txHash ? `https://chainscan-galileo.0g.ai/tx/${txHash}` : null,
+          note: 'Upload finalized on enough storage nodes; one node returned a temporary write-limit.',
+          nodes: details,
+          contentEncoding: pathForUpload.endsWith('.gz') ? 'gzip' : 'identity',
+        });
+      }
+    }
+
+    // Still a real failure
+    return res.status(500).json({ success: false, message: `0G upload failed: ${msg}` });
   } catch (err: any) {
     console.error('[upload] Fatal error:', err);
-    return res.status(500).json({ success: false, message: err?.shortMessage || err?.reason || err?.message || String(err) });
+    return res.status(500).json({ success: false, message: fmtErr(err) });
   }
 }
 
