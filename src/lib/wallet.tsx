@@ -17,7 +17,7 @@ const metadata = {
 };
 
 // 3. Set the networks - create mutable array from readonly networks
-const networks = [...[mainnet, arbitrum]];
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [mainnet, arbitrum];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
