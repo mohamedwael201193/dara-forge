@@ -25,7 +25,7 @@ export function suppressNonCriticalErrors() {
     }
   }
 
-  // Suppress font preload warnings
+  // Suppress font preload warnings and other non-critical warnings
   const originalConsoleWarn = console.warn
   console.warn = (...args) => {
     const message = args.join(' ')
@@ -33,7 +33,8 @@ export function suppressNonCriticalErrors() {
     // Suppress font preload warnings
     if (message.includes('was preloaded using link preload but not used') ||
         message.includes('fonts.reown.com') ||
-        message.includes('KHTeka-Medium.woff2')) {
+        message.includes('KHTeka-Medium.woff2') ||
+        message.includes('The resource') && message.includes('was preloaded')) {
       return // Suppress these warnings
     }
     
@@ -41,18 +42,35 @@ export function suppressNonCriticalErrors() {
     originalConsoleWarn(...args)
   }
 
-  // Suppress storage cache warnings
+  // Suppress storage cache warnings and other non-critical logs
   const originalConsoleLog = console.log
   console.log = (...args) => {
     const message = args.join(' ')
     
     // Suppress cache discard messages
-    if (message.includes('Discarding cache for address eip155:')) {
+    if (message.includes('Discarding cache for address eip155:') ||
+        message.includes('StorageUtil.js') ||
+        message.includes('App component rendering')) {
       return // Suppress these logs
     }
     
     // Allow other logs through
     originalConsoleLog(...args)
+  }
+
+  // Suppress specific console.info messages
+  const originalConsoleInfo = console.info
+  console.info = (...args) => {
+    const message = args.join(' ')
+    
+    // Suppress non-critical info messages
+    if (message.includes('App component rendering') ||
+        message.includes('StorageUtil')) {
+      return // Suppress these info messages
+    }
+    
+    // Allow other info messages through
+    originalConsoleInfo(...args)
   }
 }
 
@@ -60,6 +78,16 @@ export function suppressNonCriticalErrors() {
 export function initializeErrorSuppression() {
   if (typeof window !== 'undefined') {
     suppressNonCriticalErrors()
+    
+    // Also suppress unhandled promise rejections for non-critical errors
+    window.addEventListener('unhandledrejection', (event) => {
+      const error = event.reason
+      if (error && error.message && 
+          (error.message.includes('coinbase.com') || 
+           error.message.includes('fonts.reown.com'))) {
+        event.preventDefault() // Prevent the error from being logged
+      }
+    })
   }
 }
 

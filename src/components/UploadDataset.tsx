@@ -12,6 +12,7 @@ import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2
 import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
+import { formatEther } from 'viem'
 import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
@@ -66,6 +67,26 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         open({ view: 'Networks', namespace: 'eip155' }); 
         return; 
       }
+    }
+
+    // Check if user has sufficient balance for gas fees
+    try {
+      const signer = await requireEthersSigner();
+      if (!address) {
+        setError("Wallet address not found. Please reconnect your wallet.");
+        return;
+      }
+      const balance = await signer.provider.getBalance(address);
+      const balanceInEther = parseFloat(formatEther(balance));
+      
+      // Require at least 0.001 OG for gas fees
+      if (balanceInEther < 0.001) {
+        setError(`Insufficient balance for gas fees. You have ${balanceInEther.toFixed(4)} OG, but need at least 0.001 OG. Please get testnet tokens from a faucet.`);
+        return;
+      }
+    } catch (error) {
+      setError("Failed to check wallet balance. Please ensure you're connected to 0G Chain.");
+      return;
     }
 
     setUploading(true)
