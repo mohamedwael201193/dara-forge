@@ -7,8 +7,12 @@ import './index.css';
 // The WalletConnect component will handle wallet connections directly with window.ethereum
 
 import { WalletProviders } from './lib/wallet'
+import { initializeErrorSuppression } from './utils/errorSuppression'
 
 import ErrorBoundary from './components/ErrorBoundary';
+
+// Initialize error suppression for non-critical console errors
+initializeErrorSuppression()
 
 createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

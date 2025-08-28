@@ -12,11 +12,13 @@ export const WalletStatus: React.FC = () => {
     chainId,
     isOnZeroGChain,
     balance,
+    actualBalance,
     balanceLoading,
     isLoading,
     switchToZeroGChain,
     refetchBalance,
-    zeroGChainId
+    zeroGChainId,
+    hasError
   } = useWalletBalance()
 
   if (!isConnected) {
@@ -103,7 +105,7 @@ export const WalletStatus: React.FC = () => {
               variant="ghost"
               size="sm"
               onClick={() => refetchBalance()}
-              disabled={balanceLoading}
+              disabled={balanceLoading || !isOnZeroGChain}
             >
               <RefreshCw className={`w-3 h-3 ${balanceLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -112,23 +114,39 @@ export const WalletStatus: React.FC = () => {
           <div className="bg-muted p-3 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold">
-                {balanceLoading ? (
+                {!isOnZeroGChain ? (
+                  <div className="flex items-center gap-2 text-yellow-600">
+                    <AlertTriangle className="w-4 h-4" />
+                    Switch to 0G Chain
+                  </div>
+                ) : balanceLoading ? (
                   <div className="flex items-center gap-2">
                     <RefreshCw className="w-4 h-4 animate-spin" />
                     Loading...
+                  </div>
+                ) : hasError ? (
+                  <div className="flex items-center gap-2 text-red-600">
+                    <AlertTriangle className="w-4 h-4" />
+                    Error fetching balance
                   </div>
                 ) : (
                   `${balance} OG`
                 )}
               </span>
-              {isOnZeroGChain && (
+              {isOnZeroGChain && !hasError && (
                 <CheckCircle className="w-4 h-4 text-green-500" />
               )}
             </div>
             
             {!isOnZeroGChain && (
               <p className="text-xs text-muted-foreground mt-1">
-                Switch to 0G Chain to view balance
+                Connect to 0G Chain (ID: {zeroGChainId}) to view your balance
+              </p>
+            )}
+            
+            {isOnZeroGChain && actualBalance === '0.0000' && !balanceLoading && (
+              <p className="text-xs text-muted-foreground mt-1">
+                This wallet has no 0G tokens. Visit a faucet to get testnet tokens.
               </p>
             )}
           </div>
@@ -138,7 +156,8 @@ export const WalletStatus: React.FC = () => {
         <div className="text-xs text-muted-foreground space-y-1">
           <p><strong>0G Chain ID:</strong> {zeroGChainId}</p>
           <p><strong>Current Chain:</strong> {chainId}</p>
-          <p><strong>RPC:</strong> https://16601.rpc.thirdweb.com</p>
+          <p><strong>Status:</strong> {isOnZeroGChain ? '✅ Correct Network' : '❌ Wrong Network'}</p>
+          <p><strong>RPC:</strong> evmrpc-testnet.0g.ai</p>
           <p><strong>Explorer:</strong> chainscan-galileo.0g.ai</p>
         </div>
       </CardContent>
