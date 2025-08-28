@@ -34,7 +34,8 @@ export function suppressNonCriticalErrors() {
     if (message.includes('was preloaded using link preload but not used') ||
         message.includes('fonts.reown.com') ||
         message.includes('KHTeka-Medium.woff2') ||
-        message.includes('The resource') && message.includes('was preloaded')) {
+        (message.includes('The resource') && message.includes('was preloaded')) ||
+        message.includes('A preload for') && message.includes('is found, but is not used')) {
       return // Suppress these warnings
     }
     
@@ -123,14 +124,8 @@ export function initializeErrorSuppression() {
           event.preventDefault() // Prevent the error from being logged
         }
       }
-      
-      // Suppress React error #321 and other React context errors
-      if (event.error && event.error.message && 
-          (event.error.message.includes('Minified React error #321') ||
-           event.error.message.includes('useContext'))) {
-        event.preventDefault() // Prevent the error from being logged
-      }
     })
   }
 }
+
 
