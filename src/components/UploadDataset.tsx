@@ -55,8 +55,6 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       return
     }
 
-    const { balance: ogBalance, isOnZeroGChain, switchToZeroGChain, isLoading: isSwitchingChain } = useWalletBalance();
-
     if (!isConnected) {
       await open({ view: 'Connect', namespace: 'eip155' });
       return;

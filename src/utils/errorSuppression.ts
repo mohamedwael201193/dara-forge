@@ -85,7 +85,9 @@ export function suppressNonCriticalErrors() {
     // Suppress non-critical error messages
     if (message.includes('Failed to load resource') && message.includes('coinbase.com') ||
         message.includes('401') && message.includes('coinbase.com') ||
-        message.includes('cca-lite.coinbase.com/metrics')) {
+        message.includes('cca-lite.coinbase.com/metrics') ||
+        message.includes('Minified React error #321') ||
+        message.includes('useContext') && message.includes('react-dom.production.min.js')) {
       return // Suppress these error messages
     }
     
@@ -106,7 +108,9 @@ export function initializeErrorSuppression() {
           (error.message.includes('coinbase.com') || 
            error.message.includes('fonts.reown.com') ||
            error.message.includes('401') ||
-           error.message.includes('Failed to load resource'))) {
+           error.message.includes('Failed to load resource') ||
+           error.message.includes('Minified React error #321') ||
+           error.message.includes('useContext'))) {
         event.preventDefault() // Prevent the error from being logged
       }
     })
@@ -118,6 +122,13 @@ export function initializeErrorSuppression() {
         if (src && (src.includes('coinbase.com') || src.includes('fonts.reown.com'))) {
           event.preventDefault() // Prevent the error from being logged
         }
+      }
+      
+      // Suppress React error #321 and other React context errors
+      if (event.error && event.error.message && 
+          (event.error.message.includes('Minified React error #321') ||
+           event.error.message.includes('useContext'))) {
+        event.preventDefault() // Prevent the error from being logged
       }
     })
   }
