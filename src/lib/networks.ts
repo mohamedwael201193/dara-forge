@@ -8,9 +8,7 @@ export const ogGalileo = defineChain({
   name: '0G-Galileo-Testnet',
   nativeCurrency: { name: 'OG', symbol: 'OG', decimals: 18 },
   rpcUrls: {
-    default: {
-      http: [import.meta.env.VITE_OG_RPC ?? 'https://16601.rpc.thirdweb.com/']
-    }
+    default: { http: [import.meta.env.VITE_OG_RPC ?? 'https://16601.rpc.thirdweb.com/'] }
   },
   blockExplorers: {
     default: {

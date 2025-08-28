@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { useAppKitAccount } from '@reown/appkit/react'
+import { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react'
+import { ogGalileo } from '@/lib/networks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -9,14 +10,16 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons"
 import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
-import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
+import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
 
 export const UploadDataset: React.FC<UploadDatasetProps> = () => {
+  const { open } = useAppKit()
   const { address, isConnected } = useAppKitAccount()
+  const { chainId, switchNetwork } = useAppKitNetwork()
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])
@@ -51,9 +54,18 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       return
     }
 
-    if (!isConnected || !address) {
-      setError("Please connect your wallet first")
-      return
+    if (!isConnected) {
+      await open({ view: 'Connect', namespace: 'eip155' });
+      return;
+    }
+    
+    if (chainId !== ogGalileo.id) {
+      try { 
+        await switchNetwork(ogGalileo); 
+      } catch { 
+        open({ view: 'Networks', namespace: 'eip155' }); 
+        return; 
+      }
     }
 
     setUploading(true)
@@ -106,7 +118,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
       // Anchor on blockchain
       setCurrentStep("Anchoring on 0G Chain...")
-      const signer = await getSigner()
+      const signer = await requireEthersSigner()
       const contract = getDaraContract(signer)
       const tx = await contract.logData(manifestResult.rootHash)
       const receipt = await tx.wait()

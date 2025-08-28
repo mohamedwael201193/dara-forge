@@ -1,19 +1,18 @@
 // src/components/ConnectWalletButton.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
 import { ogGalileo } from '@/lib/networks';
 import { getWalletClient } from '@wagmi/core';
 import { wagmiConfig } from '@/lib/wallet';
 import { useBalance } from 'wagmi';
-import { Wallet, User } from '@/lib/icons';
+import { formatEther } from 'viem';
 
 async function addGalileoIfMissing() {
-  const client = await getWalletClient(wagmiConfig);
-  if (!client) return;
+  const wc = await getWalletClient(wagmiConfig);
+  if (!wc) return;
   try {
-    await client.request({
+    await wc.transport.request({
       method: 'wallet_addEthereumChain',
       params: [{
         chainId: '0x40D9', // 16601
@@ -26,14 +25,14 @@ async function addGalileoIfMissing() {
   } catch {}
 }
 
-const ConnectWalletButton: React.FC = () => {
+export default function ConnectWalletButton() {
   const { open } = useAppKit();
   const { isConnected, address } = useAppKitAccount();
   const { chainId, switchNetwork } = useAppKitNetwork();
-  const [balanceDisplay, setBalanceDisplay] = React.useState<string | null>(null);
+  const [balance, setBalance] = React.useState<string | null>(null);
 
-  // Get balance using wagmi hook for the connected user on Galileo
-  const { data: balance } = useBalance({
+  // Use wagmi's useBalance hook
+  const { data: balanceData } = useBalance({
     address: address as `0x${string}` | undefined,
     chainId: ogGalileo.id,
     query: {
@@ -44,76 +43,35 @@ const ConnectWalletButton: React.FC = () => {
 
   React.useEffect(() => {
     (async () => {
-      if (!isConnected) { 
-        setBalanceDisplay(null); 
-        return; 
-      }
+      if (!isConnected) { setBalance(null); return; }
 
-      // Auto-switch to Galileo; if wallet doesn't know it, add then switch
       if (chainId !== ogGalileo.id) {
         try {
           await switchNetwork(ogGalileo);
         } catch {
           await addGalileoIfMissing();
-          try { 
-            await switchNetwork(ogGalileo); 
-          } catch { 
-            open({ view: 'Networks' }); 
-          }
+          try { await switchNetwork(ogGalileo); }
+          catch { open({ view: 'Networks', namespace: 'eip155' }); }
         }
       }
+
+      if (balanceData && chainId === ogGalileo.id) {
+        const formatted = formatEther(balanceData.value);
+        const truncated = parseFloat(formatted).toFixed(4);
+        setBalance(`${truncated} ${balanceData.symbol}`);
+      } else {
+        setBalance(null);
+      }
     })();
-  }, [isConnected, chainId, switchNetwork, open]);
+  }, [isConnected, chainId, switchNetwork, open, balanceData]);
 
-  // Update balance display when balance data changes
-  React.useEffect(() => {
-    if (balance && chainId === ogGalileo.id) {
-      const formatted = parseFloat(balance.formatted).toFixed(4);
-      setBalanceDisplay(`${formatted} ${balance.symbol}`);
-    } else {
-      setBalanceDisplay(null);
-    }
-  }, [balance, chainId]);
-
-  const formatAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
-
-  if (isConnected && address) {
+  if (isConnected) {
     return (
-      <div className="flex items-center gap-3">
-        <Badge className={`px-3 py-1 ${
-          chainId === ogGalileo.id 
-            ? 'bg-green-500/20 text-green-300 border-green-500/30' 
-            : 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30'
-        }`}>
-          <div className={`w-2 h-2 rounded-full mr-2 animate-pulse ${
-            chainId === ogGalileo.id ? 'bg-green-400' : 'bg-yellow-400'
-          }`}></div>
-          {chainId === ogGalileo.id ? 'Connected to 0G' : 'Wrong Network'}
-        </Badge>
-        <Button
-          onClick={() => open()}
-          className="bg-slate-700 hover:bg-slate-600 text-white border border-slate-600 px-4 py-2 rounded-lg flex items-center gap-2"
-        >
-          <User className="w-4 h-4" />
-          {formatAddress(address)}
-          {balanceDisplay && <span className="text-xs opacity-75">· {balanceDisplay}</span>}
-        </Button>
-      </div>
+      <Button variant="outline" onClick={() => open({ view: 'Account', namespace: 'eip155' })}>
+        {address?.slice(0, 6)}…{address?.slice(-4)} {balance ? `· ${balance}` : ''}
+      </Button>
     );
   }
-
-  return (
-    <Button
-      onClick={() => open()}
-      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg flex items-center gap-2 font-medium transition-colors"
-    >
-      <Wallet className="w-4 h-4" />
-      Connect Wallet
-    </Button>
-  );
-};
-
-export default ConnectWalletButton;
+  return <Button onClick={() => open({ view: 'Connect', namespace: 'eip155' })}>Connect Wallet</Button>;
+}
 
