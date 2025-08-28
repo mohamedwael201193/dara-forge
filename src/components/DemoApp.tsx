@@ -1,5 +1,6 @@
 import React from 'react';
 import ConnectWalletButton from '@/components/ConnectWalletButton';
+import { WalletStatus } from '@/components/WalletStatus';
 import { UploadDataset } from './UploadDataset'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -121,82 +122,51 @@ export const DemoApp: React.FC = () => {
 
               <TabsContent value="status" className="space-y-6">
                 <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-white mb-2">Network & Service Status</h2>
+                  <h2 className="text-2xl font-bold text-white mb-2">Wallet & Network Status</h2>
                   <p className="text-slate-300 max-w-2xl mx-auto">
-                    Monitor the status of all integrated services and networks. 
-                    Track the health and availability of 0G Storage, blockchain networks, and DARA services.
+                    Monitor your wallet connection, 0G balance, and network status. Ensure you're connected to the correct 0G Chain for optimal functionality.
                   </p>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[
-                    {
-                      title: "0G Storage Network",
-                      status: "Online & Ready",
-                      description: "Decentralized storage network operating normally",
-                      icon: Globe,
-                      color: "green",
-                      metrics: ["Uptime: 99.9%", "Nodes: 1,247", "Capacity: 2.4 PB"]
-                    },
-                    {
-                      title: "0G Galileo Chain",
-                      status: "Testnet Active",
-                      description: "Blockchain network for immutable data anchoring",
-                      icon: Link,
-                      color: "blue",
-                      metrics: ["Block Height: 2,847,392", "TPS: 1,000+", "Validators: 100"]
-                    },
-                    {
-                      title: "DARA Smart Contract",
-                      status: "Deployed & Verified",
-                      description: "Smart contract for dataset registration and verification",
-                      icon: Shield,
-                      color: "purple",
-                      metrics: ["Version: 1.2.0", "Datasets: 15,847", "Verifications: 98,234"]
-                    }
-                  ].map((service, index) => (
-                    <Card key={index} className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                      <CardContent className="p-6 text-center space-y-4">
-                        <div className={`w-16 h-16 mx-auto rounded-2xl bg-${service.color}-500/20 flex items-center justify-center border border-${service.color}-500/30`}>
-                          <service.icon className={`w-8 h-8 text-${service.color}-400`} />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <WalletStatus />
+                  
+                  <Card className="bg-slate-800 border-slate-700">
+                    <CardHeader>
+                      <CardTitle className="text-white flex items-center gap-2">
+                        <Network className="w-5 h-5" />
+                        Network Information
+                      </CardTitle>
+                      <CardDescription className="text-slate-300">
+                        0G Galileo Testnet details and status
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-slate-400 mb-1">Chain ID</p>
+                          <p className="text-white font-mono">16601</p>
                         </div>
                         <div>
-                          <h3 className="font-semibold text-white mb-1">{service.title}</h3>
-                          <Badge className={`bg-${service.color}-500/20 text-${service.color}-300 border-${service.color}-500/30 mb-2`}>
-                            {service.status}
-                          </Badge>
-                          <p className="text-sm text-slate-300 mb-3">{service.description}</p>
-                          <div className="space-y-1">
-                            {service.metrics.map((metric, i) => (
-                              <div key={i} className="text-xs text-slate-400">{metric}</div>
-                            ))}
-                          </div>
+                          <p className="text-slate-400 mb-1">Currency</p>
+                          <p className="text-white font-mono">OG</p>
                         </div>
-                        <div className="flex items-center justify-center gap-2">
-                          <div className={`w-2 h-2 rounded-full bg-${service.color}-400 animate-pulse`}></div>
-                          <span className="text-xs text-slate-400">Active</span>
+                        <div>
+                          <p className="text-slate-400 mb-1">RPC Endpoint</p>
+                          <p className="text-white font-mono text-xs">evmrpc-testnet.0g.ai</p>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Additional Network Information */}
-                <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-white">
-                      <Network className="w-5 h-5 text-blue-400" />
-                      Integration Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <h4 className="font-semibold text-white mb-3">Supported Networks</h4>
+                        <div>
+                          <p className="text-slate-400 mb-1">Explorer</p>
+                          <p className="text-white font-mono text-xs">chainscan-galileo.0g.ai</p>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-slate-700 pt-4">
+                        <h4 className="font-semibold text-white mb-3">Network Services</h4>
                         <div className="space-y-2">
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
-                            <span className="text-sm text-slate-300">0G Galileo Testnet (Chain ID: 16601)</span>
+                            <span className="text-sm text-slate-300">0G Chain (Blockchain)</span>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
@@ -204,34 +174,39 @@ export const DemoApp: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
-                            <span className="text-sm text-slate-300">IPFS Gateway Integration</span>
+                            <span className="text-sm text-slate-300">0G Compute Network</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
+                            <span className="text-sm text-slate-300">0G DA Layer</span>
                           </div>
                         </div>
                       </div>
-                      <div>
+                      
+                      <div className="border-t border-slate-700 pt-4">
                         <h4 className="font-semibold text-white mb-3">Platform Features</h4>
                         <div className="space-y-2">
                           <div className="flex items-center gap-3">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-sm text-slate-300">Cryptographic Proof Generation</span>
+                            <span className="text-sm text-slate-300">Real-time Balance Display</span>
                           </div>
                           <div className="flex items-center gap-3">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-sm text-slate-300">Blockchain Data Anchoring</span>
+                            <span className="text-sm text-slate-300">Network Auto-Detection</span>
                           </div>
                           <div className="flex items-center gap-3">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-sm text-slate-300">AI-Powered Analysis</span>
+                            <span className="text-sm text-slate-300">Chain Switching Support</span>
                           </div>
                           <div className="flex items-center gap-3">
                             <CheckCircle className="w-4 h-4 text-green-400" />
-                            <span className="text-sm text-slate-300">Decentralized Publishing</span>
+                            <span className="text-sm text-slate-300">Multi-Wallet Compatibility</span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    </CardContent>
+                  </Card>
+                </div>
               </TabsContent>
             </div>
           </Tabs>

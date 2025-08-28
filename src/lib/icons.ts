@@ -30,7 +30,8 @@ export {
   Wallet,
   Copy,
   FileText,
-  User
+  User,
+  RefreshCw
 } from 'lucide-react';
 
 

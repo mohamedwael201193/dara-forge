@@ -16,10 +16,16 @@ const zeroGGalileoTestnet: Chain = {
   },
   rpcUrls: {
     default: {
-      http: ['https://16601.rpc.thirdweb.com'],
+      http: [
+        'https://evmrpc-testnet.0g.ai/',
+        'https://16601.rpc.thirdweb.com'
+      ],
     },
     public: {
-      http: ['https://16601.rpc.thirdweb.com'],
+      http: [
+        'https://evmrpc-testnet.0g.ai/',
+        'https://16601.rpc.thirdweb.com'
+      ],
     },
   },
   blockExplorers: {
