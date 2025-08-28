@@ -47,10 +47,12 @@ export function suppressNonCriticalErrors() {
   console.log = (...args) => {
     const message = args.join(' ')
     
-    // Suppress cache discard messages
+    // Suppress cache discard messages and other non-critical logs
     if (message.includes('Discarding cache for address eip155:') ||
         message.includes('StorageUtil.js') ||
-        message.includes('App component rendering')) {
+        message.includes('App component rendering') ||
+        message.includes('cache for address') ||
+        message.includes('Discarding cache')) {
       return // Suppress these logs
     }
     
@@ -65,12 +67,30 @@ export function suppressNonCriticalErrors() {
     
     // Suppress non-critical info messages
     if (message.includes('App component rendering') ||
-        message.includes('StorageUtil')) {
+        message.includes('StorageUtil') ||
+        message.includes('cache for address') ||
+        message.includes('Discarding cache')) {
       return // Suppress these info messages
     }
     
     // Allow other info messages through
     originalConsoleInfo(...args)
+  }
+
+  // Suppress specific console.error messages for non-critical errors
+  const originalConsoleError = console.error
+  console.error = (...args) => {
+    const message = args.join(' ')
+    
+    // Suppress non-critical error messages
+    if (message.includes('Failed to load resource') && message.includes('coinbase.com') ||
+        message.includes('401') && message.includes('coinbase.com') ||
+        message.includes('cca-lite.coinbase.com/metrics')) {
+      return // Suppress these error messages
+    }
+    
+    // Allow other error messages through
+    originalConsoleError(...args)
   }
 }
 
@@ -84,8 +104,20 @@ export function initializeErrorSuppression() {
       const error = event.reason
       if (error && error.message && 
           (error.message.includes('coinbase.com') || 
-           error.message.includes('fonts.reown.com'))) {
+           error.message.includes('fonts.reown.com') ||
+           error.message.includes('401') ||
+           error.message.includes('Failed to load resource'))) {
         event.preventDefault() // Prevent the error from being logged
+      }
+    })
+
+    // Suppress resource loading errors for non-critical resources
+    window.addEventListener('error', (event) => {
+      if (event.target && event.target instanceof HTMLElement) {
+        const src = (event.target as any).src || (event.target as any).href
+        if (src && (src.includes('coinbase.com') || src.includes('fonts.reown.com'))) {
+          event.preventDefault() // Prevent the error from being logged
+        }
       }
     })
   }

@@ -17,38 +17,45 @@ export function useWalletBalance() {
     setIsOnZeroGChain(currentChainId === ZERO_G_CHAIN_ID)
   }, [currentChainId])
 
-  // Get balance from 0G Chain ONLY when connected to the correct chain
-  // Use a unique query key to prevent cache conflicts
+  // Get balance from 0G Chain ONLY when connected to the correct chain AND address
   const { data: balance, isLoading: balanceLoading, refetch: refetchBalance, error } = useBalance({
     address,
     chainId: ZERO_G_CHAIN_ID,
     query: {
+      // Only fetch when ALL conditions are met:
+      // 1. Wallet is connected
+      // 2. Address exists
+      // 3. Currently on 0G Chain (prevents cross-chain balance pollution)
       enabled: isConnected && !!address && currentChainId === ZERO_G_CHAIN_ID,
       refetchInterval: isOnZeroGChain ? 10000 : false,
       retry: false,
-      // Force fresh data when switching chains
+      // Force fresh data when switching chains or addresses
       staleTime: 0,
       gcTime: 0, // Don't cache balance data
     }
   })
 
-  // Format balance display - only when we have valid data from correct chain
+  // Format balance display - STRICT validation
   useEffect(() => {
+    // Reset to zero immediately when not on correct chain
     if (currentChainId !== ZERO_G_CHAIN_ID) {
-      // Always show 0 when not on correct chain
       setBalanceDisplay('0.0000')
       return
     }
 
-    if (balance && currentChainId === ZERO_G_CHAIN_ID) {
+    // Only show balance when we have valid data AND we're on the correct chain
+    if (balance && currentChainId === ZERO_G_CHAIN_ID && isConnected && address) {
       const formatted = formatEther(balance.value)
       const truncated = parseFloat(formatted).toFixed(4)
       setBalanceDisplay(truncated)
-    } else if (currentChainId === ZERO_G_CHAIN_ID && !balanceLoading) {
-      // On correct chain but no balance data and not loading
+    } else if (currentChainId === ZERO_G_CHAIN_ID && !balanceLoading && isConnected && address) {
+      // On correct chain, not loading, connected, but no balance data = zero balance
+      setBalanceDisplay('0.0000')
+    } else {
+      // Any other state = show zero
       setBalanceDisplay('0.0000')
     }
-  }, [balance, currentChainId, balanceLoading])
+  }, [balance, currentChainId, balanceLoading, isConnected, address])
 
   // Handle balance fetch errors
   useEffect(() => {
