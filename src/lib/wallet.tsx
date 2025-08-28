@@ -1,43 +1,10 @@
 import React from 'react';
 import { createAppKit } from '@reown/appkit/react';
 import { WagmiProvider } from 'wagmi';
-import { arbitrum, mainnet, type AppKitNetwork } from '@reown/appkit/networks';
-import { Chain } from 'wagmi/chains';
+import { type AppKitNetwork } from '@reown/appkit/networks';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
-
-const zeroGGalileoTestnet: Chain = {
-  id: 16601,
-  name: '0G-Galileo-Testnet',
-  nativeCurrency: {
-    decimals: 18,
-    name: '0G',
-    symbol: 'OG',
-  },
-  rpcUrls: {
-    default: {
-      http: [
-        'https://evmrpc-testnet.0g.ai/',
-        'https://rpc.0g.ai/', // Added new RPC
-        'https://16601.rpc.thirdweb.com' // Keep thirdweb as backup
-      ],
-    },
-    public: {
-      http: [
-        'https://evmrpc-testnet.0g.ai/',
-        'https://rpc.0g.ai/', // Added new RPC
-        'https://16601.rpc.thirdweb.com' // Keep thirdweb as backup
-      ],
-    },
-  },
-  blockExplorers: {
-    default: {
-      name: '0G Chainscan',
-      url: 'https://chainscan-galileo.0g.ai',
-    },
-  },
-  testnet: true,
-};
+import { ogGalileo } from './networks';
 
 // 1. Get projectId from https://cloud.reown.com
 const projectId = import.meta.env.VITE_WC_PROJECT_ID || 'your-project-id';
@@ -50,8 +17,8 @@ const metadata = {
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 };
 
-// 3. Set the networks - create mutable array from readonly networks
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [zeroGGalileoTestnet, mainnet, arbitrum];
+// 3. Set the networks - ONLY 0G Galileo Testnet
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [ogGalileo];
 
 // 4. Create Wagmi Adapter
 const wagmiAdapter = new WagmiAdapter({
@@ -66,6 +33,7 @@ const modal = createAppKit({
   networks,
   projectId,
   metadata,
+  defaultNetwork: ogGalileo,
   features: {
     analytics: true, // Optional - defaults to your Cloud configuration
   }

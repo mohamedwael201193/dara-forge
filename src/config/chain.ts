@@ -1,21 +1,21 @@
 // 0G Galileo Testnet Configuration
 export const CHAIN_CONFIG = {
   // Chain Details
-  chainId: 16600,
-  name: "0G Galileo Testnet",
+  chainId: 16601, // Updated to Galileo
+  name: "0G-Galileo-Testnet",
   nativeCurrency: {
-    name: "0G",
-    symbol: "0G",
+    name: "OG",
+    symbol: "OG",
     decimals: 18,
   },
   
   // RPC Endpoints
   rpcUrls: {
     default: {
-      http: [process.env.VITE_OG_RPC || "https://evmrpc-testnet.0g.ai/"],
+      http: [process.env.VITE_OG_RPC || "https://16601.rpc.thirdweb.com/"],
     },
     public: {
-      http: [process.env.VITE_OG_RPC || "https://evmrpc-testnet.0g.ai/"],
+      http: [process.env.VITE_OG_RPC || "https://16601.rpc.thirdweb.com/"],
     },
     alt: {
       http: [process.env.VITE_OG_RPC_ALT || "https://16601.rpc.thirdweb.com/"],
@@ -25,7 +25,7 @@ export const CHAIN_CONFIG = {
   // Block Explorers
   blockExplorers: {
     default: {
-      name: "0G ChainScan",
+      name: "ChainScan",
       url: process.env.VITE_OG_EXPLORER || "https://chainscan-galileo.0g.ai",
     },
   },
@@ -46,11 +46,11 @@ export const CHAIN_CONFIG = {
     projectId: process.env.VITE_WC_PROJECT_ID || "383710c855108ec5713394a649cb6eea",
   },
   
-  // Server Configuration (for API routes)
+  // Server Configuration (for API routes only - never used in client)
   server: {
     rpcUrl: "https://evmrpc-testnet.0g.ai/",
     indexer: "https://indexer-storage-testnet-turbo.0g.ai",
-    // Private key is accessed via process.env.OG_STORAGE_PRIVATE_KEY in server-only code
+    // Private keys are only accessed in server-side API routes, never in client
   }
 } as const;
 
