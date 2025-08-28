@@ -12,7 +12,6 @@ export const WalletStatus: React.FC = () => {
     chainId,
     isOnZeroGChain,
     balance,
-    actualBalance,
     balanceLoading,
     isLoading,
     switchToZeroGChain,
@@ -144,7 +143,7 @@ export const WalletStatus: React.FC = () => {
               </p>
             )}
             
-            {isOnZeroGChain && actualBalance === '0.0000' && !balanceLoading && (
+            {isOnZeroGChain && balance === '0.0000' && !balanceLoading && (
               <p className="text-xs text-muted-foreground mt-1">
                 This wallet has no 0G tokens. Visit a faucet to get testnet tokens.
               </p>

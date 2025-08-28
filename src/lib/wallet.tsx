@@ -18,13 +18,15 @@ const zeroGGalileoTestnet: Chain = {
     default: {
       http: [
         'https://evmrpc-testnet.0g.ai/',
-        'https://16601.rpc.thirdweb.com'
+        'https://rpc.0g.ai/', // Added new RPC
+        'https://16601.rpc.thirdweb.com' // Keep thirdweb as backup
       ],
     },
     public: {
       http: [
         'https://evmrpc-testnet.0g.ai/',
-        'https://16601.rpc.thirdweb.com'
+        'https://rpc.0g.ai/', // Added new RPC
+        'https://16601.rpc.thirdweb.com' // Keep thirdweb as backup
       ],
     },
   },
