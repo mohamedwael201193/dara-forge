@@ -9,11 +9,23 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons"
+import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2, Brain } from "@/lib/icons"
 import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
+import { ComputeJobManager } from './compute/ComputeJobManager'
+import { ResearchStatus } from '../contracts/DaraResearch'
 import ConnectWalletButton from './ConnectWalletButton'
+
+interface UploadedDataset {
+  id: number;
+  name: string;
+  size: string;
+  uploadDate: string;
+  datasetRoot: string;
+  status: ResearchStatus;
+  computeJobId?: string;
+}
 
 interface UploadDatasetProps {}
 
@@ -24,6 +36,8 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])
+  const [uploadedDatasets, setUploadedDatasets] = useState<UploadedDataset[]>([])
+  const [selectedDataset, setSelectedDataset] = useState<UploadedDataset | null>(null)
   const [datasetTitle, setDatasetTitle] = useState("")
   const [datasetDescription, setDatasetDescription] = useState("")
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -43,6 +57,38 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       console.error('Failed to copy:', err)
     }
   }
+
+  const handleJobCompleted = (jobId: string, outputRoot: string) => {
+    setUploadedDatasets(prev => 
+      prev.map(dataset => 
+        dataset.id === selectedDataset?.id 
+          ? { ...dataset, status: ResearchStatus.Analyzed, computeJobId: jobId }
+          : dataset
+      )
+    );
+    
+    if (selectedDataset) {
+      setSelectedDataset(prev => prev ? { ...prev, status: ResearchStatus.Analyzed, computeJobId: jobId } : null);
+    }
+  };
+
+  const getStatusBadge = (status: ResearchStatus) => {
+    const statusConfig = {
+      [ResearchStatus.Uploaded]: { color: 'bg-blue-500/20 text-blue-300 border-blue-500/30', text: 'Uploaded' },
+      [ResearchStatus.Processing]: { color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30', text: 'Processing' },
+      [ResearchStatus.Analyzed]: { color: 'bg-green-500/20 text-green-300 border-green-500/30', text: 'Analyzed' },
+      [ResearchStatus.Published]: { color: 'bg-purple-500/20 text-purple-300 border-purple-500/30', text: 'Published' },
+      [ResearchStatus.Verified]: { color: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30', text: 'Verified' },
+      [ResearchStatus.INFTCreated]: { color: 'bg-pink-500/20 text-pink-300 border-pink-500/30', text: 'INFT Created' }
+    };
+
+    const config = statusConfig[status];
+    return (
+      <Badge className={config.color}>
+        {config.text}
+      </Badge>
+    );
+  };
 
   const handleUpload = async () => {
     if (!files || files.length === 0) {
@@ -136,7 +182,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
 
-      setResults([
+      const finalResults = [
         ...uploadResults,
         {
           file: 'manifest.json',
@@ -148,7 +194,21 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           isManifest: true,
           blockchainTx: txHash
         }
-      ])
+      ]
+
+      setResults(finalResults)
+
+      // Add to uploaded datasets for compute processing
+      const newDataset: UploadedDataset = {
+        id: Date.now(),
+        name: datasetTitle,
+        size: (Array.from(files).reduce((total, file) => total + file.size, 0) / (1024 * 1024)).toFixed(2) + ' MB',
+        uploadDate: new Date().toLocaleDateString(),
+        datasetRoot: manifestResult.rootHash,
+        status: ResearchStatus.Uploaded
+      };
+
+      setUploadedDatasets(prev => [...prev, newDataset]);
 
     } catch (err: any) {
       setError(`Upload failed: ${err.message || 'Unknown error'}`)
@@ -304,6 +364,77 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         </CardContent>
       </Card>
 
+      {/* Uploaded Datasets */}
+      {uploadedDatasets.length > 0 && (
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <FileText className="w-5 h-5 text-blue-400" />
+              Your Research Datasets
+            </CardTitle>
+            <CardDescription className="text-slate-300">
+              Select a dataset to run 0G Compute jobs
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {uploadedDatasets.map((dataset) => (
+                <div
+                  key={dataset.id}
+                  className={`p-4 rounded-lg border cursor-pointer transition-colors ${
+                    selectedDataset?.id === dataset.id 
+                      ? 'border-blue-500 bg-blue-500/10' 
+                      : 'border-slate-600 hover:border-slate-500 bg-slate-700/30'
+                  }`}
+                  onClick={() => setSelectedDataset(dataset)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FileText className="w-5 h-5 text-blue-400" />
+                      <div>
+                        <h4 className="font-medium text-white">{dataset.name}</h4>
+                        <p className="text-sm text-slate-400">
+                          {dataset.size} • Uploaded {dataset.uploadDate} • ID: {dataset.id}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(dataset.status)}
+                      {selectedDataset?.id === dataset.id && (
+                        <CheckCircle className="w-5 h-5 text-blue-400" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Compute Job Manager */}
+      {selectedDataset && (
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-white">
+              <Brain className="w-5 h-5 text-purple-400" />
+              0G Compute Jobs - {selectedDataset.name}
+            </CardTitle>
+            <CardDescription className="text-slate-300">
+              Submit AI analysis and processing jobs to 0G Compute Network
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ComputeJobManager
+              tokenId={selectedDataset.id}
+              datasetRoot={selectedDataset.datasetRoot}
+              currentStatus={selectedDataset.status}
+              onJobCompleted={handleJobCompleted}
+            />
+          </CardContent>
+        </Card>
+      )}
+
       {/* Results */}
       {results.length > 0 && (
         <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
@@ -403,7 +534,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
-                      Gateway
+                      View
                     </Button>
                     <Button
                       size="sm"
@@ -411,8 +542,8 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                       onClick={() => window.open(result.downloadUrl, '_blank')}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
-                      <ExternalLink className="w-3 h-3 mr-1" />
-                      Download with Proof
+                      <Upload className="w-3 h-3 mr-1" />
+                      Download
                     </Button>
                   </div>
                 </div>
@@ -421,6 +552,9 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           </CardContent>
         </Card>
       )}
+    </div>
+  )
+}
     </div>
   )
 }
