@@ -1222,15 +1222,29 @@ export const DARA_ABI = [
 // Returns an EIP-1193 provider backed by the connected wallet
 export async function requireEip1193Provider() {
   const account = getAccount(wagmiConfig);
-  if (!account.isConnected) throw new Error('Wallet not connected');
+  if (!account.isConnected) {
+    console.warn("Wallet not connected, attempting to connect...");
+    // Potentially trigger connection flow here if needed
+    throw new Error('Wallet not connected');
+  }
 
   const wc = await getWalletClient(wagmiConfig);
-  if (!wc) throw new Error('Wallet client unavailable');
+  if (!wc) {
+    console.error("Wallet client not found. Wagmi might not be initialized correctly.");
+    throw new Error('Wallet client unavailable');
+  }
 
   // viem WalletClient -> EIP-1193 bridge
   const eip1193 = {
-    request: async ({ method, params }: { method: string; params?: any[] }) =>
-      wc.transport.request({ method, params })
+    request: async ({ method, params }: { method: string; params?: any[] }) => {
+      try {
+        const result = await wc.transport.request({ method, params });
+        return result;
+      } catch (error) {
+        console.error(`EIP-1193 request for method '${method}' failed:`, error);
+        throw error;
+      }
+    }
   } as any;
 
   return eip1193;
@@ -1239,7 +1253,13 @@ export async function requireEip1193Provider() {
 export async function requireEthersSigner() {
   const eip1193 = await requireEip1193Provider();
   const provider = new ethers.BrowserProvider(eip1193);
-  return provider.getSigner();
+  try {
+    const signer = await provider.getSigner();
+    return signer;
+  } catch (error) {
+    console.error("Error getting signer:", error);
+    throw new Error("Could not get signer from wallet. Please ensure your wallet is connected and unlocked.");
+  }
 }
 
 // Legacy functions for backward compatibility - use requireEthersSigner instead
@@ -1253,8 +1273,8 @@ export async function getSigner() {
   return requireEthersSigner();
 }
 
-export function getDaraContract(signer: ethers.Signer): DaraResearchPlatform {
-  return new ethers.Contract(DARA_CONTRACT, DARA_ABI, signer) as unknown as DaraResearchPlatform;
+export function getDaraContract(signerOrProvider: ethers.Signer | ethers.Provider): DaraResearchPlatform {
+  return new ethers.Contract(DARA_CONTRACT, DARA_ABI, signerOrProvider) as unknown as DaraResearchPlatform;
 }
 
 
