@@ -233,9 +233,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         
         // Try with higher gas limit to avoid execution reverted errors
         const gasLimit = 500000; // Set a high gas limit
-        const tx = await contract.createResearchAsset(manifestResult.rootHash, "", {
-          gasLimit: gasLimit
-        });
+        const tx = await contract.createResearchAsset(manifestResult.rootHash, "", { gasLimit: gasLimit });
         console.log('Transaction sent:', tx.hash);
         
         const receipt = await tx.wait()
