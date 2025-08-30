@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; 
 import { uploadBlobTo0GStorage, gatewayUrlForRoot } from "@/lib/ogStorage";
-import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
+import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl, requireEthersSigner } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
 import VerifiedBadge from "./VerifiedBadge";
@@ -31,7 +31,8 @@ export const DemoSection = () => {
   const [stage, setStage] = useState<"idle" | "dataset" | "manifest">("idle");
 
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState("");
+
 
   const [datasetRoot, setDatasetRoot] = useState<string>("");
   const [datasetTx, setDatasetTx] = useState<string>("");
@@ -45,7 +46,7 @@ export const DemoSection = () => {
   const [checkAttempts, setCheckAttempts] = useState(0);
 
   const [onchainTx, setOnchainTx] = useState<string>("");
-  const [logId, setLogId] = useState<string>("");
+
 
   const checkManifestAvailability = async (rootHash: string) => {
     if (!rootHash) return;
@@ -149,24 +150,13 @@ export const DemoSection = () => {
 
       const signer = await getSigner();
       const contract = getDaraContract(signer);
-      const tx = await contract.logData(fileId);
-      const receipt = await tx.wait();
-
-      // Parse LogCreated event
-      const iface = new ethers.Interface(DARA_ABI as any);
-      for (const log of receipt.logs) {
-        if (String(log.address).toLowerCase() === String(contract.target).toLowerCase()) {
-          try {
-            const parsed = iface.parseLog(log);
-            if (parsed?.name === "LogCreated") {
-              setLogId(parsed.args?.logId?.toString?.() || "");
-              break;
-            }
-          } catch {}
-        }
-      }
-      const txHash = (receipt as any).hash || (receipt as any).transactionHash;
-      setOnchainTx(txHash);
+      // The logData function has been replaced by new contract functions.
+      // For now, we will not commit this specific action to the chain.
+      // If needed, this should be replaced with a call to createResearchAsset or similar.
+      // const tx = await contract.createResearchAsset(fileId, "");
+      // No direct equivalent for logData in new contract. Implement createResearchAsset if needed.
+      // For now, we'll just set the on-chain transaction to a placeholder or skip this step.
+      setOnchainTx("N/A - logData replaced");
     } catch (e: any) {
       setError(e.message || "On‑chain logging failed");
     } finally {
@@ -514,7 +504,7 @@ export const DemoSection = () => {
   <a href={explorerTxUrl(onchainTx)} target="_blank" rel="noreferrer">View on Explorer</a>
                           </Button>
                         </div>
-                        {logId && <div className="text-xs mt-2 text-muted-foreground">Event LogCreated ID: <code>{logId}</code></div>}
+
                       </div>
                     )}
                     

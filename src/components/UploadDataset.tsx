@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2, Brain, Globe, Sparkles } from "@/lib/icons"
+import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2, Brain, Globe } from "@/lib/icons"
+import { Sparkles } from 'lucide-react'
 import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
@@ -224,7 +225,9 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       setCurrentStep("Anchoring on 0G Chain...")
       const signer = await requireEthersSigner()
       const contract = getDaraContract(signer)
-      const tx = await contract.logData(manifestResult.rootHash)
+      // The logData function has been replaced by new contract functions.
+      // For now, we will use createResearchAsset to log the manifest on-chain.
+      const tx = await contract.createResearchAsset(manifestResult.rootHash, "");
       const receipt = await tx.wait()
       const txHash = (receipt as any).hash || (receipt as any).transactionHash
 

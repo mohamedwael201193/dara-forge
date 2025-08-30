@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { Sparkles, Brain, Zap, Eye, MessageSquare, TrendingUp, CheckCircle, Clock, AlertCircle, ExternalLink, Copy } from 'lucide-react';
 import { inftService, INFTStatus, INFTCreationRequest } from '../../services/inft';
+import { requireEthersSigner } from '@/lib/ethersClient';
 import { ResearchStatus } from '../../contracts/DaraResearch';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -117,7 +118,7 @@ export const INFTCreator: React.FC<INFTCreatorProps> = ({
         daCommitment
       };
 
-      const inftId = await inftService.createINFT(request, walletClient);
+      const inftId = await inftService.createINFT(request, await requireEthersSigner());
 
       // Start monitoring the INFT creation
       const cleanup = inftService.monitorINFTCreation(inftId, (status) => {

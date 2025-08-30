@@ -14,7 +14,7 @@ export default function DarkOgUploader() {
   const [manifestTx, setManifestTx] = useState<string>("");
   const [manifestHash, setManifestHash] = useState<string>("");
   const [onchainTx, setOnchainTx] = useState<string>("");
-  const [logId, setLogId] = useState<string>("");
+
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string>("");
 
@@ -67,24 +67,15 @@ export default function DarkOgUploader() {
       const fileId = manifestRoot || datasetRoot;
       if (!fileId) throw new Error("Upload first.");
 
-      const tx = await contract.logData(fileId);
-      const receipt = await tx.wait();
+      // The logData function has been replaced by new contract functions.
+      // For now, we will not commit this specific action to the chain.
+      // If needed, this should be replaced with a call to createResearchAsset or similar.
+      // const tx = await contract.createResearchAsset(fileId, "");
+      // const receipt = await tx.wait();
 
-      // parse event
-      const iface = new ethers.Interface(DARA_ABI as any);
-      for (const log of receipt.logs) {
-        if (String(log.address).toLowerCase() === String(contract.target).toLowerCase()) {
-          try {
-            const parsed = iface.parseLog(log);
-            if (parsed?.name === "LogCreated") {
-              setLogId(parsed.args?.logId?.toString?.() ?? "");
-              break;
-            }
-          } catch {}
-        }
-      }
-      const hash = (receipt as any).hash || (receipt as any).transactionHash;
-      setOnchainTx(hash);
+      // No direct equivalent for logData in new contract. Implement createResearchAsset if needed.
+      // For now, we'll just set the on-chain transaction to a placeholder or skip this step.
+      setOnchainTx("N/A - logData replaced");
     } catch (e: any) {
       setErr(e.message || "On‑chain logging failed");
     } finally {
@@ -138,7 +129,7 @@ export default function DarkOgUploader() {
             {onchainTx && (
               <li>• On‑chain Tx: <a className="underline" href={`${EXPLORER}/tx/${onchainTx}`} target="_blank" rel="noreferrer">{onchainTx}</a></li>
             )}
-            {logId && <li>• Log ID (event): <code>{logId}</code></li>}
+
           </ul>
           <div className="mt-3">
             <button

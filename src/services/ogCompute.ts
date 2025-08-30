@@ -1,6 +1,6 @@
 // 0G Compute Network Integration Service
 import { ethers } from 'ethers';
-import { DARA_RESEARCH_ABI, DARA_RESEARCH_CONTRACT_ADDRESS, COMPUTE_JOB_TYPES } from '../contracts/DaraResearch';
+import { DARA_RESEARCH_ABI, DARA_RESEARCH_CONTRACT_ADDRESS, COMPUTE_JOB_TYPES, DaraResearchPlatform } from '../contracts/DaraResearch';
 
 export interface ComputeJobRequest {
   tokenId: number;
@@ -40,7 +40,7 @@ class OGComputeService {
   constructor() {
     this.computeEndpoint = import.meta.env.VITE_OG_COMPUTE_ENDPOINT || 'https://compute-testnet.0g.ai';
     this.wsEndpoint = import.meta.env.VITE_OG_COMPUTE_WS || 'wss://compute-testnet.0g.ai/ws';
-    this.apiKey = import.meta.env.OG_COMPUTE_API_KEY || '';
+    this.apiKey = import.meta.env.OG_COMPUTE_API_KEY ?? '';
     
     // Initialize provider and contract
     const rpcUrl = import.meta.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/';
@@ -69,7 +69,7 @@ class OGComputeService {
       }
 
       // Submit to smart contract
-      const contractWithSigner = this.contract.connect(signer);
+      const contractWithSigner = new ethers.Contract(DARA_RESEARCH_CONTRACT_ADDRESS, DARA_RESEARCH_ABI, signer) as unknown as DaraResearchPlatform;
       const tx = await contractWithSigner.submitComputeJob(
         request.tokenId,
         jobId,
@@ -126,7 +126,7 @@ class OGComputeService {
    */
   async completeComputeJob(tokenId: number, jobId: string, outputDataRoot: string, signer: ethers.Signer): Promise<void> {
     try {
-      const contractWithSigner = this.contract.connect(signer);
+      const contractWithSigner = new ethers.Contract(DARA_RESEARCH_CONTRACT_ADDRESS, DARA_RESEARCH_ABI, signer) as unknown as DaraResearchPlatform;
       const tx = await contractWithSigner.completeComputeJob(tokenId, jobId, outputDataRoot);
       await tx.wait();
       

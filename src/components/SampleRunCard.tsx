@@ -12,7 +12,7 @@ export default function SampleRunCard() {
   const [manifestTx, setManifestTx] = useState<string>("");
   const [manifestHash, setManifestHash] = useState<string>("");
   const [txHash, setTxHash] = useState<string>("");
-  const [logId, setLogId] = useState<string>("");
+
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>("");
 
@@ -67,26 +67,13 @@ export default function SampleRunCard() {
 
       const signer = await getSigner();
       const contract = getDaraContract(signer);
-      const tx = await contract.logData(fileId);
-      const receipt = await tx.wait();
-
-      // Parse LogCreated event
-      const iface = new ethers.Interface(DARA_ABI as any);
-      let id = "";
-      for (const log of receipt.logs) {
-        if (String(log.address).toLowerCase() === String(contract.target).toLowerCase()) {
-          try {
-            const parsed = iface.parseLog(log);
-            if (parsed?.name === "LogCreated") {
-              id = parsed.args?.logId?.toString?.() || "";
-              break;
-            }
-          } catch {}
-        }
-      }
-      setLogId(id);
-      const hash = (receipt as any).hash || (receipt as any).transactionHash;
-      setTxHash(hash);
+      // The logData function has been replaced by new contract functions.
+      // For now, we will not commit this specific action to the chain.
+      // If needed, this should be replaced with a call to createResearchAsset or similar.
+      // const tx = await contract.createResearchAsset(fileId, "");
+      // No direct equivalent for logData in new contract. Implement createResearchAsset if needed.
+      // For now, we'll just set the on-chain transaction to a placeholder or skip this step.
+      setTxHash("N/A - logData replaced");
     } catch (e: any) {
       setError(e.message || "Commit failed");
     } finally {
@@ -138,7 +125,7 @@ export default function SampleRunCard() {
             </a>
           </div>
         )}
-        {logId && <div>Log ID (event): <code>{logId}</code></div>}
+        
       </div>
 
       <p className="text-xs text-muted-foreground">

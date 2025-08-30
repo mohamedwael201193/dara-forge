@@ -264,7 +264,7 @@ export const Wave2DemoSection = () => {
       setSuccess("⛓️ Committing to 0G Chain...");
       const signer = await getSigner();
       const contract = getDaraContract(signer);
-      const tx = await contract.logData(mu.rootHash);
+      const tx = await contract.createResearchAsset(mu.rootHash, "");
       const receipt = await tx.wait();
       const txHash = (receipt as any).hash || (receipt as any).transactionHash;
       setOnchainTx(txHash);

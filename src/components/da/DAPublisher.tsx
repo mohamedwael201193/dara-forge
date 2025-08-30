@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { FileText, Globe, Shield, CheckCircle, Clock, AlertCircle, ExternalLink, Copy } from 'lucide-react';
 import { ogDAService, DAPublicationStatus, DAPublicationResult } from '../../services/ogDA';
+import { requireEthersSigner } from '@/lib/ethersClient';
 import { ResearchStatus } from '../../contracts/DaraResearch';
 import { Button } from '../ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -92,7 +93,7 @@ export const DAPublisher: React.FC<DAPublisherProps> = ({
           author: address,
           publishedAt: new Date().toISOString()
         }
-      }, walletClient);
+      }, await requireEthersSigner());
 
       // Start monitoring the publication
       const cleanup = ogDAService.monitorPublicationStatus(commitment, (status) => {

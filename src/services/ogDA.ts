@@ -1,6 +1,6 @@
 // 0G Data Availability Integration Service
 import { ethers } from 'ethers';
-import { DARA_RESEARCH_ABI, DARA_RESEARCH_CONTRACT_ADDRESS, PUBLICATION_TYPES } from '../contracts/DaraResearch';
+import { DARA_RESEARCH_ABI, DARA_RESEARCH_CONTRACT_ADDRESS, PUBLICATION_TYPES, DaraResearchPlatform } from '../contracts/DaraResearch';
 
 export interface DAPublicationRequest {
   tokenId: number;
@@ -38,7 +38,7 @@ class OGDAService {
   constructor() {
     this.daEndpoint = import.meta.env.VITE_OG_DA_ENDPOINT || 'https://da-testnet.0g.ai';
     this.daRpc = import.meta.env.VITE_OG_DA_RPC || 'https://da-rpc-testnet.0g.ai';
-    this.privateKey = import.meta.env.OG_DA_PRIVATE_KEY || '';
+    this.privateKey = import.meta.env.OG_DA_PRIVATE_KEY ?? '';
     
     // Initialize provider and contract
     const rpcUrl = import.meta.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/';
@@ -71,11 +71,14 @@ class OGDAService {
         throw new Error(`DA publication failed: ${daResponse.error}`);
       }
 
+      if (!daResponse.commitment) {
+        throw new Error("DA commitment is undefined after publication.");
+      }
       const commitment = daResponse.commitment;
       const height = daResponse.height || Math.floor(Date.now() / 1000); // Mock height
 
       // Submit to smart contract
-      const contractWithSigner = this.contract.connect(signer);
+      const contractWithSigner = new ethers.Contract(DARA_RESEARCH_CONTRACT_ADDRESS, DARA_RESEARCH_ABI, signer) as unknown as DaraResearchPlatform;
       const tx = await contractWithSigner.publishToDA(
         request.tokenId,
         commitment,
@@ -87,7 +90,7 @@ class OGDAService {
       await tx.wait();
       
       console.log(`Research published to DA: ${commitment}`);
-      return commitment;
+      return commitment as string;
     } catch (error) {
       console.error('Error publishing to DA:', error);
       throw error;

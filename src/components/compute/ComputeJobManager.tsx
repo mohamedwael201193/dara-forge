@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
 import { Play, Clock, CheckCircle, XCircle, BarChart3, Brain, Cpu, TrendingUp, Eye } from 'lucide-react';
 import { ogComputeService, ComputeJobStatus, ComputeJobResult } from '../../services/ogCompute';
+import { requireEthersSigner } from '@/lib/ethersClient';
 import { ResearchStatus } from '../../contracts/DaraResearch';
 
 interface ComputeJobManagerProps {
@@ -62,7 +63,7 @@ export const ComputeJobManager: React.FC<ComputeJobManagerProps> = ({
           model: import.meta.env.VITE_DEFAULT_AI_MODEL || 'research-analyzer-v1',
           maxProcessingTime: 300 // 5 minutes
         }
-      }, walletClient);
+      }, await requireEthersSigner());
 
       // Start monitoring the job
       const cleanup = ogComputeService.monitorJobProgress(jobId, (status) => {
@@ -88,7 +89,7 @@ export const ComputeJobManager: React.FC<ComputeJobManagerProps> = ({
   const handleJobCompleted = async (jobId: string, outputRoot: string) => {
     try {
       if (walletClient) {
-        await ogComputeService.completeComputeJob(tokenId, jobId, outputRoot, walletClient);
+        await ogComputeService.completeComputeJob(tokenId, jobId, outputRoot, await requireEthersSigner());
         onJobCompleted(jobId, outputRoot);
       }
 

@@ -1,6 +1,6 @@
 // INFT (Intelligent NFTs) Integration Service
 import { ethers } from 'ethers';
-import { DARA_RESEARCH_ABI, DARA_RESEARCH_CONTRACT_ADDRESS } from '../contracts/DaraResearch';
+import { DARA_RESEARCH_ABI, DARA_RESEARCH_CONTRACT_ADDRESS, DaraResearchPlatform } from '../contracts/DaraResearch';
 
 export interface INFTMetadata {
   name: string;
@@ -83,16 +83,16 @@ class INFTService {
         throw new Error(`INFT creation failed: ${inftResponse.error}`);
       }
 
+      if (!inftResponse.inftId) {
+        throw new Error("INFT ID is undefined after creation.");
+      }
       const inftId = inftResponse.inftId;
 
       // Mint INFT on smart contract
-      const contractWithSigner = this.contract.connect(signer);
+      const contractWithSigner = new ethers.Contract(DARA_RESEARCH_CONTRACT_ADDRESS, DARA_RESEARCH_ABI, signer) as unknown as DaraResearchPlatform;
       const tx = await contractWithSigner.createINFT(
         request.tokenId,
-        inftId,
-        metadataUri,
-        request.aiModel,
-        request.capabilities.join(',')
+        request.capabilities
       );
 
       await tx.wait();
@@ -225,7 +225,7 @@ class INFTService {
     return {
       name: request.name,
       description: request.description,
-      image: request.imageUrl || this.generateDefaultImage(request.name),
+      image: request.imageUrl ?? this.generateDefaultImage(request.name),
       attributes: [
         { trait_type: 'AI Model', value: request.aiModel },
         { trait_type: 'Capabilities', value: request.capabilities.length },

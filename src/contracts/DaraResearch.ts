@@ -1,3 +1,5 @@
+import { ethers, BaseContract } from 'ethers';
+
 // Updated DaraResearchPlatform contract interface
 export const DARA_RESEARCH_CONTRACT_ADDRESS = "0x1a8c31b7c93bDaC2951E1E80774e19679Ce4571d";
 
@@ -1292,4 +1294,26 @@ export const INFT_CAPABILITIES = {
   PREDICTION: "prediction", 
   VISUALIZATION: "visualization"
 } as const;
+
+
+
+
+
+
+export interface DaraResearchPlatform extends BaseContract {
+  createResearchAsset(datasetRoot: string, metadataURI: string): Promise<ethers.ContractTransactionResponse>;
+  submitComputeJob(tokenId: number, jobId: string, jobType: string, inputDataRoot: string): Promise<ethers.ContractTransactionResponse>;
+  completeComputeJob(tokenId: number, jobId: string, outputDataRoot: string): Promise<ethers.ContractTransactionResponse>;
+  publishToDA(tokenId: number, commitment: string, publicationType: string, title: string, height: number): Promise<ethers.ContractTransactionResponse>;
+  createINFT(tokenId: number, capabilities: string[]): Promise<ethers.ContractTransactionResponse>;
+  verifyFullIntegrity(tokenId: number): Promise<ethers.ContractTransactionResponse>;
+  getResearchAsset(tokenId: number): Promise<any>;
+  getComputeJob(jobId: string): Promise<any>;
+  getDAPublication(commitment: string): Promise<any>;
+  getResearcherAssets(researcher: string): Promise<number[]>;
+  getINFTCapabilities(tokenId: number): Promise<string[]>;
+  tokenURI(tokenId: number): Promise<string>;
+  totalSupply(): Promise<number>;
+}
+
 

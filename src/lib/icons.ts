@@ -31,7 +31,8 @@ export {
   Copy,
   FileText,
   User,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 
 
