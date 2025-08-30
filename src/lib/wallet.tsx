@@ -37,11 +37,31 @@ const modal = createAppKit({
   features: {
     analytics: true, // Optional - defaults to your Cloud configuration
   },
-  themeMode: 'dark',
-  themeVariables: {
-    '--w3m-z-index': 9999
-  }
+  themeMode: 'dark'
 });
+
+// Add custom CSS to fix z-index issues
+if (typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    w3m-modal,
+    wcm-modal,
+    [data-testid="w3m-modal"],
+    .w3m-modal,
+    .wcm-modal {
+      z-index: 99999 !important;
+    }
+    
+    w3m-modal *,
+    wcm-modal *,
+    [data-testid="w3m-modal"] *,
+    .w3m-modal *,
+    .wcm-modal * {
+      z-index: inherit !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 // 6. Create query client
 const queryClient = new QueryClient();

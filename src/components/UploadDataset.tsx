@@ -231,8 +231,11 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         
         console.log('Attempting to create research asset with root hash:', manifestResult.rootHash);
         
-        // Try to call the contract method
-        const tx = await contract.createResearchAsset(manifestResult.rootHash, "");
+        // Try with higher gas limit to avoid execution reverted errors
+        const gasLimit = 500000; // Set a high gas limit
+        const tx = await contract.createResearchAsset(manifestResult.rootHash, "", {
+          gasLimit: gasLimit
+        });
         console.log('Transaction sent:', tx.hash);
         
         const receipt = await tx.wait()
@@ -254,6 +257,8 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           throw new Error(`Transaction was rejected by user. Please try again and confirm the transaction in your wallet.`);
         } else if (contractError.message?.includes('user rejected')) {
           throw new Error(`Transaction was rejected by user. Please try again and confirm the transaction in your wallet.`);
+        } else if (contractError.message?.includes('execution reverted')) {
+          throw new Error(`Smart contract execution failed. This might be due to invalid data or contract requirements not being met. Please try again.`);
         } else {
           throw new Error(`Blockchain transaction failed: ${contractError.message || 'Unknown error'}`);
         }
