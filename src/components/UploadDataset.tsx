@@ -167,9 +167,9 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
     // Check if user has sufficient balance for gas fees
     const balanceInEther = parseFloat(ogBalance);
-    // Require at least 0.001 OG for gas fees
-    if (balanceInEther < 0.001) {
-      setError(`Insufficient balance for gas fees. You have ${balanceInEther.toFixed(4)} OG, but need at least 0.001 OG. Please get testnet tokens from the faucet: https://faucet.0g.ai`);
+    // Require at least 0.01 OG for gas fees (increased from 0.001 based on team message)
+    if (balanceInEther < 0.01) {
+      setError(`Insufficient balance for gas fees. You have ${balanceInEther.toFixed(4)} OG, but need at least 0.01 OG for increased gas fees. Please get testnet tokens from the faucet: https://faucet.0g.ai`);
       return;
     }
 
@@ -225,14 +225,28 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       setCurrentStep("Anchoring on 0G Chain...")
       const signer = await requireEthersSigner()
       const contract = getDaraContract(signer)
-      // The logData function has been replaced by new contract functions.
-      // For now, we will use createResearchAsset to log the manifest on-chain.
-      const tx = await contract.createResearchAsset(manifestResult.rootHash, "");
-      const receipt = await tx.wait()
-      const txHash = (receipt as any).hash || (receipt as any).transactionHash
-
-      setUploadProgress(100)
-      setCurrentStep("Upload completed successfully!")
+      
+      // Use higher gas limit based on team message about increased gas fees
+      let txHash: string;
+      try {
+        const tx = await contract.createResearchAsset(manifestResult.rootHash, "");
+        const receipt = await tx.wait()
+        txHash = (receipt as any).hash || (receipt as any).transactionHash || tx.hash
+        
+        setUploadProgress(100)
+        setCurrentStep("Upload completed successfully!")
+      } catch (contractError: any) {
+        console.error('Contract error:', contractError);
+        
+        // Handle specific contract errors
+        if (contractError.code === 'CALL_EXCEPTION') {
+          throw new Error(`Smart contract call failed. This might be due to network congestion or insufficient gas. Please try again with higher gas fees. Error: ${contractError.reason || contractError.message}`);
+        } else if (contractError.code === 'INSUFFICIENT_FUNDS') {
+          throw new Error(`Insufficient funds for gas fees. Please ensure you have enough OG tokens for the transaction.`);
+        } else {
+          throw new Error(`Blockchain transaction failed: ${contractError.message || 'Unknown error'}`);
+        }
+      }
 
       const finalResults = [
         ...uploadResults,
