@@ -47,10 +47,11 @@ export async function uploadBlobTo0GStorage(blob: Blob, filename: string, onProg
     const response = await fetch(`${import.meta.env.VITE_OG_STORAGE_API_URL}/upload`, {
       method: 'POST',
       body: formData,
-      headers: {
-        // Add any required headers for 0G Storage API
-        'Accept': 'application/json',
-      },
+      // Removed headers for now, as the 401 might be related to auth
+      // to auth or CORS issues when using direct IP
+      // headers: {
+      //   'Accept': 'application/json',
+      // },
     });
 
     if (response.ok) {
