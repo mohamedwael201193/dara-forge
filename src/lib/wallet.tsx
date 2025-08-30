@@ -7,7 +7,7 @@ import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { ogGalileo } from './networks';
 
 // 1. Get projectId from https://cloud.reown.com
-const projectId = import.meta.env.VITE_WC_PROJECT_ID || 'your-project-id';
+const projectId = '383710c855108ec5713394a649cb6eea';
 
 // 2. Create a metadata object - optional
 const metadata = {
@@ -36,6 +36,10 @@ const modal = createAppKit({
   defaultNetwork: ogGalileo,
   features: {
     analytics: true, // Optional - defaults to your Cloud configuration
+  },
+  themeMode: 'dark',
+  themeVariables: {
+    '--w3m-z-index': '9999'
   }
 });
 

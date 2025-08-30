@@ -223,26 +223,37 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
       // Anchor on blockchain
       setCurrentStep("Anchoring on 0G Chain...")
-      const signer = await requireEthersSigner()
-      const contract = getDaraContract(signer)
       
-      // Use higher gas limit based on team message about increased gas fees
       let txHash: string;
       try {
+        const signer = await requireEthersSigner()
+        const contract = getDaraContract(signer)
+        
+        console.log('Attempting to create research asset with root hash:', manifestResult.rootHash);
+        
+        // Try to call the contract method
         const tx = await contract.createResearchAsset(manifestResult.rootHash, "");
+        console.log('Transaction sent:', tx.hash);
+        
         const receipt = await tx.wait()
+        console.log('Transaction confirmed:', receipt);
+        
         txHash = (receipt as any).hash || (receipt as any).transactionHash || tx.hash
         
         setUploadProgress(100)
         setCurrentStep("Upload completed successfully!")
       } catch (contractError: any) {
-        console.error('Contract error:', contractError);
+        console.error('Contract error details:', contractError);
         
         // Handle specific contract errors
         if (contractError.code === 'CALL_EXCEPTION') {
           throw new Error(`Smart contract call failed. This might be due to network congestion or insufficient gas. Please try again with higher gas fees. Error: ${contractError.reason || contractError.message}`);
         } else if (contractError.code === 'INSUFFICIENT_FUNDS') {
           throw new Error(`Insufficient funds for gas fees. Please ensure you have enough OG tokens for the transaction.`);
+        } else if (contractError.code === 'ACTION_REJECTED') {
+          throw new Error(`Transaction was rejected by user. Please try again and confirm the transaction in your wallet.`);
+        } else if (contractError.message?.includes('user rejected')) {
+          throw new Error(`Transaction was rejected by user. Please try again and confirm the transaction in your wallet.`);
         } else {
           throw new Error(`Blockchain transaction failed: ${contractError.message || 'Unknown error'}`);
         }
