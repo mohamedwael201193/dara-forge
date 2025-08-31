@@ -100,7 +100,6 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           gatewayUrl: gatewayUrlForRoot(result.rootHash),
           downloadUrl: downloadWithProofUrl(result.rootHash)
         })
-      }
 
       // Create manifest
       setCurrentStep("Creating dataset manifest...")
@@ -122,13 +121,14 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
       const manifestJson = await uploadTo0G(manifestFile);
 
-      // Anchor on blockchain
-      setCurrentStep("Anchoring on 0G Chain...")
-      const signer = await requireEthersSigner()
-      const contract = getDaraContract(signer)
-      const tx = await contract.logData(manifestJson.rootHash)
-      const receipt = await tx.wait()
-      const txHash = (receipt as any).hash || (receipt as any).transactionHash
+      if (manifestJson.error) {
+        const friendlyError = manifestJson.error.includes("TEMPORARY_LIMIT")
+          ? "The storage network is under heavy upgrade right now. Please upload a smaller file (≤1 MiB) and retry later for larger files."
+          : manifestJson.error.includes("NETWORK_CONCURRENCY_LIMIT")
+          ? "Storage nodes are rejecting batched writes right now. Retry shortly or upload a smaller file."
+          : manifestJson.error;
+        throw new Error(friendlyError);
+      }
 
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
