@@ -88,7 +88,7 @@ export const DemoSection = () => {
     try {
       // 1) Dataset upload with real progress → map to 0–70%
       const ds = await uploadTo0G(file);
-      setDatasetRoot(ds.rootHash);
+      setDatasetRoot(ds.rootHash || "");
       setDatasetTx(ds.txHash || "");
 
       // 2) Build + upload manifest → 70–100%
@@ -112,11 +112,11 @@ export const DemoSection = () => {
         type: "application/json"  // Explicit content type
       });
       const mu = await uploadTo0G(new File([mBlob], "manifest.json"));
-      setManifestRoot(mu.rootHash);
+      setManifestRoot(mu.rootHash || "");
       setManifestTx(mu.txHash || "");
       
       // Check if manifest is immediately available
-      checkManifestAvailability(mu.rootHash);
+      checkManifestAvailability(mu.rootHash || "");
 
       setUploadProgress(100);
       setStage("idle");

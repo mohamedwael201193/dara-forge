@@ -97,9 +97,10 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           size: file.size,
           rootHash: result.rootHash,
           txHash: result.txHash,
-          gatewayUrl: gatewayUrlForRoot(result.rootHash),
-          downloadUrl: downloadWithProofUrl(result.rootHash)
+          gatewayUrl: gatewayUrlForRoot(result.rootHash || ""),
+          downloadUrl: downloadWithProofUrl(result.rootHash || "")
         })
+      }
 
       // Create manifest
       setCurrentStep("Creating dataset manifest...")
@@ -130,6 +131,14 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         throw new Error(friendlyError);
       }
 
+      // Anchor on blockchain
+      setCurrentStep("Anchoring on 0G Chain...")
+      const signer = await requireEthersSigner()
+      const contract = getDaraContract(signer)
+      const tx = await contract.logData(manifestJson.rootHash)
+      const receipt = await tx.wait()
+      const txHash = (receipt as any).hash || (receipt as any).transactionHash
+
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
 
@@ -140,8 +149,8 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           size: manifestBlob.size,
           rootHash: manifestJson.rootHash,
           txHash: manifestJson.txHash,
-          gatewayUrl: gatewayUrlForRoot(manifestJson.rootHash),
-          downloadUrl: downloadWithProofUrl(manifestJson.rootHash),
+          gatewayUrl: gatewayUrlForRoot(manifestJson.rootHash || ""),
+          downloadUrl: downloadWithProofUrl(manifestJson.rootHash || ""),
           isManifest: true,
           blockchainTx: txHash
         }
@@ -421,4 +430,5 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     </div>
   )
 }
+
 

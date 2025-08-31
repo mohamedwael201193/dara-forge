@@ -32,8 +32,8 @@ export default function SampleRunCard() {
       const ds = await uploadTo0G(new File([dsBlob], "sample_abstracts.csv"));
 
 
-      setDatasetRoot(ds.rootHash);
-      setDatasetTx(ds.txHash);
+      setDatasetRoot(ds.rootHash || "");
+      setDatasetTx(ds.txHash || "");
 
       // 2) Build manifest + hash
       const provider = getBrowserProvider();
@@ -52,8 +52,8 @@ export default function SampleRunCard() {
       // 3) Upload manifest.json to 0G Storage
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
       const m = await uploadTo0G(new File([mBlob], "manifest.json"));
-      setManifestRoot(m.rootHash);
-      setManifestTx(m.txHash);
+      setManifestRoot(m.rootHash || "");
+      setManifestTx(m.txHash || "");
     } catch (e: any) {
       setError(e.message || "Upload failed");
     } finally {

@@ -52,8 +52,8 @@ export default function DarkOgUploader() {
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
       const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
       const mUpload = await uploadTo0G(manifestFile);
-      setManifestRoot(mUpload.rootHash);
-      setManifestTx(mUpload.txHash);
+      setManifestRoot(mUpload.rootHash || "");
+      setManifestTx(mUpload.txHash || "");
     } catch (e: any) {
       setErr(e.message || "Upload failed");
     } finally {

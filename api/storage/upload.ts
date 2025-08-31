@@ -108,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       try {
         const [tx, uerr] = await indexer.upload(zg, chosenRpc, signer as any);
         if (uerr) throw uerr;
-        txHash = tx;
+        txHash = tx.txHash;
         break;
       } catch (e: any) {
         lastErr = e;

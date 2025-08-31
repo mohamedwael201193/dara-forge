@@ -222,7 +222,7 @@ export const Wave2DemoSection = () => {
       // 1) Upload dataset to 0G Storage
       setSuccess("🚀 Uploading to 0G Storage Network...");
       const ds = await uploadTo0G(selectedFile);
-      setDatasetRoot(ds.rootHash);
+      setDatasetRoot(ds.rootHash || "");
       setDatasetTx(ds.txHash || "");
 
       // 2) Create enhanced manifest with metadata
@@ -254,7 +254,7 @@ export const Wave2DemoSection = () => {
         type: "application/json"
       });
       const mu = await uploadTo0G(new File([mBlob], "manifest.json"));
-      setManifestRoot(mu.rootHash);
+      setManifestRoot(mu.rootHash || "");
       setManifestTx(mu.txHash || "");
 
       // 3) Commit to blockchain
@@ -275,7 +275,7 @@ export const Wave2DemoSection = () => {
         id: Date.now().toString(),
         name: datasetMetadata.title,
         description: datasetMetadata.description,
-        rootHash: mu.rootHash,
+        rootHash: mu.rootHash || "",
         size: selectedFile.size,
         uploadDate: new Date().toISOString().split('T')[0],
         author: uploader,
