@@ -220,4 +220,3 @@ Block Explorer URL: https://chainscan-galileo.0g.ai
 
 This project is licensed under the **MIT License** - see the LICENSE file for details.
 
-
