@@ -36,7 +36,8 @@ import {
   Award
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; 
-import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
+import { uploadTo0G } from "@/services/ogStorageClient";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
 import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
@@ -220,11 +221,9 @@ export const Wave2DemoSection = () => {
     try {
       // 1) Upload dataset to 0G Storage
       setSuccess("🚀 Uploading to 0G Storage Network...");
-      const ds = await uploadBlobTo0GStorage(selectedFile, selectedFile.name, (p: any) =>
-        setUploadProgress(Math.min(60, Math.round(p * 0.6)))
-      );
+      const ds = await uploadTo0G(selectedFile);
       setDatasetRoot(ds.rootHash);
-      setDatasetTx(ds.txHash || ds.chainTx || "");
+      setDatasetTx(ds.txHash || "");
 
       // 2) Create enhanced manifest with metadata
       setStage("manifest");
@@ -254,11 +253,9 @@ export const Wave2DemoSection = () => {
       const mBlob = new Blob([JSON.stringify(enhancedManifest, null, 2)], { 
         type: "application/json"
       });
-      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json", (p: any) =>
-        setUploadProgress(60 + Math.round(p * 0.30))
-      );
+      const mu = await uploadTo0G(new File([mBlob], "manifest.json"));
       setManifestRoot(mu.rootHash);
-      setManifestTx(mu.txHash || mu.chainTx || "");
+      setManifestTx(mu.txHash || "");
 
       // 3) Commit to blockchain
       setSuccess("⛓️ Committing to 0G Chain...");

@@ -10,7 +10,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons";
-import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
+import { uploadTo0G } from "@/services/ogStorageClient";
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import ConnectWalletButton from './ConnectWalletButton'
@@ -89,23 +90,13 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         const file = files[i]
         setCurrentStep(`Uploading ${file.name} to 0G Storage...`)
         
-        const response = await fetch("/api/storage/upload", {
-          method: "POST",
-          body: file,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Upload failed");
-        }
-
-        const result = await response.json();
+        const result = await uploadTo0G(file);
 
         uploadResults.push({
           file: file.name,
           size: file.size,
           rootHash: result.rootHash,
-          txHash: result.txHash || result.chainTx,
+          txHash: result.txHash,
           gatewayUrl: gatewayUrlForRoot(result.rootHash),
           downloadUrl: downloadWithProofUrl(result.rootHash)
         })
@@ -127,18 +118,9 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         }))
       })
 
-      const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' })
-      const manifestResult = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: manifestBlob,
-      });
-
-      if (!manifestResult.ok) {
-        const errorData = await manifestResult.json();
-        throw new Error(errorData.error || "Manifest upload failed");
-      }
-
-      const manifestJson = await manifestResult.json();
+      const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+      const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
+      const manifestJson = await uploadTo0G(manifestFile);
 
       // Anchor on blockchain
       setCurrentStep("Anchoring on 0G Chain...")
@@ -157,7 +139,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           file: 'manifest.json',
           size: manifestBlob.size,
           rootHash: manifestJson.rootHash,
-          txHash: manifestJson.txHash || manifestJson.chainTx,
+          txHash: manifestJson.txHash,
           gatewayUrl: gatewayUrlForRoot(manifestJson.rootHash),
           downloadUrl: downloadWithProofUrl(manifestJson.rootHash),
           isManifest: true,

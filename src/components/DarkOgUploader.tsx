@@ -2,7 +2,8 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import { ethers } from "ethers";
-import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
+import { uploadTo0G } from "@/services/ogStorageClient";
 import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 
@@ -32,17 +33,7 @@ export default function DarkOgUploader() {
     setErr(""); setBusy(true);
     try {
       // 1) Upload file to 0G Storage
-      const response = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: file,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Upload failed");
-      }
-
-      const { rootHash, txHash } = await response.json();
+      const { rootHash, txHash } = await uploadTo0G(file);
       setDatasetRoot(rootHash ?? "");
       setDatasetTx(txHash ?? "");
 
@@ -59,17 +50,8 @@ export default function DarkOgUploader() {
       setManifestHash(mHash);
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const mResponse = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: manifestBlob,
-      });
-
-      if (!mResponse.ok) {
-        const errorData = await mResponse.json();
-        throw new Error(errorData.error || "Manifest upload failed");
-      }
-
-      const mUpload = await mResponse.json();
+      const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
+      const mUpload = await uploadTo0G(manifestFile);
       setManifestRoot(mUpload.rootHash);
       setManifestTx(mUpload.txHash);
     } catch (e: any) {

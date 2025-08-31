@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import { getBrowserProvider, getSigner, getDaraContract, DARA_ABI } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
+import { uploadTo0G } from "@/services/ogStorageClient";
 import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
 
 export default function SampleRunCard() {
@@ -28,17 +29,9 @@ export default function SampleRunCard() {
       const dsBlob = await res.blob();
 
       // 1) Upload dataset to 0G Storage
-      const dsResponse = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: dsBlob,
-      });
+      const ds = await uploadTo0G(new File([dsBlob], "sample_abstracts.csv"));
 
-      if (!dsResponse.ok) {
-        const errorData = await dsResponse.json();
-        throw new Error(errorData.error || "Upload failed");
-      }
 
-      const ds = await dsResponse.json();
       setDatasetRoot(ds.rootHash);
       setDatasetTx(ds.txHash);
 
@@ -58,17 +51,7 @@ export default function SampleRunCard() {
 
       // 3) Upload manifest.json to 0G Storage
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const mResponse = await fetch("/api/storage/upload", {
-        method: "POST",
-        body: mBlob,
-      });
-
-      if (!mResponse.ok) {
-        const errorData = await mResponse.json();
-        throw new Error(errorData.error || "Manifest upload failed");
-      }
-
-      const m = await mResponse.json();
+      const m = await uploadTo0G(new File([mBlob], "manifest.json"));
       setManifestRoot(m.rootHash);
       setManifestTx(m.txHash);
     } catch (e: any) {
