@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import { getBrowserProvider, getSigner, getDaraContract, DARA_ABI } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
-import { uploadBlobTo0GStorageViaBrowser, gatewayUrlForRoot } from "@/lib/ogStorage";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
 
 export default function SampleRunCard() {
   const [datasetRoot, setDatasetRoot] = useState<string>("");
@@ -28,7 +28,17 @@ export default function SampleRunCard() {
       const dsBlob = await res.blob();
 
       // 1) Upload dataset to 0G Storage
-      const ds = await uploadBlobTo0GStorageViaBrowser(dsBlob, "sample_abstracts.csv");
+      const dsResponse = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: dsBlob,
+      });
+
+      if (!dsResponse.ok) {
+        const errorData = await dsResponse.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const ds = await dsResponse.json();
       setDatasetRoot(ds.rootHash);
       setDatasetTx(ds.txHash);
 
@@ -48,7 +58,17 @@ export default function SampleRunCard() {
 
       // 3) Upload manifest.json to 0G Storage
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const m = await uploadBlobTo0GStorageViaBrowser(mBlob, "manifest.json");
+      const mResponse = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: mBlob,
+      });
+
+      if (!mResponse.ok) {
+        const errorData = await mResponse.json();
+        throw new Error(errorData.error || "Manifest upload failed");
+      }
+
+      const m = await mResponse.json();
       setManifestRoot(m.rootHash);
       setManifestTx(m.txHash);
     } catch (e: any) {
@@ -116,7 +136,7 @@ export default function SampleRunCard() {
         {datasetRoot && (
           <div>
             Dataset Root: <code>{datasetRoot}</code>{" "}
-            <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(datasetRoot, "sample_abstracts.csv")}>Open</a>{" "}
+            <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(datasetRoot)}>Open</a>{" "}
             {datasetTx && <span>• Upload Tx: <code>{datasetTx}</code></span>}
           </div>
         )}
@@ -126,7 +146,7 @@ export default function SampleRunCard() {
         {manifestRoot && (
           <div>
             Manifest Root: <code>{manifestRoot}</code>{" "}
-            <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(manifestRoot, "manifest.json")}>Open</a>{" "}
+            <a className="underline" target="_blank" rel="noreferrer" href={gatewayUrlForRoot(manifestRoot)}>Open</a>{" "}
             {manifestTx && <span>• Upload Tx: <code>{manifestTx}</code></span>}
           </div>
         )}

@@ -2,7 +2,7 @@
 "use client";
 import React, { useMemo, useState } from "react";
 import { ethers } from "ethers";
-import { uploadBlobTo0GStorage, gatewayUrlForRoot } from "@/lib/ogStorage";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
 import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 
@@ -32,7 +32,17 @@ export default function DarkOgUploader() {
     setErr(""); setBusy(true);
     try {
       // 1) Upload file to 0G Storage
-      const { rootHash, txHash } = await uploadBlobTo0GStorage(file, file.name);
+      const response = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: file,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Upload failed");
+      }
+
+      const { rootHash, txHash } = await response.json();
       setDatasetRoot(rootHash ?? "");
       setDatasetTx(txHash ?? "");
 
@@ -49,7 +59,17 @@ export default function DarkOgUploader() {
       setManifestHash(mHash);
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const mUpload = await uploadBlobTo0GStorage(manifestBlob, "manifest.json");
+      const mResponse = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: manifestBlob,
+      });
+
+      if (!mResponse.ok) {
+        const errorData = await mResponse.json();
+        throw new Error(errorData.error || "Manifest upload failed");
+      }
+
+      const mUpload = await mResponse.json();
       setManifestRoot(mUpload.rootHash);
       setManifestTx(mUpload.txHash);
     } catch (e: any) {
@@ -130,7 +150,7 @@ export default function DarkOgUploader() {
             {datasetTx && <li>• Dataset Upload Tx: <code>{datasetTx}</code></li>}
             {manifestRoot && (
               <li>• Manifest Root: <code>{manifestRoot}</code> { " " }
-                <a className="underline" href={gatewayUrlForRoot(manifestRoot, "manifest.json")} target="_blank" rel="noreferrer">Open</a>
+                <a className="underline" href={gatewayUrlForRoot(manifestRoot)} target="_blank" rel="noreferrer">Open</a>
               </li>
             )}
             {manifestTx && <li>• Manifest Upload Tx: <code>{manifestTx}</code></li>}

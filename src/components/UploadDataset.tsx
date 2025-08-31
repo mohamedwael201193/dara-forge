@@ -9,9 +9,9 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons"
-import { uploadBlobTo0GStorage, gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage"
-import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient"
+import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
+import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import ConnectWalletButton from './ConnectWalletButton'
 
@@ -89,10 +89,17 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         const file = files[i]
         setCurrentStep(`Uploading ${file.name} to 0G Storage...`)
         
-        const result = await uploadBlobTo0GStorage(file, file.name, (progress: any) => {
-          const fileProgress = (i / files.length) * 100 + (progress / files.length)
-          setUploadProgress(Math.min(90, fileProgress))
-        })
+        const response = await fetch("/api/storage/upload", {
+          method: "POST",
+          body: file,
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Upload failed");
+        }
+
+        const result = await response.json();
 
         uploadResults.push({
           file: file.name,
@@ -121,15 +128,23 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       })
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' })
-      const manifestResult = await uploadBlobTo0GStorage(manifestBlob, 'manifest.json', (progress: any) => {
-        setUploadProgress(90 + progress * 0.05)
-      })
+      const manifestResult = await fetch("/api/storage/upload", {
+        method: "POST",
+        body: manifestBlob,
+      });
+
+      if (!manifestResult.ok) {
+        const errorData = await manifestResult.json();
+        throw new Error(errorData.error || "Manifest upload failed");
+      }
+
+      const manifestJson = await manifestResult.json();
 
       // Anchor on blockchain
       setCurrentStep("Anchoring on 0G Chain...")
       const signer = await requireEthersSigner()
       const contract = getDaraContract(signer)
-      const tx = await contract.logData(manifestResult.rootHash)
+      const tx = await contract.logData(manifestJson.rootHash)
       const receipt = await tx.wait()
       const txHash = (receipt as any).hash || (receipt as any).transactionHash
 
@@ -141,10 +156,10 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         {
           file: 'manifest.json',
           size: manifestBlob.size,
-          rootHash: manifestResult.rootHash,
-          txHash: manifestResult.txHash || manifestResult.chainTx,
-          gatewayUrl: gatewayUrlForRoot(manifestResult.rootHash),
-          downloadUrl: downloadWithProofUrl(manifestResult.rootHash),
+          rootHash: manifestJson.rootHash,
+          txHash: manifestJson.txHash || manifestJson.chainTx,
+          gatewayUrl: gatewayUrlForRoot(manifestJson.rootHash),
+          downloadUrl: downloadWithProofUrl(manifestJson.rootHash),
           isManifest: true,
           blockchainTx: txHash
         }
