@@ -1,4 +1,4 @@
-import { uploadFileViaApi, anchorWithWallet } from '../0gStorage'
+
 import { OGChainService } from '../0gChain'
 
 interface WalletConnection {
@@ -93,17 +93,7 @@ export class WalletAuth {
     return this.ogChain
   }
 
-  // Expose the upload and anchor functions directly
-  async uploadFile(file: File) {
-    if (!this.connection?.address) {
-      throw new Error('Wallet not connected for upload.')
-    }
-    return uploadFileViaApi(file, this.connection.address)
-  }
 
-  async anchorDataset(datasetId: string, rootHashHex: string, metadata: any) {
-    return anchorWithWallet(datasetId, rootHashHex, metadata)
-  }
 
   areServicesReady(): boolean {
     // Only check chain service as storage is now function-based

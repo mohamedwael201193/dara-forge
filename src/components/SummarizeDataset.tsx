@@ -31,9 +31,6 @@ export const SummarizeDataset: React.FC<SummarizeDatasetProps> = () => {
     try {
       const response = await fetch('/api/compute/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           messages: [
             { role: 'system', content: 'You are a helpful assistant that summarizes text.' },

@@ -30,9 +30,6 @@ export const DAPublish: React.FC<DAPublishProps> = () => {
     try {
       const res = await fetch('/api/da/publish', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           rootHash,
           metadata: metadata ? JSON.parse(metadata) : {},

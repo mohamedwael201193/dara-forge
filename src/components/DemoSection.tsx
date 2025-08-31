@@ -16,12 +16,12 @@ import {
   Cpu
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; 
-import { uploadBlobTo0GStorage, gatewayUrlForRoot } from "@/lib/ogStorage";
+import { uploadTo0G } from "@/services/ogStorageClient";
 import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
 import VerifiedBadge from "./VerifiedBadge";
-
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
 
 export const DemoSection = () => {
   const [connectedWallet, setConnectedWallet] = useState(false);
@@ -56,7 +56,7 @@ export const DemoSection = () => {
     
     try {
       // Try to fetch the file using a HEAD request
-      const response = await fetch(gatewayUrlForRoot(rootHash, "manifest.json"), {
+      const response = await fetch(gatewayUrlForRoot(rootHash), {
         method: "HEAD",
       });
       setManifestReady(response.ok);
@@ -87,11 +87,9 @@ export const DemoSection = () => {
 
     try {
       // 1) Dataset upload with real progress → map to 0–70%
-      const ds = await uploadBlobTo0GStorage(file, file.name, (p: any) =>
-        setUploadProgress(Math.min(70, Math.round(p * 0.7)))
-      );
+      const ds = await uploadTo0G(file);
       setDatasetRoot(ds.rootHash);
-      setDatasetTx(ds.txHash || ds.chainTx || "");
+      setDatasetTx(ds.txHash || "");
 
       // 2) Build + upload manifest → 70–100%
       setStage("manifest");
@@ -113,11 +111,9 @@ export const DemoSection = () => {
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { 
         type: "application/json"  // Explicit content type
       });
-      const mu = await uploadBlobTo0GStorage(mBlob, "manifest.json", (p: any) =>
-        setUploadProgress(70 + Math.round(p * 0.30))
-      );
+      const mu = await uploadTo0G(new File([mBlob], "manifest.json"));
       setManifestRoot(mu.rootHash);
-      setManifestTx(mu.txHash || mu.chainTx || "");
+      setManifestTx(mu.txHash || "");
       
       // Check if manifest is immediately available
       checkManifestAvailability(mu.rootHash);
@@ -332,8 +328,8 @@ export const DemoSection = () => {
       <div>
         Manifest Root: <code>{manifestRoot}</code>
         {' • '}
-        <a href={gatewayUrlForRoot(manifestRoot, 'manifest.json')} target="_blank" rel="noreferrer" className="underline">Open</a>
-        <VerifiedBadge expectedRoot={manifestRoot} fetchUrl={gatewayUrlForRoot(manifestRoot, 'manifest.json')} />
+        <a href={gatewayUrlForRoot(manifestRoot)} target="_blank" rel="noreferrer" className="underline">Open</a>
+        <VerifiedBadge expectedRoot={manifestRoot} fetchUrl={gatewayUrlForRoot(manifestRoot)} />
         {manifestTx && <> {' • '} Upload Tx: <code>{manifestTx}</code></>}
         {' • '}
         {manifestReady ? (
