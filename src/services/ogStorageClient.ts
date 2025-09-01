@@ -1,21 +1,12 @@
-export type UploadResponse = {
-  ok: boolean;
-  rootHash?: string;
-  txHash?: string;
-  explorer?: string;
-  error?: string;
-};
-
-export async function uploadTo0G(file: File): Promise<UploadResponse> {
+export async function uploadToZeroG(file: File) {
   const fd = new FormData();
-  fd.append("file", file, file.name);
-  const res = await fetch("/api/storage/upload", { method: "POST", body: fd });
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(text || `Upload failed (${res.status})`);
-  }
-}
+  fd.append('file', file, file.name);
 
+  const res = await fetch('/api/storage/upload', { method: 'POST', body: fd });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || `Upload failed (${res.status})`);
+  }
+  return data as { ok: true; root: string; tx: string; indexer: string; explorer: string };
+}
 

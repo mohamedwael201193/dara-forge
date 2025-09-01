@@ -1,11 +1,7 @@
 {
-"$schema": "https://openapi.vercel.sh/vercel.json",
-"functions": {
-"api/**": {
-"maxDuration": 300,
-"memory": 1024
-}
-}
+  "functions": {
+    "api/storage/upload.ts": { "memory": 1024, "maxDuration": 60 }
+  }
 }
 
 

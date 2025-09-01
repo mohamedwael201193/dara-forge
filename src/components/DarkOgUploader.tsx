@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import { ethers } from "ethers";
 import { gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
-import { uploadTo0G } from "@/services/ogStorageClient";
+import { uploadToZeroG } from "@/services/ogStorageClient";
 import { getSigner, getDaraContract, DARA_ABI, EXPLORER } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 
@@ -33,14 +33,14 @@ export default function DarkOgUploader() {
     setErr(""); setBusy(true);
     try {
       // 1) Upload file to 0G Storage
-      const { rootHash, txHash } = await uploadTo0G(file);
-      setDatasetRoot(rootHash ?? "");
-      setDatasetTx(txHash ?? "");
+      const { root, tx } = await uploadToZeroG(file);
+      setDatasetRoot(root ?? "");
+      setDatasetTx(tx ?? "");
 
       // 2) Build manifest and upload it
       const uploader = await ensureWallet();
       const manifest: DaraManifest = buildManifest({ 
-        rootHash, 
+        rootHash: root, 
         title: "Wave‑1 sample dataset import", 
         uploader, 
         app: "DARA", 
@@ -51,9 +51,9 @@ export default function DarkOgUploader() {
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
       const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
-      const mUpload = await uploadTo0G(manifestFile);
-      setManifestRoot(mUpload.rootHash || "");
-      setManifestTx(mUpload.txHash || "");
+      const mUpload = await uploadToZeroG(manifestFile);
+      setManifestRoot(mUpload.root || "");
+      setManifestTx(mUpload.tx || "");
     } catch (e: any) {
       setErr(e.message || "Upload failed");
     } finally {

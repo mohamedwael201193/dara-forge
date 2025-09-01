@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import { getBrowserProvider, getSigner, getDaraContract, DARA_ABI } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
-import { uploadTo0G } from "@/services/ogStorageClient";
+import { uploadToZeroG } from "@/services/ogStorageClient";
 import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
 
 export default function SampleRunCard() {
@@ -29,18 +29,18 @@ export default function SampleRunCard() {
       const dsBlob = await res.blob();
 
       // 1) Upload dataset to 0G Storage
-      const ds = await uploadTo0G(new File([dsBlob], "sample_abstracts.csv"));
+      const ds = await uploadToZeroG(new File([dsBlob], "sample_abstracts.csv"));
 
 
-      setDatasetRoot(ds.rootHash || "");
-      setDatasetTx(ds.txHash || "");
+      setDatasetRoot(ds.root || "");
+      setDatasetTx(ds.tx || "");
 
       // 2) Build manifest + hash
       const provider = getBrowserProvider();
       const accounts: string[] = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
       const uploader = accounts[0];
       const manifest: DaraManifest = buildManifest({
-        rootHash: ds.rootHash,
+        rootHash: ds.root,
         title: "Wave‑1 sample dataset import",
         uploader,
         app: "DARA",
@@ -51,9 +51,9 @@ export default function SampleRunCard() {
 
       // 3) Upload manifest.json to 0G Storage
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: "application/json" });
-      const m = await uploadTo0G(new File([mBlob], "manifest.json"));
-      setManifestRoot(m.rootHash || "");
-      setManifestTx(m.txHash || "");
+      const m = await uploadToZeroG(new File([mBlob], "manifest.json"));
+      setManifestRoot(m.root || "");
+      setManifestTx(m.tx || "");
     } catch (e: any) {
       setError(e.message || "Upload failed");
     } finally {

@@ -16,7 +16,7 @@ import {
   Cpu
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; 
-import { uploadTo0G } from "@/services/ogStorageClient";
+import { uploadToZeroG } from "@/services/ogStorageClient";
 import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
 import { ethers } from "ethers";
@@ -87,9 +87,9 @@ export const DemoSection = () => {
 
     try {
       // 1) Dataset upload with real progress → map to 0–70%
-      const ds = await uploadTo0G(file);
-      setDatasetRoot(ds.rootHash || "");
-      setDatasetTx(ds.txHash || "");
+      const ds = await uploadToZeroG(file);
+      setDatasetRoot(ds.root || "");
+      setDatasetTx(ds.tx || "");
 
       // 2) Build + upload manifest → 70–100%
       setStage("manifest");
@@ -98,7 +98,7 @@ export const DemoSection = () => {
       const uploader = accounts[0];
 
       const manifest: DaraManifest = buildManifest({
-        rootHash: ds.rootHash,
+        rootHash: ds.root,
         title: "Wave‑1 sample dataset import",
         uploader,
         app: "DARA",
@@ -111,12 +111,12 @@ export const DemoSection = () => {
       const mBlob = new Blob([JSON.stringify(manifest, null, 2)], { 
         type: "application/json"  // Explicit content type
       });
-      const mu = await uploadTo0G(new File([mBlob], "manifest.json"));
-      setManifestRoot(mu.rootHash || "");
-      setManifestTx(mu.txHash || "");
+      const mu = await uploadToZeroG(new File([mBlob], "manifest.json"));
+      setManifestRoot(mu.root || "");
+      setManifestTx(mu.tx || "");
       
       // Check if manifest is immediately available
-      checkManifestAvailability(mu.rootHash || "");
+      checkManifestAvailability(mu.root || "");
 
       setUploadProgress(100);
       setStage("idle");

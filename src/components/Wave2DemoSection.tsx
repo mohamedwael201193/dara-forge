@@ -36,7 +36,7 @@ import {
   Award
 } from "lucide-react";
 import { WalletConnect } from "./WalletConnect"; 
-import { uploadTo0G } from "@/services/ogStorageClient";
+import { uploadToZeroG } from "@/services/ogStorageClient";
 import { gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
 import { getSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
@@ -221,9 +221,9 @@ export const Wave2DemoSection = () => {
     try {
       // 1) Upload dataset to 0G Storage
       setSuccess("🚀 Uploading to 0G Storage Network...");
-      const ds = await uploadTo0G(selectedFile);
-      setDatasetRoot(ds.rootHash || "");
-      setDatasetTx(ds.txHash || "");
+      const ds = await uploadToZeroG(selectedFile);
+      setDatasetRoot(ds.root || "");
+      setDatasetTx(ds.tx || "");
 
       // 2) Create enhanced manifest with metadata
       setStage("manifest");
@@ -233,7 +233,7 @@ export const Wave2DemoSection = () => {
       const uploader = accounts[0];
 
       const enhancedManifest: DaraManifest = buildManifest({
-        rootHash: ds.rootHash,
+        rootHash: ds.root,
         title: datasetMetadata.title,
         uploader,
         app: "DARA",
@@ -253,15 +253,15 @@ export const Wave2DemoSection = () => {
       const mBlob = new Blob([JSON.stringify(enhancedManifest, null, 2)], { 
         type: "application/json"
       });
-      const mu = await uploadTo0G(new File([mBlob], "manifest.json"));
-      setManifestRoot(mu.rootHash || "");
-      setManifestTx(mu.txHash || "");
+      const mu = await uploadToZeroG(new File([mBlob], "manifest.json"));
+      setManifestRoot(mu.root || "");
+      setManifestTx(mu.tx || "");
 
       // 3) Commit to blockchain
       setSuccess("⛓️ Committing to 0G Chain...");
       const signer = await getSigner();
       const contract = getDaraContract(signer);
-      const tx = await contract.logData(mu.rootHash);
+      const tx = await contract.logData(mu.root);
       const receipt = await tx.wait();
       const txHash = (receipt as any).hash || (receipt as any).transactionHash;
       setOnchainTx(txHash);
@@ -275,7 +275,7 @@ export const Wave2DemoSection = () => {
         id: Date.now().toString(),
         name: datasetMetadata.title,
         description: datasetMetadata.description,
-        rootHash: mu.rootHash || "",
+        rootHash: mu.root || "",
         size: selectedFile.size,
         uploadDate: new Date().toISOString().split('T')[0],
         author: uploader,

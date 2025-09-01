@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons";
 import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
-import { uploadTo0G } from "@/services/ogStorageClient";
+import { uploadToZeroG } from "@/services/ogStorageClient";
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import { saveUploadRecord } from "@/lib/uploadHistory"
@@ -91,15 +91,15 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         const file = files[i]
         setCurrentStep(`Uploading ${file.name} to 0G Storage...`)
         
-        const result = await uploadTo0G(file);
+        const result = await uploadToZeroG(file);
 
         uploadResults.push({
           file: file.name,
           size: file.size,
-          rootHash: result.rootHash,
-          txHash: result.txHash,
-          gatewayUrl: gatewayUrlForRoot(result.rootHash || ""),
-          downloadUrl: downloadWithProofUrl(result.rootHash || "")
+          rootHash: result.root,
+          txHash: result.tx,
+          gatewayUrl: gatewayUrlForRoot(result.root || ""),
+          downloadUrl: downloadWithProofUrl(result.root || "")
         })
       }
 
@@ -121,20 +121,11 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
       const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
-      const manifestJson = await uploadTo0G(manifestFile);
-
-      if (manifestJson.error) {
-        const friendlyError = manifestJson.error.includes("TEMPORARY_LIMIT")
-          ? "The storage network is under heavy upgrade right now. Please upload a smaller file (≤1 MiB) and retry later for larger files."
-          : manifestJson.error.includes("NETWORK_CONCURRENCY_LIMIT")
-          ? "Storage nodes are rejecting batched writes right now. Retry shortly or upload a smaller file."
-          : manifestJson.error;
-        throw new Error(friendlyError);
-      }
+      const manifestJson = await uploadToZeroG(manifestFile);
 
       // The blockchain anchoring is handled by the 0G Storage API endpoint (api/storage/upload.ts)
       // The txHash for the blockchain anchoring is returned by the API call if successful.
-      const txHash = manifestJson.txHash;
+      const txHash = manifestJson.tx;
 
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
@@ -144,10 +135,10 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         {
           file: 'manifest.json',
           size: manifestBlob.size,
-          rootHash: manifestJson.rootHash,
-          txHash: manifestJson.txHash,
-          gatewayUrl: gatewayUrlForRoot(manifestJson.rootHash || ""),
-          downloadUrl: downloadWithProofUrl(manifestJson.rootHash || ""),
+          rootHash: manifestJson.root,
+          txHash: manifestJson.tx,
+          gatewayUrl: gatewayUrlForRoot(manifestJson.root || ""),
+          downloadUrl: downloadWithProofUrl(manifestJson.root || ""),
           isManifest: true,
           blockchainTx: txHash
         }
