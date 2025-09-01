@@ -145,15 +145,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (uerr) throw uerr;
 
           const rootHash = tree!.rootHash();
-          console.log("Root Hash to be submitted to Flow contract:", rootHash);
+          console.log("Root Hash (raw) to be submitted to Flow contract:", rootHash);
+          console.log("Root Hash (hex) to be submitted to Flow contract:", ethers.hexlify(rootHash));
+          console.log("Root Hash (length) to be submitted to Flow contract:", rootHash.length);
 
           // Anchor on 0G Flow contract
           console.log("Attempting to interact with Flow contract...");
+          console.log("Flow Contract Address:", FLOW_CONTRACT_ADDRESS);
+          console.log("Signer Address:", signer.address);
+          console.log("Flow ABI:", JSON.stringify(FLOW_ABI));
           const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI as any, signer);
-          const flowTx = await flowContract.submit(rootHash);
-          console.log("Flow contract transaction sent, hash:", flowTx.hash);
-          await flowTx.wait();
-          console.log("Flow contract transaction confirmed.");
+          console.log("Calling flowContract.submit with rootHash:", rootHash);
+          try {
+            const flowTx = await flowContract.submit(rootHash);
+            console.log("Flow contract transaction sent, hash:", flowTx.hash);
+            await flowTx.wait();
+            console.log("Flow contract transaction confirmed.");
+          } catch (flowError: any) {
+            console.error("Error interacting with Flow contract:", flowError);
+            throw flowError;
+          }
 
           await zg.close();
           await fs.rm(tmp, { recursive: true, force: true });
