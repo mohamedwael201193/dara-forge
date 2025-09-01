@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FLOW_ABI = void 0;
-exports.FLOW_ABI = [
+exports.default = [
     {
         "inputs": [
             {

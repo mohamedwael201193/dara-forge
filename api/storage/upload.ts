@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { ethers } from 'ethers';
-import { FLOW_ABI } from './FlowABI.js';
+import FLOW_ABI from './FlowABI.js';
 
 const FLOW_CONTRACT_ADDRESS = '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628';
 
@@ -135,7 +135,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
           // Anchor on 0G Flow contract
           console.log("Attempting to interact with Flow contract...");
-          const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI, signer);
+          const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI as any, signer);
           const flowTx = await flowContract.submit(rootHash);
           console.log("Flow contract transaction sent, hash:", flowTx.hash);
           await flowTx.wait();
