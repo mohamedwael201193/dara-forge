@@ -4,7 +4,21 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { ethers } from 'ethers';
-import FLOW_ABI from './FlowABI.js';
+const FLOW_ABI = [
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "_merkleRoot",
+        "type": "bytes32"
+      }
+    ],
+    "name": "submit",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
 
 const FLOW_CONTRACT_ADDRESS = '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628';
 
