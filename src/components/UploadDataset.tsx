@@ -15,6 +15,7 @@ import { uploadToZeroG, checkRoot } from "@/services/ogStorageClient";
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import { saveUploadRecord } from "@/lib/uploadHistory"
+import { buildGatewayUrl } from "@/lib/buildGatewayUrl"
 import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
@@ -31,6 +32,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState("")
   const [error, setError] = useState("")
+  const [gatewayBase, setGatewayBase] = useState<string | null>(null)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files)
@@ -44,6 +46,29 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     } catch (err) {
       console.error('Failed to copy:', err)
     }
+  }
+
+  const ensureGatewayBase = async (root: string, relPath?: string) => {
+    // prefer indexer from upload/status, else resolve
+    const preferred = results.find(r => r.rootHash === root)?.indexer;
+    if (preferred) { setGatewayBase(preferred); return preferred; }
+    const r = await fetch(`/api/storage/resolve?root=${encodeURIComponent(root)}${relPath ? `&path=${encodeURIComponent(relPath)}` : ''}`);
+    const data = await r.json();
+    if (data?.ok && data.indexer) { setGatewayBase(data.indexer); return data.indexer; }
+    return null;
+  }
+
+  const onOpenGateway = async (root: string, name?: string, relPath?: string) => {
+    const idx = await ensureGatewayBase(root, relPath);
+    if (!idx) { 
+      setError('File not yet available on any indexer. Try again shortly.'); 
+      return; 
+    }
+    window.open(buildGatewayUrl(idx, root, name, relPath), '_blank', 'noopener,noreferrer');
+  }
+
+  const onDownloadWithProof = (root: string, name: string) => {
+    window.open(`/api/storage/download?root=${encodeURIComponent(root)}&name=${encodeURIComponent(name)}&proof=true`, '_blank');
   }
 
   const handleUpload = async () => {
@@ -126,6 +151,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           rootHash: result.root,
           txHash: result.tx,
           status: result.status,
+          indexer: result.indexer,
           gatewayUrl: gatewayUrlForRoot(result.root || ""),
           downloadUrl: downloadWithProofUrl(result.root || "")
         })
@@ -175,6 +201,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           rootHash: manifestJson.root,
           txHash: manifestJson.tx,
           status: manifestJson.status,
+          indexer: manifestJson.indexer,
           gatewayUrl: gatewayUrlForRoot(manifestJson.root || ""),
           downloadUrl: downloadWithProofUrl(manifestJson.root || ""),
           isManifest: true,
@@ -402,16 +429,18 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                       <Label className="text-slate-400">Storage TX:</Label>
                       <div className="flex items-center gap-2 mt-1">
                         <code className="text-blue-400 bg-slate-900 px-2 py-1 rounded text-xs">
-                          {result.txHash?.slice(0, 20)}...
+                          {result.txHash ? `${result.txHash.slice(0, 20)}...` : '—'}
                         </code>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => copyToClipboard(result.txHash, 'Transaction hash')}
-                          className="h-6 w-6 p-0 hover:bg-slate-600"
-                        >
-                          <Copy className="w-3 h-3 text-slate-400" />
-                        </Button>
+                        {result.txHash && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyToClipboard(result.txHash, 'Transaction hash')}
+                            className="h-6 w-6 p-0 hover:bg-slate-600"
+                          >
+                            <Copy className="w-3 h-3 text-slate-400" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -447,7 +476,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(result.gatewayUrl, '_blank')}
+                      onClick={() => onOpenGateway(result.rootHash, result.file)}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
@@ -456,7 +485,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => window.open(result.downloadUrl, '_blank')}
+                      onClick={() => onDownloadWithProof(result.rootHash, result.file)}
                       className="border-slate-600 text-slate-300 hover:bg-slate-700"
                     >
                       <ExternalLink className="w-3 h-3 mr-1" />
