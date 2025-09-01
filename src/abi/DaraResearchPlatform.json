@@ -1,0 +1,51 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "internalType": "string", "name": "jobId", "type": "string" },
+        { "internalType": "string", "name": "jobType", "type": "string" },
+        { "internalType": "string", "name": "inputDataRoot", "type": "string" }
+      ],
+      "name": "submitComputeJob",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+        { "internalType": "string", "name": "jobId", "type": "string" },
+        { "internalType": "string", "name": "outputDataRoot", "type": "string" }
+      ],
+      "name": "completeComputeJob",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+      ],
+      "name": "getComputeJobs",
+      "outputs": [
+        {
+          "components": [
+            { "internalType": "string", "name": "jobId", "type": "string" },
+            { "internalType": "string", "name": "jobType", "type": "string" },
+            { "internalType": "string", "name": "inputDataRoot", "type": "string" },
+            { "internalType": "string", "name": "outputDataRoot", "type": "string" },
+            { "internalType": "uint256", "name": "timestamp", "type": "uint256" },
+            { "internalType": "bool", "name": "completed", "type": "bool" }
+          ],
+          "internalType": "struct DaraResearchPlatform.ComputeJob[]",
+          "name": "",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
+

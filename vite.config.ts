@@ -29,6 +29,13 @@ export default defineConfig({
   },
   optimizeDeps: {
     exclude: ["@0glabs/0g-ts-sdk"],
+    esbuildOptions: {
+      // Define global for browser compatibility
+      define: {
+        global: 'globalThis'
+      }
+    },
+    include: ['buffer', 'process']
   },
   build: {
     sourcemap: true, // temporary while polishing

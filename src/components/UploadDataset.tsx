@@ -16,6 +16,7 @@ import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import { saveUploadRecord } from "@/lib/uploadHistory"
 import { buildGatewayUrl } from "@/lib/buildGatewayUrl"
+import { ResearchAnalysis } from './ResearchAnalysis'
 import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
@@ -33,6 +34,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const [currentStep, setCurrentStep] = useState("")
   const [error, setError] = useState("")
   const [gatewayBase, setGatewayBase] = useState<string | null>(null)
+  const [showAnalysis, setShowAnalysis] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFiles(e.target.files)
@@ -496,6 +498,38 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
               ))}
             </div>
           </CardContent>
+        </Card>
+      )}
+
+      {/* AI Analysis Section */}
+      {results.length > 0 && results.some(r => r.isManifest) && (
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between text-white">
+              <span>AI Research Analysis</span>
+              <Button
+                onClick={() => setShowAnalysis(!showAnalysis)}
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                {showAnalysis ? 'Hide Analysis' : 'Show AI Analysis'}
+              </Button>
+            </CardTitle>
+            <CardDescription className="text-slate-400">
+              Analyze your uploaded dataset with advanced AI models
+            </CardDescription>
+          </CardHeader>
+          
+          {showAnalysis && (
+            <CardContent>
+              <ResearchAnalysis
+                datasetRoot={results.find(r => r.isManifest)?.rootHash || ''}
+                onComplete={(result) => {
+                  console.log("Analysis complete:", result);
+                }}
+              />
+            </CardContent>
+          )}
         </Card>
       )}
     </div>

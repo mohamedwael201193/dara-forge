@@ -15,7 +15,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@0glabs/0g-serving-broker": "^0.3.3",
     "@0glabs/0g-ts-sdk": "^0.3.1",
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
@@ -49,10 +48,12 @@
     "@reown/appkit-adapter-wagmi": "^1.8.1",
     "@tanstack/react-query": "^5.85.5",
     "@types/busboy": "^1.5.4",
+    "@types/crypto-js": "^4.2.2",
     "busboy": "^1.6.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "crypto-js": "^4.2.0",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "ethers": "^6.13.1",
