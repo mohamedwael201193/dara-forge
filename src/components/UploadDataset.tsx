@@ -11,7 +11,7 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons";
 import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
-import { uploadToZeroG } from "@/services/ogStorageClient";
+import { uploadToZeroG, checkRoot } from "@/services/ogStorageClient";
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import { saveUploadRecord } from "@/lib/uploadHistory"
@@ -87,17 +87,45 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     try {
       const uploadResults: any[] = []
 
+      // Helper function to poll for file availability
+      const pollForAvailability = async (root: string, maxAttempts = 30) => {
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          try {
+            const status = await checkRoot(root);
+            if (status.status === 'available') {
+              return true;
+            }
+            // Wait 2 seconds before next check
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          } catch (err) {
+            console.warn(`Polling attempt ${attempt + 1} failed:`, err);
+          }
+        }
+        return false;
+      };
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i]
         setCurrentStep(`Uploading ${file.name} to 0G Storage...`)
+        setUploadProgress((i / files.length) * 40) // 40% for uploads
         
         const result = await uploadToZeroG(file);
+
+        // If file was uploaded (not existing), poll for availability
+        if (result.status === 'uploaded' && result.root) {
+          setCurrentStep(`Waiting for ${file.name} to be available on storage nodes...`)
+          const isAvailable = await pollForAvailability(result.root);
+          if (!isAvailable) {
+            console.warn(`File ${file.name} may still be processing on storage nodes`);
+          }
+        }
 
         uploadResults.push({
           file: file.name,
           size: file.size,
           rootHash: result.root,
           txHash: result.tx,
+          status: result.status,
           gatewayUrl: gatewayUrlForRoot(result.root || ""),
           downloadUrl: downloadWithProofUrl(result.root || "")
         })
@@ -105,6 +133,8 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
       // Create manifest
       setCurrentStep("Creating dataset manifest...")
+      setUploadProgress(60) // 60% after file uploads
+      
       const manifest: DaraManifest = buildManifest({
         rootHash: uploadResults[0].rootHash,
         title: datasetTitle,
@@ -121,11 +151,18 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
 
       const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
       const manifestFile = new File([manifestBlob], 'manifest.json', { type: 'application/json' });
+      
+      setUploadProgress(80) // 80% before manifest upload
       const manifestJson = await uploadToZeroG(manifestFile);
 
-      // The blockchain anchoring is handled by the 0G Storage API endpoint (api/storage/upload.ts)
-      // The txHash for the blockchain anchoring is returned by the API call if successful.
-      const txHash = manifestJson.tx;
+      // Poll for manifest availability if it was uploaded
+      if (manifestJson.status === 'uploaded' && manifestJson.root) {
+        setCurrentStep("Waiting for manifest to be available on storage nodes...")
+        const isAvailable = await pollForAvailability(manifestJson.root);
+        if (!isAvailable) {
+          console.warn("Manifest may still be processing on storage nodes");
+        }
+      }
 
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
@@ -137,10 +174,11 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           size: manifestBlob.size,
           rootHash: manifestJson.root,
           txHash: manifestJson.tx,
+          status: manifestJson.status,
           gatewayUrl: gatewayUrlForRoot(manifestJson.root || ""),
           downloadUrl: downloadWithProofUrl(manifestJson.root || ""),
           isManifest: true,
-          blockchainTx: txHash
+          blockchainTx: manifestJson.tx
         }
       ];
 
@@ -155,7 +193,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
             fileName: result.file,
             fileSize: result.size,
             timestamp: Date.now(),
-            explorer: explorerTxUrl(result.txHash)
+            explorer: manifestJson.explorer || explorerTxUrl(result.txHash)
           });
         }
       });

@@ -1,4 +1,3 @@
-// api/storage/upload.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import os from 'os';
 import fs from 'fs';
@@ -7,9 +6,8 @@ import Busboy from 'busboy';
 import { ethers } from 'ethers';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 
-// Galileo Flow (docs) and default endpoints
 const FLOW_DEFAULT = '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628';
-const INDEXER_DEFAULTS = [
+const INDEXER_FALLBACKS = [
   'https://indexer-storage-testnet-turbo.0g.ai',
   'https://indexer-storage-testnet-standard.0g.ai',
 ];
@@ -23,43 +21,62 @@ function parseMultipart(req: VercelRequest): Promise<{ filePath: string; filenam
     bb.on('file', (_name, file, info) => {
       filename = info.filename || `upload_${Date.now()}`;
       tmpPath = path.join(os.tmpdir(), `${Date.now()}_${filename}`);
-      const writeStream = fs.createWriteStream(tmpPath);
+      const ws = fs.createWriteStream(tmpPath);
       file.on('data', (d: Buffer) => (size += d.length));
-      file.pipe(writeStream);
-      writeStream.on('close', () => resolve({ filePath: tmpPath, filename, size }));
-      writeStream.on('error', reject);
+      file.pipe(ws);
+      ws.on('close', () => resolve({ filePath: tmpPath, filename, size }));
+      ws.on('error', reject);
     });
     bb.on('error', reject);
     req.pipe(bb);
   });
 }
 
-const isTransient = (msg: string) =>
-  /too many data writing|timeout|ECONNRESET|ETIMEDOUT|503|rate/i.test(msg);
+const isTransient = (m: string) => /too many data writing|timeout|ECONNRESET|ETIMEDOUT|503|rate/i.test(m);
 
-async function uploadViaIndexer(
-  zgFile: ZgFile,
+async function probeIndexer(indexer: string, root: string, timeoutMs = 3000): Promise<boolean> {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), timeoutMs);
+  try {
+    const u = `${indexer.replace(/\/$/, '')}/file?root=${encodeURIComponent(root)}&name=__probe`;
+    const res = await fetch(u, {
+      method: 'GET',
+      headers: { Range: 'bytes=0-0' },
+      signal: ac.signal,
+    });
+    return res.status === 206 || res.status === 200;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function quickExists(root: string, indexers: string[]) {
+  for (const ind of indexers) {
+    const exists = await probeIndexer(ind, root);
+    if (exists) {
+      return { exists: true, indexer: ind };
+    }
+  }
+  return { exists: false, indexer: null as string | null };
+}
+
+async function uploadWithBackoff(
+  file: ZgFile,
   rpc: string,
   signer: ethers.Wallet,
   indexers: string[]
-): Promise<{ tx: string; root: string; usedIndexer: string }> {
-  const [tree, treeErr] = await zgFile.merkleTree();
-  if (treeErr || !tree) throw new Error(`Merkle tree error: ${String(treeErr)}`);
-  const root = tree.rootHash();
-  if (!root) throw new Error('Failed to generate root hash');
-
+) {
   let lastErr: unknown = null;
-
   for (const ind of indexers) {
     const indexer = new Indexer(ind);
-
-    // up to 5 attempts with exponential backoff if the node is overloaded
     let delay = 1500;
     for (let attempt = 1; attempt <= 5; attempt++) {
       try {
-        const [tx, err] = await indexer.upload(zgFile, rpc, signer as any); // single source of truth
+        const [tx, err] = await indexer.upload(file, rpc, signer as any);
         if (err) throw err;
-        return { tx: String(tx), root, usedIndexer: ind };
+        return { tx: String(tx), indexer: ind };
       } catch (e: any) {
         const msg = e?.message || String(e);
         if (isTransient(msg) && attempt < 5) {
@@ -89,7 +106,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const RPC = process.env.OG_RPC || 'https://evmrpc-testnet.0g.ai/';
     const FLOW = process.env.OG_FLOW_CONTRACT || FLOW_DEFAULT;
-
     const fromEnv =
       process.env.OG_INDEXER_LIST ||
       process.env.OG_INDEXER ||
@@ -97,24 +113,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       '';
     const indexers = [
       ...fromEnv.split(',').map(s => s.trim()).filter(Boolean),
-      ...INDEXER_DEFAULTS,
+      ...INDEXER_FALLBACKS,
     ].filter((v, i, a) => a.indexOf(v) === i);
 
     const { filePath, filename, size } = await parseMultipart(req);
 
-    // provider + signer (use EIP-1559 fees if available)
     const provider = new ethers.JsonRpcProvider(RPC);
-    const wallet = new ethers.Wallet(OG_STORAGE_PRIVATE_KEY, provider);
-    const bal = await provider.getBalance(wallet.address);
+    const signer = new ethers.Wallet(OG_STORAGE_PRIVATE_KEY, provider);
+    const bal = await provider.getBalance(signer.address);
     if (bal === 0n) {
-      throw new Error('Server wallet has 0 OG. Fund it via the faucet and retry.');
+      throw new Error('Server wallet has 0 OG. Use the Galileo faucet and retry.');
     }
 
     const zgFile = await ZgFile.fromFilePath(filePath);
+    const [tree, treeErr] = await zgFile.merkleTree();
+    if (treeErr || !tree) throw new Error(String(treeErr || 'Failed to generate merkle tree'));
+    const root = tree.rootHash();
+    if (!root) throw new Error('Failed to generate root hash');
 
-    // Important: Do NOT call Flow.submit yourself. indexer.upload handles that.
-    const { tx, root, usedIndexer } = await uploadViaIndexer(zgFile, RPC, wallet, indexers);
+    // Fast path: if the file already exists, don't re-upload or re-anchor.
+    const exists = await quickExists(root, indexers);
+    if (exists.exists) {
+      await zgFile.close();
+      fs.unlink(filePath, () => {});
+      return res.status(200).json({
+        ok: true,
+        file: filename,
+        size,
+        root,
+        tx: null,
+        indexer: exists.indexer,
+        flow: FLOW,
+        status: 'exists',
+        explorer: process.env.OG_EXPLORER || 'https://chainscan-galileo.0g.ai'
+      });
+    }
 
+    // Otherwise, upload (SDK handles Flow interaction). May run >60s under load.
+    const { tx, indexer } = await uploadWithBackoff(zgFile, RPC, signer, indexers);
     await zgFile.close();
     fs.unlink(filePath, () => {});
 
@@ -124,16 +160,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       size,
       root,
       tx,
-      indexer: usedIndexer,
+      indexer,
       flow: FLOW,
+      status: 'uploaded',
       explorer: (process.env.OG_EXPLORER || 'https://chainscan-galileo.0g.ai') + `/tx/${tx}`,
     });
+
   } catch (err: any) {
-    const msg = err?.shortMessage || err?.message || String(err);
-    return res.status(500).json({ ok: false, error: msg });
+    return res.status(500).json({ ok: false, error: err?.shortMessage || err?.message || String(err) });
   }
 }
-
-// For Node-style Vercel functions: silence "typeless package.json" perf warning by using ESM.
-// Add: { "type": "module" } in package.json
 

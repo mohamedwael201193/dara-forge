@@ -77,12 +77,12 @@ const downloadResponse = await 0gSdk.storage.downloadWithProof(root, filePath, {
 const provider = new ethers.BrowserProvider(window.ethereum);
 const signer = await provider.getSigner();
 
-// Commit dataset root to 0G Chain
-const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
-const tx = await contract.anchorData(datasetRoot);
+// Log dataset root to 0G Chain using DaraLogger contract
+const contract = new ethers.Contract(CONTRACT_ADDRESS, DARA_ABI, signer);
+const tx = await contract.logData(datasetRoot);
 const receipt = await tx.wait();
 
-console.log(`Dataset anchored on 0G Chain: ${receipt.hash}`);
+console.log(`Dataset logged on 0G Chain: ${receipt.hash}`);
 ```
 
 ---
