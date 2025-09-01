@@ -4,6 +4,9 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { ethers } from 'ethers';
+import { FLOW_ABI } from '../../src/lib/FlowABI';
+
+const FLOW_CONTRACT_ADDRESS = '0xbD75117F80b4E22698D0Cd7612d92BDb8eaff628';
 
 export const config = { api: { bodyParser: false } };
 
@@ -117,14 +120,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (uerr) throw uerr;
 
           const rootHash = tree!.rootHash();
+
+          // Anchor on 0G Flow contract
+          const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI, signer);
+          const flowTx = await flowContract.submit(rootHash);
+          await flowTx.wait();
+
           await zg.close();
           await fs.rm(tmp, { recursive: true, force: true });
-          res.setHeader('Cache-Control', 'no-store');
+          res.setHeader("Cache-Control", "no-store");
           return res.status(200).json({
             ok: true,
             rootHash,
-            txHash: tx,
-            explorer: `${EXPLORER}/tx/${tx}`
+            txHash: flowTx.hash,
+            explorer: `${EXPLORER}/tx/${flowTx.hash}`
           });
         } catch (e: any) {
           lastErr = e;
