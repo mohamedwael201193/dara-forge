@@ -13,14 +13,13 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    nodePolyfills({
-      include: ["crypto", "buffer", "stream", "util", "events"],
-    }),
+
     // componentTagger(),
   ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+
     },
   },
   define: {
@@ -28,7 +27,7 @@ export default defineConfig({
     "process.env": {},
   },
   optimizeDeps: {
-    exclude: ["@0glabs/0g-ts-sdk"],
+    exclude: ["@0glabs/0g-ts-sdk", "@0glabs/0g-serving-broker"],
     esbuildOptions: {
       // Define global for browser compatibility
       define: {
@@ -41,6 +40,9 @@ export default defineConfig({
     sourcemap: true, // temporary while polishing
     rollupOptions: {
       external: ['@0glabs/0g-ts-sdk'],
+    },
+    commonjsOptions: {
+      ignoreTryCatch: true
     }
   }
 });

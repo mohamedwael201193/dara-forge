@@ -1,123 +1,189 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { ethers } from 'ethers'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { ethers } from "ethers";
+
+export const config = { runtime: 'nodejs' };
+
+const OFFICIAL_PROVIDERS: Record<string, string[]> = {
+  'llama-3.3-70b-instruct': ['0xf07240Efa67755B5311bc75784a061eDB47165Dd'],
+  'deepseek-r1-70b': ['0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3'],
+};
+
+async function getBroker() {
+  const { createZGComputeNetworkBroker } = await import('@0glabs/0g-serving-broker');
+  const provider = new ethers.JsonRpcProvider(process.env.OG_RPC_URL!);
+  const wallet = new ethers.Wallet(process.env.OG_COMPUTE_PRIVATE_KEY!, provider);
+  return createZGComputeNetworkBroker(wallet);
+}
+
+async function ensureLedgerBalance(broker: any) {
+  const min = ethers.parseEther(process.env.OG_MIN_LEDGER_BALANCE ?? '0.01');
+  const bootstrap = ethers.parseEther(process.env.OG_BOOTSTRAP_LEDGER ?? '0.05');
+  const refill = ethers.parseEther(process.env.OG_REFILL_AMOUNT ?? '0.05');
+  
+  let ledger = await broker.ledger.getLedger().catch(() => null);
+  
+  if (!ledger) {
+    console.log('Creating new ledger with', ethers.formatEther(bootstrap), 'OG');
+    await broker.ledger.addLedger(bootstrap);
+    ledger = await broker.ledger.getLedger();
+  } else {
+    const avail = ledger.balance - ledger.locked;
+    if (avail < min) {
+      console.log('Refilling ledger with', ethers.formatEther(refill), 'OG');
+      await broker.ledger.depositFund(refill);
+    }
+  }
+  
+  return ledger;
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Set CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*')
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-
+  // Handle CORS
   if (req.method === 'OPTIONS') {
-    res.status(200).end()
-    return
+    res.setHeader('Access-Control-Allow-Origin', process.env.PUBLIC_ORIGIN ?? '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(204).end();
+  }
+  
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', process.env.PUBLIC_ORIGIN ?? '*');
+
+  const { model, messages, stream, tokenId, datasetRef } = req.body || {};
+  
+  if (!model || !messages) {
+    return res.status(400).json({ error: 'model and messages are required' });
   }
 
   try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' })
+    console.log('Initializing broker for model:', model);
+    const broker = await getBroker();
+    await ensureLedgerBalance(broker);
+
+    const providers = OFFICIAL_PROVIDERS[model] ?? [];
+    if (!providers.length) {
+      return res.status(400).json({ error: `Unsupported model: ${model}` });
     }
 
-    const { messages, modelHint } = req.body || {}
-    
-    if (!messages || !Array.isArray(messages)) {
-      return res.status(400).json({ error: 'Invalid messages format' })
-    }
-
-    const rpc = process.env.OG_COMPUTE_RPC || 'https://evmrpc-testnet.0g.ai'
-    const pk = process.env.OG_COMPUTE_PRIVATE_KEY
-    
-    if (!pk) {
-      return res.status(500).json({ error: 'Missing OG_COMPUTE_PRIVATE_KEY' })
-    }
-
-    // For now, return a mock response until 0G Compute is fully integrated
-    // This prevents the "Unexpected end of JSON input" error
-    const mockResponse = {
-      provider: "0g-compute-provider",
-      model: modelHint || "llama-3.3-70b-instruct",
-      response: {
-        id: `chatcmpl-${Date.now()}`,
-        object: "chat.completion",
-        created: Math.floor(Date.now() / 1000),
-        model: modelHint || "llama-3.3-70b-instruct",
-        choices: [{
-          index: 0,
-          message: {
-            role: "assistant",
-            content: generateMockSummary(messages)
-          },
-          finish_reason: "stop"
-        }],
-        usage: {
-          prompt_tokens: 50,
-          completion_tokens: 100,
-          total_tokens: 150
+    // Try each provider until one succeeds
+    for (const providerAddr of providers) {
+      try {
+        console.log('Trying provider:', providerAddr);
+        
+        // Acknowledge provider
+        await broker.inference.acknowledgeProviderSigner(providerAddr).catch(() => {});
+        
+        // Get service metadata
+        const meta = await broker.inference.getServiceMetadata(providerAddr);
+        console.log('Provider metadata:', { endpoint: meta.endpoint, model: meta.model });
+        
+        // Generate one-time headers
+        const headers = await broker.inference.getRequestHeaders(providerAddr, JSON.stringify(messages));
+        
+        const url = `${meta.endpoint}/chat/completions`;
+        
+        if (stream) {
+          // Handle streaming response
+          const upstream = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...headers },
+            body: JSON.stringify({ model: meta.model, messages, stream: true }),
+          });
+          
+          if (!upstream.ok) {
+            throw new Error(`Upstream ${upstream.status}: ${await upstream.text()}`);
+          }
+          
+          res.writeHead(200, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+          });
+          
+          // Stream the response
+          const reader = upstream.body?.getReader();
+          if (reader) {
+            try {
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                res.write(value);
+              }
+            } finally {
+              reader.releaseLock();
+            }
+          }
+          
+          res.end();
+          return;
+        } else {
+          // Handle non-streaming response
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...headers },
+            body: JSON.stringify({ 
+              model: meta.model, 
+              messages,
+              temperature: 0.3,
+              max_tokens: 3000
+            }),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Upstream ${response.status}: ${await response.text()}`);
+          }
+          
+          const data = await response.json();
+          const content = data?.choices?.[0]?.message?.content ?? '';
+          
+          // Try to verify response (TEE providers only)
+          let verified = false;
+          try {
+            verified = await broker.inference.processResponse(providerAddr, content, data.id) || false;
+          } catch (e) {
+            console.log('Verification not available for this provider');
+          }
+          
+          return res.status(200).json({ 
+            content, 
+            provider: providerAddr, 
+            model: meta.model,
+            verified,
+            usage: data.usage,
+            raw: data 
+          });
         }
+      } catch (e: any) {
+        console.error(`Provider ${providerAddr} failed:`, e.message);
+        // Continue to next provider
       }
     }
 
-    return res.status(200).json(mockResponse)
+    // All providers failed
+    return res.status(502).json({ 
+      error: 'Selected provider endpoint unreachable. Try again later or switch model.' 
+    });
 
-    // TODO: Uncomment this when 0G Compute SDK is available
-    /*
-    const wallet = new ethers.Wallet(pk, new ethers.JsonRpcProvider(rpc))
-    const broker = await createZGComputeNetworkBroker(wallet)
-
-    const services = await broker.inference.listService()
-    const preferred = (modelHint || 'llama-3.3-70b-instruct').toLowerCase()
-    const picked = services.find(s => s.model.toLowerCase().includes(preferred)) || services[0]
+  } catch (e: any) {
+    console.error('Compute API error:', e);
     
-    if (!picked) {
-      throw new Error('No providers available')
+    // Map specific errors
+    if (e.message?.includes('ENOTFOUND') || e.message?.includes('DNS')) {
+      return res.status(502).json({ error: 'Provider endpoint unreachable' });
     }
-
-    await broker.inference.acknowledgeProviderSigner(picked.provider)
-    const meta = await broker.inference.getServiceMetadata(picked.provider)
-    const headers = await broker.inference.getRequestHeaders(picked.provider, JSON.stringify(messages))
-
-    const r = await fetch(`${meta.endpoint}/chat/completions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...headers },
-      body: JSON.stringify({ model: meta.model, messages })
-    })
     
-    const json = await r.json()
-    return res.status(200).json({ provider: picked.provider, model: meta.model, response: json })
-    */
-
-  } catch (error: any) {
-    console.error('0G Compute API error:', error)
-    return res.status(500).json({ 
-      error: error?.message || 'Internal server error',
-      details: 'Failed to process request with 0G Compute'
-    })
-  }
-}
-
-function generateMockSummary(messages: any[]): string {
-  const userMessage = messages.find(m => m.role === 'user')?.content || ''
-  
-  if (userMessage.toLowerCase().includes('summarize')) {
-    const textToSummarize = userMessage.replace(/summarize the following text:\s*/i, '').trim()
-    
-    if (textToSummarize.length > 0) {
-      return `**AI-Generated Summary (Mock Response)**
-
-This text discusses ${textToSummarize.split(' ').slice(0, 5).join(' ')}... 
-
-Key points:
-• The content appears to focus on research and data analysis
-• Machine learning and AI technologies are mentioned
-• The text suggests academic or scientific context
-
-*Note: This is a mock response. Full 0G Compute integration is pending.*`
+    if (e.message?.includes('401') || e.message?.includes('403')) {
+      return res.status(401).json({ error: 'Authentication failed' });
     }
+    
+    if (e.message?.includes('insufficient') || e.message?.includes('balance')) {
+      return res.status(402).json({ error: 'Insufficient OG balance. Please top up from faucet.' });
+    }
+    
+    return res.status(500).json({ error: e.message || 'Internal server error' });
   }
-  
-  return `**AI-Generated Summary (Mock Response)**
-
-I've analyzed the provided text and generated a summary based on the key concepts and themes identified.
-
-*Note: This is a mock response while 0G Compute integration is being finalized.*`
 }
 

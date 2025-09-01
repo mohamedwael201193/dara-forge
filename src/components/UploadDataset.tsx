@@ -16,7 +16,7 @@ import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
 import { saveUploadRecord } from "@/lib/uploadHistory"
 import { buildGatewayUrl } from "@/lib/buildGatewayUrl"
-import { ResearchAnalysis } from './ResearchAnalysis'
+import { AIWorkbench } from './AIWorkbench'
 import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
@@ -506,24 +506,25 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
           <CardHeader>
             <CardTitle className="flex items-center justify-between text-white">
-              <span>AI Research Analysis</span>
+              <span>AI Workbench</span>
               <Button
                 onClick={() => setShowAnalysis(!showAnalysis)}
                 variant="outline"
                 className="border-slate-600 text-slate-300 hover:bg-slate-700"
               >
-                {showAnalysis ? 'Hide Analysis' : 'Show AI Analysis'}
+                {showAnalysis ? 'Hide Workbench' : 'Open AI Workbench'}
               </Button>
             </CardTitle>
             <CardDescription className="text-slate-400">
-              Analyze your uploaded dataset with advanced AI models
+              Advanced AI analysis and research tools for your dataset
             </CardDescription>
           </CardHeader>
           
           {showAnalysis && (
             <CardContent>
-              <ResearchAnalysis
+              <AIWorkbench
                 datasetRoot={results.find(r => r.isManifest)?.rootHash || ''}
+                tokenId={results.find(r => r.isManifest)?.tokenId}
                 onComplete={(result) => {
                   console.log("Analysis complete:", result);
                 }}
