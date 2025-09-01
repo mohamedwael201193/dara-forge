@@ -81,11 +81,22 @@ async function parseBody(req: VercelRequest): Promise<Buffer> {
 
 // ---- handler ----
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!PRIV) return res.status(500).json({ error: 'Missing OG_STORAGE_PRIVATE_KEY' });
-  if (INDEXERLIST.length === 0) return res.status(500).json({ error: 'Missing OG_INDEXER_LIST / OG_INDEXER_RPC' });
+  console.log("Function handler started.");
+  if (req.method !== 'POST') {
+    console.log("Method not allowed:", req.method);
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+  if (!PRIV) {
+    console.log("Missing OG_STORAGE_PRIVATE_KEY");
+    return res.status(500).json({ error: 'Missing OG_STORAGE_PRIVATE_KEY' });
+  }
+  if (INDEXERLIST.length === 0) {
+    console.log("Missing OG_INDEXER_LIST / OG_INDEXER_RPC");
+    return res.status(500).json({ error: 'Missing OG_INDEXER_LIST / OG_INDEXER_RPC' });
+  }
 
   try {
+    console.log("Parsing request body...");
     const buf = await parseBody(req);
     if (!buf.length) return res.status(400).json({ error: 'Empty file buffer' });
 
@@ -123,13 +134,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log("Root Hash to be submitted to Flow contract:", rootHash);
 
           // Anchor on 0G Flow contract
+          console.log("Attempting to interact with Flow contract...");
           const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI, signer);
           const flowTx = await flowContract.submit(rootHash);
+          console.log("Flow contract transaction sent, hash:", flowTx.hash);
           await flowTx.wait();
+          console.log("Flow contract transaction confirmed.");
 
           await zg.close();
           await fs.rm(tmp, { recursive: true, force: true });
           res.setHeader("Cache-Control", "no-store");
+          console.log("Upload successful, returning response.");
           return res.status(200).json({
             ok: true,
             rootHash,
