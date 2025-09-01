@@ -145,6 +145,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (uerr) throw uerr;
 
           const rootHash = tree!.rootHash();
+          if (!rootHash) {
+            throw new Error("Root hash is null.");
+          }
           console.log("Root Hash (raw) to be submitted to Flow contract:", rootHash);
           console.log("Root Hash (hex) to be submitted to Flow contract:", ethers.hexlify(rootHash));
           console.log("Root Hash (length) to be submitted to Flow contract:", rootHash.length);
@@ -156,8 +159,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           console.log("Flow ABI:", JSON.stringify(FLOW_ABI));
           const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI as any, signer);
           console.log("Calling flowContract.submit with rootHash:", rootHash);
+          let flowTx;
           try {
-            const flowTx = await flowContract.submit(rootHash);
+            flowTx = await flowContract.submit(rootHash);
             console.log("Flow contract transaction sent, hash:", flowTx.hash);
             await flowTx.wait();
             console.log("Flow contract transaction confirmed.");
