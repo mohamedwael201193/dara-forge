@@ -120,6 +120,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (uerr) throw uerr;
 
           const rootHash = tree!.rootHash();
+          console.log("Root Hash to be submitted to Flow contract:", rootHash);
 
           // Anchor on 0G Flow contract
           const flowContract = new ethers.Contract(FLOW_CONTRACT_ADDRESS, FLOW_ABI, signer);
