@@ -10,10 +10,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons";
-import { gatewayUrlForRoot, downloadWithProofUrl } from "@/lib/ogStorage";
+import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
 import { uploadTo0G } from "@/services/ogStorageClient";
 import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
 import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
+import { saveUploadRecord } from "@/lib/uploadHistory"
 import ConnectWalletButton from './ConnectWalletButton'
 
 interface UploadDatasetProps {}
@@ -142,7 +143,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
 
-      setResults([
+      const finalResults = [
         ...uploadResults,
         {
           file: 'manifest.json',
@@ -154,7 +155,23 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
           isManifest: true,
           blockchainTx: txHash
         }
-      ])
+      ];
+
+      setResults(finalResults);
+
+      // Save to upload history
+      finalResults.forEach(result => {
+        if (result.rootHash && result.txHash) {
+          saveUploadRecord({
+            rootHash: result.rootHash,
+            txHash: result.txHash,
+            fileName: result.file,
+            fileSize: result.size,
+            timestamp: Date.now(),
+            explorer: explorerTxUrl(result.txHash)
+          });
+        }
+      });
 
     } catch (err: any) {
       setError(`Upload failed: ${err.message || 'Unknown error'}`)
