@@ -132,13 +132,9 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
         throw new Error(friendlyError);
       }
 
-      // Anchor on blockchain
-      setCurrentStep("Anchoring on 0G Chain...")
-      const signer = await requireEthersSigner()
-      const contract = getDaraContract(signer)
-      const tx = await contract.logData(manifestJson.rootHash)
-      const receipt = await tx.wait()
-      const txHash = (receipt as any).hash || (receipt as any).transactionHash
+      // The blockchain anchoring is handled by the 0G Storage API endpoint (api/storage/upload.ts)
+      // The txHash for the blockchain anchoring is returned by the API call if successful.
+      const txHash = manifestJson.txHash;
 
       setUploadProgress(100)
       setCurrentStep("Upload completed successfully!")
