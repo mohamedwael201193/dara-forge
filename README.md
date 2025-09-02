@@ -159,14 +159,17 @@ Block Explorer URL: https://chainscan-galileo.0g.ai
 * ✅ 0G Chain anchoring
 * ✅ Basic MetaMask wallet connection
 * ✅ User-friendly interface
+* ✅ Multi-wallet support
+* ✅ SIWE authentication
+* ✅ Real-time Balance Display
 
-### Wave 2 (Planned)
+### Wave 2 (Completed)
 
-* 🔲 Multi-wallet support
-* 🔲 SIWE authentication
-* 🔲 Dataset search & discovery
-* 🔲 Researcher profiles
-* 🔲 Enhanced metadata support
+* ✅ Dataset search & discovery
+* ✅ Researcher profiles
+* ✅ Enhanced metadata support
+* ✅ Versioning, batch uploads, rich metadata (as groundwork for collaborative research ecosystem)
+* ✅ Smart contract-enabled role-based project management (as groundwork for collaborative research ecosystem)
 
 ### Wave 3 (Future)
 
@@ -234,4 +237,30 @@ To enable 0G Compute functionality, the following environment variables are requ
 *   `OG_REFILL_AMOUNT` (Optional): Amount to refill the ledger if balance falls below minimum (default: 0.05).
 
 These variables should be set in your Vercel project settings or in a `.env.local` file for local development.
+
+
+
+
+## 🚀 Updates in Wave 2
+
+
+
+
+🚀 **DARA Forge Wave 2: From Vision to Verified Reality on 0G**
+
+We've achieved a significant breakthrough with DARA now LIVE, featuring robust integration with 0G Storage. This enables the processing of real research data with cryptographic verification, ensuring data integrity and trustworthiness. Our focus for Wave 2 has been on expanding DARA into a truly collaborative research ecosystem.
+
+**Key Updates & Deliverables:**
+
+*   **Full 0G Storage Integration:** Implemented comprehensive 0G Storage capabilities, allowing for secure and verifiable storage of research datasets. This includes handling of file uploads, generation of root hashes, and tracking of storage transactions, all verifiable on the 0G Storage Explorer (e.g., [https://storagescan-galileo.0g.ai/history](https://storagescan-galileo.0g.ai/history)).
+
+*   **Enhanced Wallet Integration & Authentication:** We've significantly improved user accessibility and security by integrating multi-wallet support. Users can now seamlessly connect their wallets via Reown, WalletConnect, Coinbase, and SIWE (Sign-In with Ethereum). This provides a flexible and secure authentication mechanism for researchers.
+
+*   **Real-time Balance Display:** The application now prominently displays wallet balances, offering users immediate visibility into their assets and facilitating smoother interactions within the DARA ecosystem.
+
+*   **Collaborative Research Ecosystem Foundation:** By focusing on robust 0G Storage and advanced authentication, DARA is evolving beyond a data verification tool into a platform that fosters collaboration. This wave lays the groundwork for future features like versioning, batch uploads, rich metadata, and smart contract-enabled role-based project management.
+
+**Vision for the Future:**
+
+By the end of Wave 2, DARA has transformed into a collaborative research ecosystem powered by 0G, setting the stage for deeper integration with 0G Compute and 0G DA in subsequent waves. Our aim is to provide a definitive, trustless infrastructure for reproducible science, ensuring that every piece of research data is verifiable, secure, and accessible.
 
