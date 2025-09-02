@@ -3,7 +3,7 @@ import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 import { ethers } from 'ethers';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { writeFile, unlink, readFile } from 'node:fs/promises';
+import { writeFile, unlink } from 'node:fs/promises';
 import formidable from 'formidable';
 
 export const config = {
@@ -34,18 +34,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    // formidable provides the file path on the server, use it directly
     const tempPath = fileData.filepath;
 
-    // Build signer (ethers v6)
-    const evmRpc = process.env.OG_EVM_RPC!;
+    const evmRpc = process.env.OG_RPC!;
     const indexerRpc = process.env.OG_INDEXER_RPC!;
-    const priv = process.env.OG_PRIVATE_KEY!;
+    const priv = process.env.OG_STORAGE_PRIVATE_KEY!;
 
     const provider = new ethers.JsonRpcProvider(evmRpc);
     const signer = new ethers.Wallet(priv, provider);
 
-    // v0.3.x API: one-arg constructor, three-arg upload
     const indexer = new Indexer(indexerRpc);
 
     const file = await ZgFile.fromFilePath(tempPath);
@@ -63,7 +60,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       root: tree?.rootHash(),
     });
 
-    // Cleanup temp file
     await unlink(tempPath).catch(() => {});
   } catch (err: any) {
     res.status(500).json({ ok: false, error: err?.message ?? String(err) });
