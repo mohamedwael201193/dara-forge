@@ -2,9 +2,7 @@
   "name": "dara-forge",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=22"
-  },
+  "engines": { "node": "22.x" },
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",

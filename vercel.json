@@ -1,10 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sfo1"],
+  "regions": ["iad1"],
   "functions": {
-    "api/storage/upload.ts": { "memory": 1536, "maxDuration": 120 },
-    "api/storage/status.ts": { "memory": 512, "maxDuration": 15 },
-    "api/compute/*.ts": { "runtime": "nodejs@22.x", "memory": 1024, "maxDuration": 60 }
+    "api/og-upload.ts": { "maxDuration": 180, "memory": 1024 },
+    "api/og-events.ts": { "maxDuration": 60, "memory": 256 },
+    "api/og-ready.ts": { "maxDuration": 30, "memory": 128 },
+    "api/compute/*.ts": { "maxDuration": 60, "memory": 1024 }
   }
 }
 
