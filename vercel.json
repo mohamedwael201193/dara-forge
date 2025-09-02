@@ -4,8 +4,7 @@
   "functions": {
     "api/storage/upload.ts": { "memory": 1536, "maxDuration": 120 },
     "api/storage/status.ts": { "memory": 512, "maxDuration": 15 },
-    "api/compute/chat.ts": { "memory": 1024, "maxDuration": 60 },
-    "api/compute/health.ts": { "memory": 512, "maxDuration": 30 }
+    "api/compute/*.ts": { "runtime": "nodejs22.x", "memory": 1024, "maxDuration": 60 }
   }
 }
 

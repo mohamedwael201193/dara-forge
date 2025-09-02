@@ -39,12 +39,19 @@ export default defineConfig({
   build: {
     sourcemap: true, // temporary while polishing
     rollupOptions: {
-      external: ['@0glabs/0g-ts-sdk'],
+      external: ['@0glabs/0g-ts-sdk', '@0glabs/0g-serving-broker', 'child_process', 'fs', 'path', 'crypto'],
+      output: {
+        // Ensure server-only modules are not bundled for client
+        manualChunks: (id) => {
+          if (id.includes('@0glabs/0g-serving-broker')) {
+            return 'server-only';
+          }
+        }
+      }
     },
     commonjsOptions: {
       ignoreTryCatch: true
     }
   }
 });
-
 
