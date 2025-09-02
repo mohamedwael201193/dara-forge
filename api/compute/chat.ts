@@ -1,93 +1,55 @@
-import { VercelRequest, VercelResponse } from '@vercel/node'
-import { ethers } from 'ethers'
-import { createRequire } from 'node:module'
+import { ethers } from "ethers";
+import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 
-export const config = { runtime: 'nodejs' } // ensure Node runtime (not Edge)
+export const config = { runtime: 'nodejs' };
 
-const OFFICIAL_PROVIDERS: Record<string, string[]> = {
-  'llama-3.3-70b-instruct': ['0xf07240Efa67755B5311bc75784a061eDB47165Dd'],
-  'deepseek-r1-70b':       ['0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3'],
-}
-
-function loadBrokerFactory() {
-  const require = createRequire(import.meta.url)
-  const mod = require('@0glabs/0g-serving-broker')
-  const fn =
-    mod.createZGComputeNetworkBroker ??
-    mod.default?.createZGComputeNetworkBroker
-  if (!fn) {
-    throw new Error('createZGComputeNetworkBroker not found in @0glabs/0g-serving-broker')
-  }
-  return fn
-}
-
-async function getBroker() {
-  const createZGComputeNetworkBroker = loadBrokerFactory()
-  const provider = new ethers.JsonRpcProvider(process.env.OG_RPC_URL!)
-  const wallet = new ethers.Wallet(process.env.OG_COMPUTE_PRIVATE_KEY!, provider)
-  return createZGComputeNetworkBroker(wallet)
-}
-
-async function ensureLedgerBalance(broker: any) {
-  const parse = ethers.parseEther
-  const min = parse(process.env.OG_MIN_LEDGER_BALANCE ?? '0.01')
-  const bootstrap = parse(process.env.OG_BOOTSTRAP_LEDGER ?? '0.05')
-  const refill = parse(process.env.OG_REFILL_AMOUNT ?? '0.05')
-
-  let ledger = await broker.ledger.getLedger().catch(() => null)
-  if (!ledger) {
-    await broker.ledger.addLedger(bootstrap)
-  } else {
-    const avail = ledger.balance - ledger.locked
-    if (avail < min) await broker.ledger.depositFund(refill)
-  }
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', process.env.PUBLIC_ORIGIN ?? '*')
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-    return res.status(200).end()
-  }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
-
+export default async function handler(req: any, res: any) {
   try {
-    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
-    const { model, prompt, provider: providerAddr, messages } = body;
+    const { prompt } = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    if (!prompt) return res.status(400).json({ error: "Missing prompt" });
 
-    const derivedPrompt =
-      prompt ??
-      (Array.isArray(messages)
-        ? messages.filter((m: any) => m?.role === 'user').pop()?.content
-        : undefined);
+    const provider = new ethers.JsonRpcProvider(process.env.OG_EVM_RPC!);
+    const wallet = new ethers.Wallet(process.env.OG_PRIVATE_KEY!, provider);
+    const broker: any = await createZGComputeNetworkBroker(wallet);
 
-    if (!model || !derivedPrompt) {
-      return res.status(400).json({ error: 'Missing model or prompt' });
+    const listFn = broker.inference?.listService?.bind(broker.inference) ?? broker.listService?.bind(broker);
+    const services = listFn ? await listFn() : [];
+    if (!services?.length) return res.status(503).json({ error: "No providers available" });
+
+    const providerAddress = process.env.OG_PROVIDER_ADDRESS || services[0].provider;
+    const getMeta = broker.inference?.getServiceMetadata?.bind(broker.inference) ?? broker.getServiceMetadata?.bind(broker);
+    const { endpoint, model } = await getMeta(providerAddress);
+
+    // Required on-chain ack before use
+    const ack = broker.inference?.acknowledgeProviderSigner?.bind(broker.inference) ?? broker.acknowledgeProviderSigner?.bind(broker);
+    if (ack) await ack(providerAddress);
+
+    const getHeaders = broker.inference?.getRequestHeaders?.bind(broker.inference) ?? broker.getRequestHeaders?.bind(broker);
+    const headers = await getHeaders(providerAddress, prompt);
+
+    const r = await fetch(`${endpoint}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] })
+    });
+
+    if (!r.ok) {
+      const t = await r.text().catch(() => "");
+      throw new Error(`Provider returned ${r.status}: ${t}`);
     }
+    const data = await r.json();
+    const text = data?.choices?.[0]?.message?.content ?? "";
 
-    const broker = await getBroker()
-    await ensureLedgerBalance(broker)
-
-    const officialProviders = OFFICIAL_PROVIDERS[model]
-    if (officialProviders && !officialProviders.includes(providerAddr)) {
-      return res.status(400).json({ error: 'Invalid provider for model' })
+    // Optional: verify response (if service is verifiable)
+    const processResp = broker.inference?.processResponse?.bind(broker.inference) ?? broker.processResponse?.bind(broker);
+    if (processResp) {
+      try { await processResp(providerAddress, text, data?.id); } catch {}
     }
+    res.status(200).json({ text, raw: data });
 
-    const completion = await broker.inference.chatCompletion({
-      model,
-      prompt: derivedPrompt,
-      provider: providerAddr,
-    })
-
-    res.setHeader('Access-Control-Allow-Origin', process.env.PUBLIC_ORIGIN ?? '*')
-    return res.status(200).json({ completion })
-  } catch (error: any) {
-    console.error('Chat API error:', error)
-    return res.status(500).json({ error: 'Internal server error', message: error.message })
+  } catch (err: any) {
+    console.error("Chat API error:", err);
+    res.status(500).json({ error: String(err?.message || err) });
   }
 }
 

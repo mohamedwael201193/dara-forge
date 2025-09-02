@@ -13,7 +13,10 @@ export default defineConfig({
   },
   plugins: [
     react(),
-
+    nodePolyfills({
+      include: ["crypto", "buffer", "stream", "util", "events"],
+      globals: { Buffer: true, process: true }
+    })
     // componentTagger(),
   ].filter(Boolean),
   resolve: {
@@ -34,17 +37,17 @@ export default defineConfig({
         global: 'globalThis'
       }
     },
-    include: ['buffer', 'process']
+    include: ["buffer", "process"]
   },
   build: {
     sourcemap: true, // temporary while polishing
     rollupOptions: {
-      external: ['@0glabs/0g-ts-sdk', '@0glabs/0g-serving-broker', 'child_process', 'fs', 'path', 'crypto'],
+      external: ["@0glabs/0g-ts-sdk", "@0glabs/0g-serving-broker", "child_process", "fs", "path", "crypto"],
       output: {
         // Ensure server-only modules are not bundled for client
         manualChunks: (id) => {
-          if (id.includes('@0glabs/0g-serving-broker')) {
-            return 'server-only';
+          if (id.includes("@0glabs/0g-serving-broker")) {
+            return "server-only";
           }
         }
       }
@@ -54,4 +57,6 @@ export default defineConfig({
     }
   }
 });
+});
+
 

@@ -2,10 +2,16 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["iad1"],
   "functions": {
-    "api/**/*.ts": {
-      "maxDuration": 60,
+    "api/compute/**/*.ts": {
+      "runtime": "nodejs20.x",
       "memory": 1024,
-      "includeFiles": "node_modules/{@0glabs/0g-serving-broker,eciesjs,crypto-js,tslib}/**"
+      "maxDuration": 60,
+      "includeFiles": "node_modules/{@0glabs/0g-serving-broker,eciesjs,@ecies/ciphers,crypto-js,tslib}/**"
+    },
+    "api/storage/**/*.ts": {
+      "runtime": "nodejs20.x",
+      "memory": 1024,
+      "maxDuration": 60
     }
   }
 }
