@@ -8,9 +8,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!name || !base64) return res.status(400).json({ error: "Missing name/base64" });
 
     // Fix TS2554: Expected 1 arguments, but got 2. for Buffer.from
-    // Use Buffer.from(base64, 'base64') which is standard Node.js behavior
-    // If this still causes issues, it means the Buffer polyfill is not complete.
-    const bin = Uint8Array.from(Buffer.from(base64, "base64"));
+    // Using atob and Uint8Array.from to convert base64 string to Uint8Array
+    const binaryString = atob(base64);
+    const bin = Uint8Array.from(binaryString, char => char.charCodeAt(0));
     const file = new ZgBlob(bin, name);
 
     const [tree, mErr] = await file.merkleTree();
@@ -35,5 +35,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ ok: false, error: String(e?.message || e) });
   }
 }
-
 
