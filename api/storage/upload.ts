@@ -1,5 +1,5 @@
 // api/storage/upload.ts
-import type { VercelRequest, VercelResponse } from 'next';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 import { ethers } from 'ethers';
 import { tmpdir } from 'node:os';
@@ -56,4 +56,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ ok: false, error: err?.message ?? String(err) });
   }
 }
+
 
