@@ -2,7 +2,14 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "regions": ["iad1"],
   "functions": {
-    "api/**/*.ts": { "maxDuration": 60, "memory": 1024 }
+    "api/**/*.ts": {
+      "maxDuration": 60,
+      "memory": 1024,
+      "includeFiles": [
+        "node_modules/@0glabs/0g-serving-broker/**",
+        "node_modules/crypto-js/**"
+      ]
+    }
   }
 }
 

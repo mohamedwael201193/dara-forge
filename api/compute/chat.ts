@@ -56,10 +56,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { model, prompt, provider: providerAddr } = req.body
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
+    const { model, prompt, provider: providerAddr, messages } = body;
 
-    if (!model || !prompt) {
-      return res.status(400).json({ error: 'Missing model or prompt' })
+    const derivedPrompt =
+      prompt ??
+      (Array.isArray(messages)
+        ? messages.filter((m: any) => m?.role === 'user').pop()?.content
+        : undefined);
+
+    if (!model || !derivedPrompt) {
+      return res.status(400).json({ error: 'Missing model or prompt' });
     }
 
     const broker = await getBroker()
@@ -72,7 +79,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const completion = await broker.inference.chatCompletion({
       model,
-      prompt,
+      prompt: derivedPrompt,
       provider: providerAddr,
     })
 
