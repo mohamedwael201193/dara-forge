@@ -220,3 +220,18 @@ Block Explorer URL: https://chainscan-galileo.0g.ai
 
 This project is licensed under the **MIT License** - see the LICENSE file for details.
 
+
+
+
+### Environment Variables
+
+To enable 0G Compute functionality, the following environment variables are required:
+
+*   `OG_RPC_URL`: RPC URL for the 0G network.
+*   `OG_COMPUTE_PRIVATE_KEY`: Private key for the wallet used by the compute service.
+*   `OG_MIN_LEDGER_BALANCE` (Optional): Minimum ledger balance required (default: 0.01).
+*   `OG_BOOTSTRAP_LEDGER` (Optional): Initial ledger amount to add if balance is zero (default: 0.05).
+*   `OG_REFILL_AMOUNT` (Optional): Amount to refill the ledger if balance falls below minimum (default: 0.05).
+
+These variables should be set in your Vercel project settings or in a `.env.local` file for local development.
+
