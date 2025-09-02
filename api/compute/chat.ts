@@ -1,8 +1,6 @@
 import { ethers } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
 
-export const config = { runtime: 'nodejs' };
-
 export default async function handler(req: any, res: any) {
   try {
     const { prompt } = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
@@ -20,7 +18,6 @@ export default async function handler(req: any, res: any) {
     const getMeta = broker.inference?.getServiceMetadata?.bind(broker.inference) ?? broker.getServiceMetadata?.bind(broker);
     const { endpoint, model } = await getMeta(providerAddress);
 
-    // Required on-chain ack before use
     const ack = broker.inference?.acknowledgeProviderSigner?.bind(broker.inference) ?? broker.acknowledgeProviderSigner?.bind(broker);
     if (ack) await ack(providerAddress);
 
@@ -32,21 +29,14 @@ export default async function handler(req: any, res: any) {
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify({ model, messages: [{ role: "user", content: prompt }] })
     });
+    if (!r.ok) throw new Error(`Provider returned ${r.status}: ${await r.text().catch(() => "")}`);
 
-    if (!r.ok) {
-      const t = await r.text().catch(() => "");
-      throw new Error(`Provider returned ${r.status}: ${t}`);
-    }
     const data = await r.json();
     const text = data?.choices?.[0]?.message?.content ?? "";
-
-    // Optional: verify response (if service is verifiable)
     const processResp = broker.inference?.processResponse?.bind(broker.inference) ?? broker.processResponse?.bind(broker);
-    if (processResp) {
-      try { await processResp(providerAddress, text, data?.id); } catch {}
-    }
-    res.status(200).json({ text, raw: data });
+    if (processResp) { try { await processResp(providerAddress, text, data?.id); } catch {} }
 
+    res.status(200).json({ text, raw: data });
   } catch (err: any) {
     console.error("Chat API error:", err);
     res.status(500).json({ error: String(err?.message || err) });
