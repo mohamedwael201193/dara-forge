@@ -1,10 +1,16 @@
-// api/storage/upload.ts
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 import { ethers } from 'ethers';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { writeFile, unlink } from 'node:fs/promises';
+import { writeFile, unlink, readFile } from 'node:fs/promises';
+import formidable from 'formidable';
+
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
@@ -13,16 +19,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
 
-    const { name, contentBase64 } = req.body as { name?: string; contentBase64?: string };
-    if (!name || !contentBase64) {
-      res.status(400).json({ error: 'Missing name or contentBase64' });
+    const form = formidable({
+      multiples: false,
+      keepExtensions: true,
+    });
+
+    const [fields, files] = await form.parse(req);
+
+    const name = Array.isArray(fields.name) ? fields.name[0] : fields.name;
+    const fileData = Array.isArray(files.file) ? files.file[0] : files.file;
+
+    if (!name || !fileData) {
+      res.status(400).json({ error: 'Missing name or file data' });
       return;
     }
 
-    // Prepare temp file for SDK
-    const bytes = Buffer.from(contentBase64, 'base64');
-    const tempPath = join(tmpdir(), name);
-    await writeFile(tempPath, bytes);
+    // formidable provides the file path on the server, use it directly
+    const tempPath = fileData.filepath;
 
     // Build signer (ethers v6)
     const evmRpc = process.env.OG_EVM_RPC!;
