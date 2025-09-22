@@ -31,7 +31,10 @@ export {
   Copy,
   FileText,
   User,
-  RefreshCw
+  RefreshCw,
+  Edit,
+  Save,
+  X
 } from 'lucide-react';
 
 

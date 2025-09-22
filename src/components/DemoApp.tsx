@@ -5,9 +5,10 @@ import { UploadDataset } from './UploadDataset'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import { Upload, Download, ShieldCheck, Link, MessageSquareText, Network, Shield, Send, CheckCircle, Brain, Coins, Globe, Lock, ChevronRight, ArrowRight, Share, Cpu, AlertTriangle } from "@/lib/icons";
+import { Upload, Download, ShieldCheck, Link, MessageSquareText, Network, Shield, Send, CheckCircle, Brain, Coins, Globe, Lock, ChevronRight, ArrowRight, Share, Cpu, AlertTriangle, Edit } from "@/lib/icons";
 import { SummarizeDataset } from './SummarizeDataset'
 import { DAPublish } from "@/components/DAPublish";
+import { EditDataset } from './EditDataset';
 
 export const DemoApp: React.FC = () => {
   return (
@@ -71,6 +72,13 @@ export const DemoApp: React.FC = () => {
                 AI Summarize
               </TabsTrigger>
               <TabsTrigger 
+                value="edit"
+                className="data-[state=active]:bg-yellow-600 data-[state=active]:text-white text-slate-300 hover:text-white"
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Edit Dataset
+              </TabsTrigger>
+              <TabsTrigger 
                 value="publish"
                 className="data-[state=active]:bg-purple-600 data-[state=active]:text-white text-slate-300 hover:text-white"
               >
@@ -107,6 +115,33 @@ export const DemoApp: React.FC = () => {
                   </p>
                 </div>
                 <SummarizeDataset />
+              </TabsContent>
+
+              <TabsContent value="edit" className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-white mb-2">Edit Dataset Metadata</h2>
+                  <p className="text-slate-300 max-w-2xl mx-auto">
+                    Update dataset titles, descriptions, and metadata. Changes will create a new manifest 
+                    while preserving the original dataset integrity on the decentralized storage network.
+                  </p>
+                </div>
+                <Card className="bg-slate-800 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="text-center py-8">
+                      <Edit className="w-12 h-12 mx-auto mb-4 text-yellow-400" />
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        Edit Your Uploaded Datasets
+                      </h3>
+                      <p className="text-slate-300 max-w-md mx-auto mb-4">
+                        To edit dataset metadata, first upload a dataset in the "Upload Dataset" tab. 
+                        Then return here to modify titles, descriptions, and other metadata.
+                      </p>
+                      <p className="text-sm text-slate-400">
+                        Note: Editing creates a new manifest while preserving the original dataset.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="publish" className="space-y-6">

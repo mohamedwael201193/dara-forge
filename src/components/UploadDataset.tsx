@@ -18,6 +18,7 @@ import { saveUploadRecord } from "@/lib/uploadHistory"
 import { buildGatewayUrl } from "@/lib/buildGatewayUrl"
 import { AIWorkbench } from './AIWorkbench'
 import ConnectWalletButton from './ConnectWalletButton'
+import { EditDataset } from './EditDataset'
 
 interface UploadDatasetProps {}
 
@@ -499,6 +500,28 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Dataset Edit Section */}
+      {results.length > 0 && results.some(r => r.isManifest) && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-white">Edit Dataset Metadata</h3>
+          <EditDataset
+            datasetRoot={results.find(r => !r.isManifest)?.rootHash || ''}
+            manifestRoot={results.find(r => r.isManifest)?.rootHash || ''}
+            currentTitle={datasetTitle || "Research Dataset"}
+            currentDescription={datasetDescription}
+            onEditComplete={(newManifestRoot, newTx) => {
+              // Update the results with the new manifest
+              const updatedResults = results.map(r => 
+                r.isManifest 
+                  ? { ...r, rootHash: newManifestRoot, txHash: newTx }
+                  : r
+              );
+              setResults(updatedResults);
+            }}
+          />
+        </div>
       )}
 
       {/* AI Analysis Section */}
