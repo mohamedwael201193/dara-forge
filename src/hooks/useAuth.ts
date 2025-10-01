@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
 import { useToast } from '@/components/ui/use-toast';
+import { useState } from 'react';
 
 export interface UserProfile {
   id: string;
@@ -7,12 +7,12 @@ export interface UserProfile {
 }
 
 export const useAuth = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [user] = useState<UserProfile | null>(null);
+  const [loading] = useState(false);
   const { toast } = useToast();
 
   // Stub out authentication functions
-  const signUp = async (email: string, password: string, userData: Partial<UserProfile>) => {
+  const signUp = async (_email: string, _password: string, _userData: Partial<UserProfile>) => {
     toast({
       title: "Feature Disabled",
       description: "User sign-up is currently disabled.",
@@ -21,7 +21,7 @@ export const useAuth = () => {
     return { data: null, error: new Error("Sign up disabled") };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (_email: string, _password: string) => {
     toast({
       title: "Feature Disabled",
       description: "User sign-in is currently disabled.",
@@ -38,7 +38,7 @@ export const useAuth = () => {
     });
   };
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+  const updateProfile = async (_updates: Partial<UserProfile>) => {
     toast({
       title: "Feature Disabled",
       description: "Profile updates are currently disabled.",
@@ -47,7 +47,7 @@ export const useAuth = () => {
     return { data: null, error: new Error("Profile update disabled") };
   };
 
-  const fetchProfile = async (userId: string) => {
+  const fetchProfile = async (_userId: string) => {
     // Profile fetching is disabled
     return null;
   };
