@@ -1,10 +1,10 @@
 "use client";
-import React, { useState } from "react";
-import { ethers } from "ethers";
-import { getBrowserProvider, getSigner, getDaraContract, DARA_ABI } from "@/lib/ethersClient";
-import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest";
+import { DARA_ABI, getDaraContract, getSigner } from "@/lib/ethersClient";
+import { buildManifest, DaraManifest, manifestHashHex } from "@/lib/manifest";
+import { gatewayUrlForRoot } from "@/services/ogStorage";
 import { uploadToZeroG } from "@/services/ogStorageClient";
-import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
+import { ethers } from "ethers";
+import { useState } from "react";
 
 export default function SampleRunCard() {
   const [datasetRoot, setDatasetRoot] = useState<string>("");
@@ -36,7 +36,6 @@ export default function SampleRunCard() {
       setDatasetTx(ds.tx || "");
 
       // 2) Build manifest + hash
-      const provider = getBrowserProvider();
       const accounts: string[] = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
       const uploader = accounts[0];
       const manifest: DaraManifest = buildManifest({

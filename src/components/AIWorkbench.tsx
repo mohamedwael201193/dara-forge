@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useAppKitAccount } from '@reown/appkit/react';
-import { ethers } from 'ethers';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Brain, Zap, CheckCircle, Copy, Download, AlertCircle } from '@/lib/icons';
-import { computeClient, type ComputeRequest, type ComputeResponse, type ComputeHealthResponse } from '@/services/computeClient';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, Brain, CheckCircle, Copy, Download, Loader2, Zap } from '@/lib/icons';
+import { computeClient, type ComputeHealthResponse, type ComputeRequest } from '@/services/computeClient';
+import { useAppKitAccount } from '@reown/appkit/react';
+import { ethers } from 'ethers';
+import { useEffect, useState } from 'react';
 
 // Official 0G Compute Models
 const COMPUTE_MODELS = {
@@ -71,14 +71,14 @@ const RESEARCH_CONTRACT_ABI = [
 ];
 
 export function AIWorkbench({ datasetRoot, tokenId, onComplete }: AIWorkbenchProps) {
-  const { isConnected, address } = useAppKitAccount();
+  const { isConnected, address: _address } = useAppKitAccount();
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<keyof typeof COMPUTE_MODELS>('llama-3.3-70b-instruct');
   const [analysisType, setAnalysisType] = useState<string>('comprehensive');
   const [customPrompt, setCustomPrompt] = useState('');
   const [results, setResults] = useState<AnalysisResult | null>(null);
   const [contract, setContract] = useState<any>(null);
-  const [streamingContent, setStreamingContent] = useState('');
+  const [_streamingContent, _setStreamingContent] = useState('');
   const [progress, setProgress] = useState(0);
   const [health, setHealth] = useState<ComputeHealthResponse | null>(null);
   const [error, setError] = useState<string>('');
@@ -279,7 +279,7 @@ Return JSON: {ingestion, pipeline, storage, monitoring}`
 
     setLoading(true);
     setProgress(0);
-    setStreamingContent('');
+    _setStreamingContent('');
     setError('');
     
     try {
@@ -519,7 +519,7 @@ Return JSON: {ingestion, pipeline, storage, monitoring}`
           <Label className="text-sm font-semibold text-gray-700 mb-2">
             AI Model
           </Label>
-          <Select value={selectedModel} onValueChange={(value: keyof typeof COMPUTE_MODELS) => setSelectedModel(value)}>
+          <Select value={selectedModel} onValueChange={(value: string) => setSelectedModel(value as keyof typeof COMPUTE_MODELS)}>
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>

@@ -8,7 +8,7 @@ export const WalletConnect = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [walletAddress, setWalletAddress] = useState("");
-  const [chainId, setChainId] = useState("");
+  const [_chainId, _setChainId] = useState("");
   const { toast } = useToast();
 
   // Simulated 0G Chain configuration
@@ -81,7 +81,7 @@ const OG_CHAIN_CONFIG = {
 
       // Set connection state
       setWalletAddress(accounts[0]);
-      setChainId(OG_CHAIN_CONFIG.chainId);
+      _setChainId(OG_CHAIN_CONFIG.chainId);
       setIsConnected(true);
 
       toast({
@@ -104,7 +104,7 @@ const OG_CHAIN_CONFIG = {
   const disconnectWallet = () => {
     setIsConnected(false);
     setWalletAddress("");
-    setChainId("");
+    _setChainId("");
     toast({
       title: "Wallet Disconnected",
       description: "Your wallet has been disconnected from DARA.",

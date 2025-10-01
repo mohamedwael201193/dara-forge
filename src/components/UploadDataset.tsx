@@ -1,21 +1,21 @@
-import React, { useState } from 'react'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
-import { ogGalileo } from '@/lib/networks'
-import { useWalletBalance } from '@/hooks/useWalletBalance'
+import { useState } from 'react'
+// import { ogGalileo } from '@/lib/networks' // Unused in current implementation
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { Progress } from '@/components/ui/progress'
-import { Badge } from '@/components/ui/badge'
-import { Upload, FileText, CheckCircle, ExternalLink, Copy, AlertCircle, Loader2 } from "@/lib/icons";
-import { gatewayUrlForRoot, downloadWithProofUrl } from "@/services/ogStorage";
-import { uploadToZeroG, checkRoot } from "@/services/ogStorageClient";
-import { requireEthersSigner, getDaraContract, DARA_ABI, explorerTxUrl } from "@/lib/ethersClient";
-import { buildManifest, manifestHashHex, DaraManifest } from "@/lib/manifest"
-import { saveUploadRecord } from "@/lib/uploadHistory"
+import { Textarea } from '@/components/ui/textarea'
+import { useWalletBalance } from '@/hooks/useWalletBalance'
 import { buildGatewayUrl } from "@/lib/buildGatewayUrl"
+import { explorerTxUrl } from "@/lib/ethersClient"
+import { AlertCircle, CheckCircle, Copy, ExternalLink, FileText, Loader2, Upload } from "@/lib/icons"
+import { buildManifest, DaraManifest } from "@/lib/manifest"
+import { saveUploadRecord } from "@/lib/uploadHistory"
+import { downloadWithProofUrl, gatewayUrlForRoot } from "@/services/ogStorage"
+import { checkRoot, uploadToZeroG } from "@/services/ogStorageClient"
 import { AIWorkbench } from './AIWorkbench'
 import ConnectWalletButton from './ConnectWalletButton'
 
@@ -24,7 +24,7 @@ interface UploadDatasetProps {}
 export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const { open } = useAppKit()
   const { address, isConnected } = useAppKitAccount()
-  const { balance: ogBalance, isOnZeroGChain, switchToZeroGChain, isLoading: isSwitchingChain } = useWalletBalance()
+  const { balance: ogBalance, isOnZeroGChain, switchToZeroGChain, isLoading: _isSwitchingChain } = useWalletBalance()
   const [files, setFiles] = useState<FileList | null>(null)
   const [uploading, setUploading] = useState(false)
   const [results, setResults] = useState<any[]>([])
@@ -33,7 +33,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
   const [uploadProgress, setUploadProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState("")
   const [error, setError] = useState("")
-  const [gatewayBase, setGatewayBase] = useState<string | null>(null)
+  const [_gatewayBase, setGatewayBase] = useState<string | null>(null)
   const [showAnalysis, setShowAnalysis] = useState(false)
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +41,7 @@ export const UploadDataset: React.FC<UploadDatasetProps> = () => {
     setError("")
   }
 
-  const copyToClipboard = async (text: string, label: string) => {
+  const copyToClipboard = async (text: string, _label: string) => {
     try {
       await navigator.clipboard.writeText(text)
       // You could add a toast notification here

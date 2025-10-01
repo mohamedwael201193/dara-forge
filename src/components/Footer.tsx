@@ -1,5 +1,5 @@
-import React from 'react';
-import { type LucideIcon, Shield, Zap, Folder, Users } from '@/lib/icons';
+// Footer component
+import { Folder, type LucideIcon, Shield, Users, Zap } from '@/lib/icons';
 
 type Feature = {
   name: string;

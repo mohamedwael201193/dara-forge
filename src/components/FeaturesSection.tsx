@@ -1,18 +1,17 @@
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import {
-  Brain,
-  Users,
-  Coins,
-  Shield,
-  Zap,
-  Globe,
-  Lock,
-  ChevronRight,
-  Folder,
-  Database
+    Brain,
+    ChevronRight,
+    Coins,
+    Database,
+    Globe,
+    Lock,
+    Shield,
+    Users,
+    Zap
 } from '@/lib/icons';
+import { useState } from "react";
 
 export const FeaturesSection = () => {
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);

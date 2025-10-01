@@ -1,10 +1,8 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { ethers } from 'ethers';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { writeFile, unlink } from 'node:fs/promises';
 import formidable from 'formidable';
+import { unlink } from 'node:fs/promises';
 
 export const config = {
   api: {
