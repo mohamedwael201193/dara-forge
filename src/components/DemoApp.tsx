@@ -1,13 +1,12 @@
-import React from 'react';
 import ConnectWalletButton from '@/components/ConnectWalletButton';
-import { WalletStatus } from '@/components/WalletStatus';
-import { UploadDataset } from './UploadDataset'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
-import { Upload, Download, ShieldCheck, Link, MessageSquareText, Network, Shield, Send, CheckCircle, Brain, Coins, Globe, Lock, ChevronRight, ArrowRight, Share, Cpu, AlertTriangle } from "@/lib/icons";
-import { SummarizeDataset } from './SummarizeDataset'
 import { DAPublish } from "@/components/DAPublish";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { WalletStatus } from '@/components/WalletStatus';
+import { Brain, CheckCircle, MessageSquareText, Network, Send, Shield, Upload } from "@/lib/icons";
+import React from 'react';
+import { SummarizeDataset } from './SummarizeDataset';
+import { UploadDataset } from './UploadDataset';
 
 export const DemoApp: React.FC = () => {
   return (
@@ -145,11 +144,11 @@ export const DemoApp: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
                           <p className="text-slate-400 mb-1">Chain ID</p>
-                          <p className="text-white font-mono">16601</p>
+                          <p className="text-white font-mono">16602</p>
                         </div>
                         <div>
                           <p className="text-slate-400 mb-1">Currency</p>
-                          <p className="text-white font-mono">OG</p>
+                          <p className="text-white font-mono">0G</p>
                         </div>
                         <div>
                           <p className="text-slate-400 mb-1">RPC Endpoint</p>

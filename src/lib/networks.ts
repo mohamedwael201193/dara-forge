@@ -2,13 +2,13 @@
 import { defineChain } from '@reown/appkit/networks';
 
 export const ogGalileo = defineChain({
-  id: 16601,
-  caipNetworkId: 'eip155:16601',
+  id: 16602,
+  caipNetworkId: 'eip155:16602',
   chainNamespace: 'eip155',
-  name: '0G-Galileo-Testnet',
-  nativeCurrency: { name: 'OG', symbol: 'OG', decimals: 18 },
+  name: 'Galileo (Testnet)',
+  nativeCurrency: { name: '0G', symbol: '0G', decimals: 18 },
   rpcUrls: {
-    default: { http: [import.meta.env.VITE_OG_RPC ?? 'https://16601.rpc.thirdweb.com/'] }
+    default: { http: [import.meta.env.VITE_OG_RPC ?? 'https://evmrpc-testnet.0g.ai/'] }
   },
   blockExplorers: {
     default: {

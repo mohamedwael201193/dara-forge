@@ -1,24 +1,24 @@
 // 0G Galileo Testnet Configuration
 export const CHAIN_CONFIG = {
   // Chain Details
-  chainId: 16601, // Updated to Galileo
-  name: "0G-Galileo-Testnet",
+  chainId: 16602, // Updated to Galileo
+  name: "Galileo (Testnet)",
   nativeCurrency: {
-    name: "OG",
-    symbol: "OG",
+    name: "0G",
+    symbol: "0G",
     decimals: 18,
   },
   
   // RPC Endpoints
   rpcUrls: {
     default: {
-      http: [process.env.VITE_OG_RPC || "https://16601.rpc.thirdweb.com/"],
+      http: [process.env.VITE_OG_RPC || "https://evmrpc-testnet.0g.ai/"],
     },
     public: {
-      http: [process.env.VITE_OG_RPC || "https://16601.rpc.thirdweb.com/"],
+      http: [process.env.VITE_OG_RPC || "https://evmrpc-testnet.0g.ai/"],
     },
     alt: {
-      http: [process.env.VITE_OG_RPC_ALT || "https://16601.rpc.thirdweb.com/"],
+      http: [process.env.VITE_OG_RPC_ALT || "https://evmrpc-testnet.0g.ai/"],
     }
   },
   

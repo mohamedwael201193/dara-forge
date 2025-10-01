@@ -13,7 +13,7 @@ const projectId = import.meta.env.VITE_WC_PROJECT_ID || 'your-project-id';
 const metadata = {
   name: 'DARA Forge',
   description: 'Decentralized AI Research Assistant',
-  url: 'https://dara-forge.vercel.app', // origin must match your domain & subdomain
+  url: import.meta.env.DEV ? 'http://localhost:8080' : 'https://dara-forge.vercel.app', // origin must match your domain & subdomain
   icons: ['https://avatars.githubusercontent.com/u/179229932']
 };
 

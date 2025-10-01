@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi'
+import { useEffect, useState } from 'react'
 import { formatEther } from 'viem'
+import { useAccount, useBalance, useChainId, useSwitchChain } from 'wagmi'
 
-const ZERO_G_CHAIN_ID = 16601
+const ZERO_G_CHAIN_ID = 16602
 
 export function useWalletBalance() {
   const { address, isConnected } = useAccount()

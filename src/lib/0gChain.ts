@@ -15,7 +15,7 @@ export class OGChainService {
   
   // Use your deployed contract address
   private readonly CONTRACT_ADDRESS = process.env.VITE_DARA_CONTRACT || '0xC2Ee75BFe89eAA01706e09d8722A0C8a6E849FC9'
-  private readonly CHAIN_ID = 16601
+  private readonly CHAIN_ID = 16602
   
   // FIXED: Complete ABI for your DARA contract
   private readonly CONTRACT_ABI = [
@@ -69,7 +69,7 @@ export class OGChainService {
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: `0x${this.CHAIN_ID.toString(16)}`,
-            chainName: '0G-Galileo-Testnet',
+            chainName: 'Galileo (Testnet)',
             rpcUrls: [process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/'],
             nativeCurrency: {
               name: '0G',

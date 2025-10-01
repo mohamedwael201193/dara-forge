@@ -86,7 +86,7 @@ export class WalletAuth {
   }
 
   isOnOGNetwork(): boolean {
-    return this.connection?.chainId === 16601
+    return this.connection?.chainId === 16602
   }
 
   getChainService(): OGChainService {

@@ -6,12 +6,12 @@ import { defineChain } from '@reown/appkit/networks';
 const projectId = import.meta.env.VITE_WC_PROJECT_ID;
 
 const ogGalileo = defineChain({
-  id: 16601,
-  caipNetworkId: 'eip155:16601',
+  id: 16602,
+  caipNetworkId: 'eip155:16602',
   chainNamespace: 'eip155',
-  name: '0G-Galileo-Testnet',
-  nativeCurrency: { name: 'OG', symbol: 'OG', decimals: 18 },
-  rpcUrls: { default: { http: ['https://16601.rpc.thirdweb.com/'] } },
+  name: 'Galileo (Testnet)',
+  nativeCurrency: { name: '0G', symbol: '0G', decimals: 18 },
+  rpcUrls: { default: { http: ['https://evmrpc-testnet.0g.ai/'] } },
   blockExplorers: { default: { name: 'ChainScan', url: 'https://chainscan-galileo.0g.ai' } },
   testnet: true
 });

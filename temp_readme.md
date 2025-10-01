@@ -1,35 +1,37 @@
-
 # DARA Forge: Decentralized AI Research Assistant
 
 ---
 
 ## 🚀 Project Overview
+
 DARA Forge revolutionizes scientific research by providing a decentralized platform for storing, verifying, and sharing research datasets with cryptographic integrity guarantees. Built on 0G's modular blockchain infrastructure, DARA Forge ensures that research data remains tamper-proof, verifiable, and permanently accessible.
 
 ---
 
 ## 🎯 Key Problems Solved
-- **Data Integrity**: Research data can be cryptographically verified against tampering  
-- **Transparent Provenance**: Clear lineage of dataset origins and modifications  
-- **Permanent Record**: Dataset proofs anchored on-chain for immutable references  
-- **Open Science**: Promotes reproducibility and verification in scientific research  
+
+- **Data Integrity**: Research data can be cryptographically verified against tampering
+- **Transparent Provenance**: Clear lineage of dataset origins and modifications
+- **Permanent Record**: Dataset proofs anchored on-chain for immutable references
+- **Open Science**: Promotes reproducibility and verification in scientific research
 
 ---
 
 ## ⚡ Live Demo
+
 👉 [Experience DARA Forge](https://dara-forge.vercel.app)
 
 ---
 
 ## 🔍 Core Features
 
-| Feature | Description |
-|---------|-------------|
-| **0G Integration** | Secure dataset upload with cryptographic guarantees |
+| Feature                      | Description                                                |
+| ---------------------------- | ---------------------------------------------------------- |
+| **0G Integration**           | Secure dataset upload with cryptographic guarantees        |
 | **Merkle Root Verification** | Verify dataset integrity using cryptographic Merkle proofs |
-| **On-Chain Anchoring** | Permanently commit dataset proofs to the blockchain |
-| **Proof-Based Downloads** | Download datasets with cryptographic proof of integrity |
-| **Propagation Verification** | Ensure dataset availability across the 0G network |
+| **On-Chain Anchoring**       | Permanently commit dataset proofs to the blockchain        |
+| **Proof-Based Downloads**    | Download datasets with cryptographic proof of integrity    |
+| **Propagation Verification** | Ensure dataset availability across the 0G network          |
 
 ---
 
@@ -49,7 +51,7 @@ graph TD
     G -->|With Proof| C
     C -.->|Verify Integrity| D
     F -.->|Query Anchored Roots| A
-````
+```
 
 ### 0G Storage Integration
 
@@ -91,11 +93,11 @@ console.log(`Dataset anchored on 0G Chain: ${receipt.hash}`);
 
 | Parameter         | Value                                                              |
 | ----------------- | ------------------------------------------------------------------ |
-| Network Name      | 0G-Galileo-Testnet                                                 |
-| Chain ID          | 16601                                                              |
-| RPC URL           | [https://16601.rpc.thirdweb.com](https://16601.rpc.thirdweb.com)   |
+| Network Name      | Galileo (Testnet)                                                  |
+| Chain ID          | 16602                                                              |
+| RPC URL           | [https://evmrpc-testnet.0g.ai](https://evmrpc-testnet.0g.ai)       |
 | Block Explorer    | [https://chainscan-galileo.0g.ai](https://chainscan-galileo.0g.ai) |
-| Currency Symbol   | OG                                                                 |
+| Currency Symbol   | 0G                                                                 |
 | Currency Decimals | 18                                                                 |
 
 ---
@@ -104,9 +106,9 @@ console.log(`Dataset anchored on 0G Chain: ${receipt.hash}`);
 
 ### Prerequisites
 
-* Node.js (v18 or later)
-* MetaMask wallet extension
-* 0G Galileo testnet configured in MetaMask
+- Node.js (v18 or later)
+- MetaMask wallet extension
+- 0G Galileo testnet configured in MetaMask
 
 ### Local Development
 
@@ -131,11 +133,11 @@ npm run dev
 3. Enter the following details:
 
 ```
-Network Name: 0G-Galileo-Testnet  
-RPC URL: https://16601.rpc.thirdweb.com  
-Chain ID: 16601  
-Currency Symbol: OG  
-Block Explorer URL: https://chainscan-galileo.0g.ai  
+Network Name: Galileo (Testnet)
+RPC URL: https://evmrpc-testnet.0g.ai
+Chain ID: 16602
+Currency Symbol: 0G
+Block Explorer URL: https://chainscan-galileo.0g.ai
 ```
 
 ---
@@ -154,65 +156,65 @@ Block Explorer URL: https://chainscan-galileo.0g.ai
 
 ### Wave 1 (Current)
 
-* ✅ 0G Storage integration
-* ✅ Merkle root verification
-* ✅ 0G Chain anchoring
-* ✅ Basic MetaMask wallet connection
-* ✅ User-friendly interface
+- ✅ 0G Storage integration
+- ✅ Merkle root verification
+- ✅ 0G Chain anchoring
+- ✅ Basic MetaMask wallet connection
+- ✅ User-friendly interface
 
 ### Wave 2 (Planned)
 
-* 🔲 Multi-wallet support
-* 🔲 SIWE authentication
-* 🔲 Dataset search & discovery
-* 🔲 Researcher profiles
-* 🔲 Enhanced metadata support
+- 🔲 Multi-wallet support
+- 🔲 SIWE authentication
+- 🔲 Dataset search & discovery
+- 🔲 Researcher profiles
+- 🔲 Enhanced metadata support
 
 ### Wave 3 (Future)
 
-* 🔲 0G Compute integration
-* 🔲 Collaborative research spaces
-* 🔲 Advanced analytics visualization
-* 🔲 Cross-chain dataset verification
-* 🔲 Academic publishing workflows
+- 🔲 0G Compute integration
+- 🔲 Collaborative research spaces
+- 🔲 Advanced analytics visualization
+- 🔲 Cross-chain dataset verification
+- 🔲 Academic publishing workflows
 
 ---
 
 ## 💡 Innovation Highlights
 
-* **Cryptographic Verification** via Merkle trees
-* **On-chain Provenance** for permanent dataset history
-* **Verifiable Downloads** to ensure data consistency
-* **Decentralized Storage** resistant to censorship
-* **Research-First Design** optimized for scientists
+- **Cryptographic Verification** via Merkle trees
+- **On-chain Provenance** for permanent dataset history
+- **Verifiable Downloads** to ensure data consistency
+- **Decentralized Storage** resistant to censorship
+- **Research-First Design** optimized for scientists
 
 ---
 
 ## 👨‍💻 Technologies Used
 
-* **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
-* **Blockchain**: ethers.js, MetaMask
-* **Build Tools**: Vite, PostCSS
-* **0G Integration**: 0G SDK, 0G Storage API, 0G Chain
+- **Frontend**: React, TypeScript, Tailwind CSS, shadcn/ui
+- **Blockchain**: ethers.js, MetaMask
+- **Build Tools**: Vite, PostCSS
+- **0G Integration**: 0G SDK, 0G Storage API, 0G Chain
 
 ---
 
 ## 🔗 Important Links
 
-* [Live Demo](https://dara-forge.vercel.app)
-* [GitHub Repository](https://github.com/mohamedwael201193/dara-forge)
-* [0G Documentation](https://docs.0g.ai)
-* [WaveHack Details](https://app.akindo.io/wave-hacks)
+- [Live Demo](https://dara-forge.vercel.app)
+- [GitHub Repository](https://github.com/mohamedwael201193/dara-forge)
+- [0G Documentation](https://docs.0g.ai)
+- [WaveHack Details](https://app.akindo.io/wave-hacks)
 
 ---
 
 ## 👥 Developer
 
-* **Mohamed Wael** 
+- **Mohamed Wael**
 
-  * GitHub: [@mohamedwael201193](https://github.com/mohamedwael201193)
-  * Twitter: [@Mowael777](https://twitter.com/Mowael777)
-  * Telegram: [@Mowael77](https://t.me/Mowael77)
+  - GitHub: [@mohamedwael201193](https://github.com/mohamedwael201193)
+  - Twitter: [@Mowael777](https://twitter.com/Mowael777)
+  - Telegram: [@Mowael77](https://t.me/Mowael77)
 
 ---
 
@@ -220,9 +222,4 @@ Block Explorer URL: https://chainscan-galileo.0g.ai
 
 This project is licensed under the **MIT License** - see the LICENSE file for details.
 
-
-
-
 <!-- Trigger Vercel deploy -->
-
-

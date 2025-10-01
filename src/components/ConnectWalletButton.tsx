@@ -1,12 +1,12 @@
 // src/components/ConnectWalletButton.tsx
-import React from 'react';
 import { Button } from '@/components/ui/button';
-import { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
 import { ogGalileo } from '@/lib/networks';
-import { getWalletClient } from '@wagmi/core';
 import { wagmiConfig } from '@/lib/wallet';
-import { useBalance } from 'wagmi';
+import { useAppKit, useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react';
+import { getWalletClient } from '@wagmi/core';
+import React from 'react';
 import { formatEther } from 'viem';
+import { useBalance } from 'wagmi';
 
 async function addGalileoIfMissing() {
   const wc = await getWalletClient(wagmiConfig);
@@ -15,10 +15,10 @@ async function addGalileoIfMissing() {
     await wc.transport.request({
       method: 'wallet_addEthereumChain',
       params: [{
-        chainId: '0x40D9', // 16601
-        chainName: '0G-Galileo-Testnet',
-        nativeCurrency: { name: 'OG', symbol: 'OG', decimals: 18 },
-        rpcUrls: [import.meta.env.VITE_OG_RPC ?? 'https://16601.rpc.thirdweb.com/'],
+        chainId: '0x40da', // 16602
+        chainName: 'Galileo (Testnet)',
+        nativeCurrency: { name: '0G', symbol: '0G', decimals: 18 },
+        rpcUrls: [import.meta.env.VITE_OG_RPC ?? 'https://evmrpc-testnet.0g.ai/'],
         blockExplorerUrls: [import.meta.env.VITE_OG_EXPLORER ?? 'https://chainscan-galileo.0g.ai']
       }]
     });

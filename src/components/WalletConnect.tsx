@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Wallet, CheckCircle, ExternalLink, Copy } from '@/lib/icons';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { CheckCircle, Copy, ExternalLink, Wallet } from '@/lib/icons';
+import { useState } from 'react';
 
 export const WalletConnect = () => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -13,11 +13,12 @@ export const WalletConnect = () => {
 
   // Simulated 0G Chain configuration
 const OG_CHAIN_CONFIG = {
-  chainId: '0x40d9', // 16601 in hex
-  chainName: '0G-Galileo-Testnet',
+  chainId: '0x40da', // 16602 in hex
+
+  chainName: 'Galileo (Testnet)',
   nativeCurrency: {
     name: '0G',
-    symbol: 'OG',
+    symbol: '0G',
     decimals: 18,
   },
   rpcUrls: ['https://evmrpc-testnet.0g.ai'],
@@ -85,7 +86,7 @@ const OG_CHAIN_CONFIG = {
 
       toast({
         title: "Wallet Connected Successfully",
-        description: `Connected to 0G-Galileo-Testnet with address ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
+        description: `Connected to Galileo (Testnet) with address ${accounts[0].slice(0, 6)}...${accounts[0].slice(-4)}`,
       });
 
     } catch (error: any) {
@@ -133,14 +134,14 @@ const OG_CHAIN_CONFIG = {
             <div>
               <h3 className="font-semibold text-lg">Connect Your Wallet</h3>
               <p className="text-muted-foreground text-sm">
-                 Connect to 0G-Galileo-Testnet to interact with DARA's decentralized features
+                 Connect to Galileo (Testnet) to interact with DARA's decentralized features
               </p>
             </div>
           </div>
 
           <div className="space-y-3">
             <div className="p-4 border rounded-lg space-y-2">
-              <h4 className="font-medium">0G-Galileo-Testnet</h4>
+              <h4 className="font-medium">Galileo (Testnet)</h4>
               <div className="space-y-1 text-sm text-muted-foreground">
                 <p>Chain ID: {parseInt(OG_CHAIN_CONFIG.chainId, 16)}</p>
                 <p>RPC: {OG_CHAIN_CONFIG.rpcUrls[0]}</p>
@@ -177,7 +178,7 @@ const OG_CHAIN_CONFIG = {
             <div>
               <h3 className="font-semibold text-lg">Successfully Connected</h3>
               <p className="text-muted-foreground text-sm">
-                Your wallet is connected to 0G-Galileo-Testnet
+                Your wallet is connected to Galileo (Testnet)
               </p>
             </div>
           </div>
@@ -186,7 +187,7 @@ const OG_CHAIN_CONFIG = {
             <div className="p-4 border rounded-lg space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Network</span>
-                <Badge variant="secondary">0G-Galileo-Testnet</Badge>
+                <Badge variant="secondary">Galileo (Testnet)</Badge>
               </div>
               
               <div className="space-y-2">

@@ -40,6 +40,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const indexerRpc = process.env.OG_INDEXER_RPC!;
     const priv = process.env.OG_STORAGE_PRIVATE_KEY!;
 
+    // --- DEBUGGING CODE ADDED HERE ---
+    console.log('--- DEBUGGING PRIVATE KEY ---');
+    console.log('The API received this private key:', priv);
+    console.log('--- END DEBUGGING ---');
+    // ---------------------------------
+
     const provider = new ethers.JsonRpcProvider(evmRpc);
     const signer = new ethers.Wallet(priv, provider);
 
@@ -65,5 +71,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ ok: false, error: err?.message ?? String(err) });
   }
 }
-
-

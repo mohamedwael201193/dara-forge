@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { checkHealth, type HealthCheckResult } from '@/lib/0gHealthCheck';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { checkHealth, type HealthCheckResult } from '@/lib/0gHealthCheck';
 import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export function HealthStatus() {
   const [health, setHealth] = useState<HealthCheckResult | null>(null);
@@ -58,7 +58,7 @@ export function HealthStatus() {
   }
 
   const allRpcHealthy = health.rpc.every(rpc => rpc.ok);
-  const galileoRpc = health.rpc.find(rpc => rpc.chainId === 16601);
+  const galileoRpc = health.rpc.find(rpc => rpc.chainId === 16602);
 
   return (
     <Card className="w-full max-w-md">
@@ -74,7 +74,7 @@ export function HealthStatus() {
       </CardHeader>
       <CardContent className="space-y-3">
         <div>
-          <p className="text-sm font-medium mb-1">0G Galileo (Chain ID: 16601)</p>
+          <p className="text-sm font-medium mb-1">0G Galileo (Chain ID: 16602)</p>
           {galileoRpc ? (
             <div className="flex items-center gap-2">
               <Badge variant={galileoRpc.ok ? "default" : "destructive"}>
