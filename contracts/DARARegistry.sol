@@ -2,19 +2,18 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
  * @title DARARegistry
  * @dev Registry contract for anchoring datasets and managing citations on 0G Chain
  */
 contract DARARegistry is AccessControl, ReentrancyGuard {
-    using Counters for Counters.Counter;
+    uint256 private _counter;
     
     bytes32 public constant VERIFIER_ROLE = keccak256("VERIFIER_ROLE");
     
-    Counters.Counter private _datasetIds;
+    uint256 private _datasetIds;
     
     struct Dataset {
         uint256 id;
@@ -86,8 +85,7 @@ contract DARARegistry is AccessControl, ReentrancyGuard {
         require(manifestHash != bytes32(0), "Invalid manifest hash");
         require(rootToId[root] == 0, "Dataset already anchored");
         
-        _datasetIds.increment();
-        id = _datasetIds.current();
+        id = ++_datasetIds;
         
         datasets[id] = Dataset({
             id: id,
@@ -193,7 +191,7 @@ contract DARARegistry is AccessControl, ReentrancyGuard {
      * @dev Get total number of datasets
      */
     function getTotalDatasets() external view returns (uint256) {
-        return _datasetIds.current();
+        return _datasetIds;
     }
     
     /**
@@ -203,7 +201,7 @@ contract DARARegistry is AccessControl, ReentrancyGuard {
         uint256 offset,
         uint256 limit
     ) external view returns (Dataset[] memory result) {
-        uint256 total = _datasetIds.current();
+        uint256 total = _datasetIds;
         if (offset >= total) {
             return new Dataset[](0);
         }

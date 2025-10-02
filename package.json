@@ -15,7 +15,9 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "hh:compile": "hardhat compile",
+    "hh:deploy:anchor": "hardhat run scripts/deploy-anchor.cjs --network galileo"
   },
   "dependencies": {
     "@0glabs/0g-serving-broker": "^0.3.3",

@@ -1,107 +1,82 @@
-import { ethers } from 'ethers';
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { ethers } from "ethers";
 
-function must(name: string) {
-  const v = process.env[name];
-  if (!v) throw new Error(`Missing env ${name}`);
-  return v;
+function toBytes32Smart(v?: string): `0x${string}` {
+  if (!v) return ("0x" + "00".repeat(32)) as `0x${string}`;
+  const hexLike = v.startsWith("0x") ? v : `0x${v}`;
+  if (/^0x[0-9a-fA-F]{64}$/.test(hexLike)) return hexLike as `0x${string}`;
+  return ethers.id(v) as `0x${string}`;
 }
 
-export default async function handler(req: any, res: any) {
-  if (req.method === 'GET') {
-    return res.status(200).json({
-      ok: true,
-      route: 'anchor',
-      description: 'Anchor datasets to 0G Chain'
-    });
-  }
-  
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST, GET');
-    return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
-  }
-
-  const startTime = Date.now();
-  const OG_RPC_URL = must('OG_RPC_URL');
-  const PRIV = must('OG_STORAGE_PRIVATE_KEY');
-  const CONTRACT_ADDRESS = process.env.VITE_DARA_CONTRACT || '0xC2Ee75BFe89eAA01706e09d8722A0C8a6E849FC9';
-
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const { rootHash, manifestHash, projectId } = req.body; // Added manifestHash
-    
-    if (!rootHash) {
-      return res.status(400).json({ 
-        ok: false, 
-        error: 'rootHash is required' 
-      });
+    if (req.method !== "POST") {
+      res.setHeader("Allow", "POST");
+      return res.status(405).json({ ok: false, error: "Method Not Allowed" });
     }
 
-    // Convert rootHash and projectId to bytes32 if they are strings
-    // For simplicity, assuming they are already valid hex strings for bytes32
-    // In a real app, you'd add validation/conversion logic
-    const rootBytes32 = rootHash.startsWith('0x') ? rootHash : '0x' + rootHash;
-    const manifestBytes32 = manifestHash.startsWith('0x') ? manifestHash : '0x' + manifestHash;
-    const projectBytes32 = projectId.startsWith('0x') ? projectId : '0x' + projectId;
+    const { rootHash, manifestHash, projectId } = (req.body ?? {}) as {
+      rootHash?: string; manifestHash?: string; projectId?: string;
+    };
+    if (!rootHash || !/^0x[0-9a-fA-F]{64}$/.test(rootHash)) {
+      return res.status(400).json({ ok: false, error: "rootHash must be 32-byte hex" });
+    }
 
-    // Initialize provider and signer
+    const OG_RPC_URL = process.env.OG_RPC_URL;
+    const PRIV = process.env.OG_STORAGE_PRIVATE_KEY;
+    const CONTRACT_ADDRESS = process.env.DARA_CONTRACT;
+    if (!OG_RPC_URL) return res.status(500).json({ ok: false, error: "Missing OG_RPC_URL" });
+    if (!PRIV) return res.status(500).json({ ok: false, error: "Missing OG_STORAGE_PRIVATE_KEY" });
+    if (!CONTRACT_ADDRESS) return res.status(500).json({ ok: false, error: "Missing DARA_CONTRACT" });
+
     const provider = new ethers.JsonRpcProvider(OG_RPC_URL);
     const signer = new ethers.Wallet(PRIV, provider);
-    
-    // Contract ABI for DARA contract - updated to match anchor function
-    const contractABI = [
+
+    const code = await provider.getCode(CONTRACT_ADDRESS);
+    if (!code || code === "0x") {
+      return res.status(500).json({ ok: false, error: `No contract at ${CONTRACT_ADDRESS} on current network` });
+    }
+    const ABI = [
       "function anchor(bytes32 root, bytes32 manifestHash, bytes32 projectId) external",
-      "function getDataset(uint256 id) external view returns (tuple(uint256 id, bytes32 root, bytes32 manifestHash, bytes32 projectId, address uploader, uint256 timestamp, bool verified, uint256 citationCount))",
       "event DatasetAnchored(uint256 indexed id, bytes32 indexed root, bytes32 indexed manifestHash, bytes32 projectId, address uploader, uint256 timestamp)"
     ];
-    
-    // Initialize contract
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI, signer);
-    
-    console.log('Anchoring to 0G Chain:', { rootHash, manifestHash, projectId });
-    
-    // Call contract function - changed from logData to anchor
-    const tx = await contract.anchor(rootBytes32, manifestBytes32, projectBytes32);
-    console.log('Transaction sent:', tx.hash);
-    
-    // Wait for confirmation
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
+
+    const root = rootHash as `0x${string}`;
+    const manifest = toBytes32Smart(manifestHash);
+    const project = toBytes32Smart(projectId || "dara-forge");
+
+    const tx = await contract.anchor(root, manifest, project);
     const receipt = await tx.wait();
-    console.log('Transaction confirmed:', receipt.hash);
-    
-    // Fetch the newly anchored dataset ID (assuming it's the latest one or can be derived)
-    // For now, we'll return the rootHash as a temporary datasetId
-    const datasetId = rootHash; // This needs to be properly retrieved from the contract event or state
-    
-    const totalDuration = Date.now() - startTime;
+
+    const iface = new ethers.Interface(ABI);
+    let datasetId: string | null = null;
+    for (const log of receipt.logs) {
+      try {
+        const parsed = iface.parseLog(log);
+        if (parsed?.name === "DatasetAnchored") {
+          datasetId = parsed.args.id.toString();
+          break;
+        }
+      } catch {}
+    }
+
+    const explorer = process.env.VITE_OG_EXPLORER || "https://chainscan-galileo.0g.ai";
+    const net = await provider.getNetwork();
 
     return res.status(200).json({
       ok: true,
-      datasetId: datasetId,
-      rootHash,
-      manifestHash,
-      projectId: projectId || 'default',
+      datasetId,
+      rootHash: root,
+      manifestHash: manifest,
+      projectId: project,
       txHash: receipt.hash,
-      blockNumber: receipt.blockNumber,
-      gasUsed: receipt.gasUsed.toString(),
-      contractAddress: CONTRACT_ADDRESS,
-      explorerUrl: `${process.env.VITE_OG_EXPLORER || 'https://chainscan-galileo.0g.ai'}/tx/${receipt.hash}`,
-      performance: {
-        totalDuration,
-        confirmationTime: totalDuration
-      },
-      network: {
-        rpc: OG_RPC_URL,
-        chainId: (await provider.getNetwork()).chainId.toString()
-      }
+      chainId: net.chainId.toString(),
+      explorerUrl: `${explorer}/tx/${receipt.hash}`
     });
-
-  } catch (err: any) {
-    console.error('[anchor] Error:', err);
-    
-    return res.status(500).json({ 
-      ok: false, 
-      error: String(err?.message || err),
-      timestamp: new Date().toISOString(),
-      duration: Date.now() - startTime
-    });
+  } catch (e: any) {
+    console.error("Anchor error:", e?.stack || e?.message || e);
+    return res.status(500).json({ ok: false, error: e?.message || "anchor failed" });
   }
 }
 
