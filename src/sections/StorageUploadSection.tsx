@@ -1,3 +1,4 @@
+import { AnimatedButton } from "@/components/AnimatedButton";
 import { SuccessNotification } from "@/components/SuccessNotification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,17 @@ import { useOgUpload } from "@/hooks/useOgUpload";
 import { anchorWithWallet } from "@/lib/chain/anchorClient";
 import { requireEthersSigner } from "@/lib/ethersClient";
 import { cn } from "@/lib/utils";
+import {
+  Anchor,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Eye,
+  PenTool,
+  Server,
+  Shield
+} from "lucide-react";
 import React from "react";
 
 function fmtKB(n: number) { return `${(n / 1024).toFixed(2)} KB`; }
@@ -14,8 +26,6 @@ export function StorageUploadSection() {
   const [files, setFiles] = React.useState<File[]>([]);
   const [status, setStatus] = React.useState<"idle" | "preparing" | "registering" | "checking" | "done" | "error">("idle");
   const [root, setRoot] = React.useState<string>("");
-  const [gatewayUrl, setGatewayUrl] = React.useState<string>("");
-  const [proofUrl, setProofUrl] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
   const [attestation, setAttestation] = React.useState<{address: string, signature: string} | null>(null);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
@@ -27,7 +37,7 @@ export function StorageUploadSection() {
   } | null>(null);
 
   function onInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setRoot(""); setGatewayUrl(""); setProofUrl(""); setError(""); setStatus("idle");
+    setRoot(""); setError(""); setStatus("idle");
     setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
     const list = e.target.files ? Array.from(e.target.files) : [];
     setFiles(list);
@@ -38,7 +48,7 @@ export function StorageUploadSection() {
     const list = Array.from(e.dataTransfer.files || []);
     if (list.length) {
       setFiles(list);
-      setRoot(""); setGatewayUrl(""); setProofUrl(""); setError(""); setStatus("idle");
+      setRoot(""); setError(""); setStatus("idle");
       setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
     }
   }
@@ -58,8 +68,6 @@ export function StorageUploadSection() {
         return;
       }
       setRoot(out.root);
-      if (out.gatewayUrl) setGatewayUrl(out.gatewayUrl);
-      if (out.proofUrl) setProofUrl(out.proofUrl);
       setStatus("done");
     } catch (e: any) {
       setError(e?.message || "Upload failed");
@@ -219,38 +227,84 @@ export function StorageUploadSection() {
                 </div>
                 
                 <div className="flex flex-wrap gap-3">
-                  {gatewayUrl && <a className="px-3 py-2 rounded bg-slate-700 text-slate-100 hover:bg-slate-600" href={gatewayUrl} target="_blank">Download</a>}
-                  {proofUrl && <a className="px-3 py-2 rounded bg-slate-700 text-slate-100 hover:bg-slate-600" href={proofUrl} target="_blank">Download with Proof</a>}
-                  <a className="px-3 py-2 rounded bg-slate-700 text-slate-100 hover:bg-slate-600" href={`https://storagescan-galileo.0g.ai/files?root=${encodeURIComponent(root)}`} target="_blank">View on StorageScan</a>
+                  {root && (
+                    <>
+                      <AnimatedButton 
+                        variant="secondary"
+                        icon={Download}
+                        href={`/api/storage/proxy?root=${encodeURIComponent(root)}&name=${encodeURIComponent(files[0]?.name || "dataset")}`}
+                        download={files[0]?.name || "dataset"}
+                      >
+                        Download
+                      </AnimatedButton>
+                      <AnimatedButton 
+                        variant="warning"
+                        icon={Shield}
+                        href={`/api/storage/proxy?root=${encodeURIComponent(root)}&proof=1&name=${encodeURIComponent((files[0]?.name || "dataset") + ".proof")}`}
+                        download={(files[0]?.name || "dataset") + ".proof"}
+                      >
+                        Download with Proof
+                      </AnimatedButton>
+                    </>
+                  )}
+                  <AnimatedButton 
+                    variant="info"
+                    icon={Eye}
+                    href={`https://storagescan-galileo.0g.ai/files?root=${encodeURIComponent(root)}`}
+                    target="_blank"
+                  >
+                    View on StorageScan
+                  </AnimatedButton>
+                  <AnimatedButton 
+                    variant="success"
+                    icon={CheckCircle}
+                    href={`https://storagescan-galileo.0g.ai/files?root=${encodeURIComponent(root)}`}
+                    target="_blank"
+                  >
+                    Verify Integrity
+                  </AnimatedButton>
                   
                   {!attestation && (
-                    <Button className="bg-blue-600 hover:bg-blue-500" onClick={handleAttestation}>
+                    <AnimatedButton 
+                      variant="info"
+                      icon={PenTool}
+                      onClick={handleAttestation}
+                    >
                       Sign Attestation
-                    </Button>
+                    </AnimatedButton>
                   )}
                   
-                  <Button className="bg-purple-600 hover:bg-purple-500" onClick={handleAnchor}>
-                    Anchor on 0G Chain (Your Wallet)
-                  </Button>
-                  
-                  <button 
-                    className="text-slate-400 text-sm underline hover:text-slate-300"
-                    onClick={() => setShowAdvanced(!showAdvanced)}
+                  <AnimatedButton 
+                    variant="primary"
+                    icon={Anchor}
+                    onClick={handleAnchor}
                   >
-                    {showAdvanced ? 'Hide' : 'Show'} Advanced Options
-                  </button>
+                    Anchor on 0G Chain
+                  </AnimatedButton>
+                  
+                  <AnimatedButton 
+                    variant="secondary"
+                    size="sm"
+                    icon={showAdvanced ? ChevronUp : ChevronDown}
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                    className="text-slate-400 hover:text-slate-300"
+                  >
+                    {showAdvanced ? 'Hide' : 'Show'} Advanced
+                  </AnimatedButton>
                 </div>
                 
                 {showAdvanced && (
-                  <div className="bg-slate-800/60 rounded border border-slate-600 p-3">
-                    <p className="text-slate-300 text-sm mb-2">Alternative Anchoring:</p>
-                    <Button 
-                      className="bg-slate-600 hover:bg-slate-500 text-sm" 
+                  <div className="bg-slate-800/60 rounded border border-slate-600 p-4">
+                    <p className="text-slate-300 text-sm mb-3">Alternative Anchoring:</p>
+                    <AnimatedButton 
+                      variant="secondary"
+                      size="sm"
+                      icon={Server}
                       onClick={handleServerAnchor}
                     >
                       Use Server Anchor (Demo Mode)
-                    </Button>
-                    <p className="text-slate-400 text-xs mt-1">
+                    </AnimatedButton>
+                    <p className="text-slate-400 text-xs mt-2">
                       Note: Server anchoring shows server as uploader, not ideal for provenance
                     </p>
                   </div>

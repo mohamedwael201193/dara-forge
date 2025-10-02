@@ -1,4 +1,6 @@
+import { AnimatedButton } from "@/components/AnimatedButton";
 import { Button } from "@/components/ui/button";
+import { CheckCircle, ExternalLink, X } from "lucide-react";
 
 interface SuccessNotificationProps {
   title: string;
@@ -16,15 +18,24 @@ export function SuccessNotification({
   onClose 
 }: SuccessNotificationProps) {
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-slate-800 border border-green-500/30 rounded-lg shadow-2xl max-w-md w-full">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+      <div className="bg-slate-800 border border-green-500/30 rounded-xl shadow-2xl max-w-md w-full transform animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-600 to-green-500 text-white p-4 rounded-t-lg">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-              ✅
+        <div className="bg-gradient-to-r from-green-600 to-emerald-600 text-white p-4 rounded-t-xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-green-600/80 to-emerald-600/80 animate-pulse" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                <CheckCircle className="w-6 h-6 text-white animate-bounce" />
+              </div>
+              <h3 className="text-lg font-semibold">{title}</h3>
             </div>
-            <h3 className="text-lg font-semibold">{title}</h3>
+            <button 
+              onClick={onClose}
+              className="text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
         </div>
 
@@ -41,12 +52,15 @@ export function SuccessNotification({
 
           <div className="flex flex-col sm:flex-row gap-3">
             {explorerUrl && (
-              <Button 
-                className="bg-purple-600 hover:bg-purple-500 flex-1"
-                onClick={() => window.open(explorerUrl, '_blank')}
+              <AnimatedButton 
+                variant="primary"
+                icon={ExternalLink}
+                href={explorerUrl}
+                target="_blank"
+                className="flex-1"
               >
-                🔗 View on ChainScan
-              </Button>
+                View on ChainScan
+              </AnimatedButton>
             )}
             <Button 
               variant="outline" 
