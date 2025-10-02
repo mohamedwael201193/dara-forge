@@ -4,9 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WalletStatus } from '@/components/WalletStatus';
 import { Brain, CheckCircle, MessageSquareText, Network, Send, Shield, Upload } from "@/lib/icons";
+import { StorageUploadSection } from '@/sections/StorageUploadSection';
 import React from 'react';
 import { SummarizeDataset } from './SummarizeDataset';
-import { UploadDataset } from './UploadDataset';
 
 export const DemoApp: React.FC = () => {
   return (
@@ -87,14 +87,7 @@ export const DemoApp: React.FC = () => {
 
             <div className="mt-8">
               <TabsContent value="upload" className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-bold text-white mb-2">Upload Research Datasets</h2>
-                  <p className="text-slate-300 max-w-2xl mx-auto">
-                    Securely upload your research datasets to the decentralized 0G Storage network. 
-                    Each upload generates cryptographic proofs and is anchored on the blockchain for immutable verification.
-                  </p>
-                </div>
-                <UploadDataset />
+                <StorageUploadSection />
               </TabsContent>
 
               <TabsContent value="summarize" className="space-y-6">

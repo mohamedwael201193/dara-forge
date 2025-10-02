@@ -1,11 +1,4 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/**": {
-      "memory": 1024,
-      "maxDuration": 60,
-      "includeFiles": "node_modules/{@0glabs/0g-serving-broker,@0glabs/0g-ts-sdk,eciesjs,@ecies/ciphers,crypto-js,tslib}/**"
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
 
