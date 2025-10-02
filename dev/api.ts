@@ -3,6 +3,7 @@ import 'dotenv/config';
 import express from 'express';
 
 import anchorHandler from '../api/anchor';
+import attestHandler from '../api/attest';
 import proxyHandler from '../api/storage/proxy';
 import uploadHandler from '../api/storage/upload';
 
@@ -17,6 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.all('/api/storage/upload', (req, res) => uploadHandler(req as any, res as any));
 app.all('/api/storage/proxy', (req, res) => proxyHandler(req as any, res as any));
 app.all('/api/anchor', (req, res) => anchorHandler(req as any, res as any));
+app.all('/api/attest', (req, res) => attestHandler(req as any, res as any));
 
 const PORT = Number(process.env.PORT || 3000);
 app.listen(PORT, () => {

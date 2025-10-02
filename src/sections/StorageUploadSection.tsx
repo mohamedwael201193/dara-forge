@@ -1,6 +1,9 @@
+import { SuccessNotification } from "@/components/SuccessNotification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOgUpload } from "@/hooks/useOgUpload";
+import { anchorWithWallet } from "@/lib/chain/anchorClient";
+import { requireEthersSigner } from "@/lib/ethersClient";
 import { cn } from "@/lib/utils";
 import React from "react";
 
@@ -14,9 +17,18 @@ export function StorageUploadSection() {
   const [gatewayUrl, setGatewayUrl] = React.useState<string>("");
   const [proofUrl, setProofUrl] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
+  const [attestation, setAttestation] = React.useState<{address: string, signature: string} | null>(null);
+  const [showAdvanced, setShowAdvanced] = React.useState(false);
+  const [successNotification, setSuccessNotification] = React.useState<{
+    title: string;
+    message: string;
+    txHash?: string;
+    explorerUrl?: string;
+  } | null>(null);
 
   function onInput(e: React.ChangeEvent<HTMLInputElement>) {
     setRoot(""); setGatewayUrl(""); setProofUrl(""); setError(""); setStatus("idle");
+    setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
     const list = e.target.files ? Array.from(e.target.files) : [];
     setFiles(list);
   }
@@ -27,6 +39,7 @@ export function StorageUploadSection() {
     if (list.length) {
       setFiles(list);
       setRoot(""); setGatewayUrl(""); setProofUrl(""); setError(""); setStatus("idle");
+      setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
     }
   }
 
@@ -56,11 +69,67 @@ export function StorageUploadSection() {
 
   async function handleAnchor() {
     if (!root) return;
-    const body = { rootHash: root, manifestHash: root, projectId: "dara-forge" };
-    const r = await fetch("/api/anchor", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const j = await r.json();
-    if (!j.ok) alert(j.error || "Anchor failed");
-    else window.open(j.explorerUrl, "_blank");
+    try {
+      const { txHash, explorerUrl } = await anchorWithWallet(root as `0x${string}`);
+      setSuccessNotification({
+        title: "Dataset Anchored Successfully! 🎉",
+        message: "Your dataset has been permanently anchored on 0G Chain with full provenance.",
+        txHash,
+        explorerUrl
+      });
+    } catch (e: any) {
+      alert(`Anchor failed: ${e?.message || "Unknown error"}`);
+    }
+  }
+
+  async function handleAttestation() {
+    if (!root) return;
+    try {
+      const signer = await requireEthersSigner();
+      const address = await signer.getAddress();
+      const message = `DARA Attestation: root=${root}`;
+      const signature = await signer.signMessage(message);
+      
+      // Store attestation on server
+      const response = await fetch('/api/attest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ root, message, signature })
+      });
+      
+      const result = await response.json();
+      if (result.ok) {
+        setAttestation({ address, signature });
+        setSuccessNotification({
+          title: "Attestation Signed Successfully! ✅",
+          message: `Your authorship has been cryptographically verified and stored.`
+        });
+      } else {
+        throw new Error(result.error || 'Attestation failed');
+      }
+    } catch (e: any) {
+      alert(`Attestation failed: ${e?.message || "Unknown error"}`);
+    }
+  }
+
+  async function handleServerAnchor() {
+    if (!root) return;
+    try {
+      const body = { rootHash: root, manifestHash: root, projectId: "dara-forge" };
+      const response = await fetch("/api/anchor", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(body) 
+      });
+      const result = await response.json();
+      if (!result.ok) {
+        throw new Error(result.error || "Server anchor failed");
+      }
+      alert(`Dataset anchored by server! Transaction: ${result.txHash}`);
+      window.open(result.explorerUrl, "_blank");
+    } catch (e: any) {
+      alert(`Server anchor failed: ${e?.message || "Unknown error"}`);
+    }
   }
 
   const total = files.reduce((a, f) => a + f.size, 0);
@@ -134,17 +203,74 @@ export function StorageUploadSection() {
                   <p className="text-slate-300 text-sm mb-1">Merkle Root</p>
                   <code className="text-slate-100 break-all">{root}</code>
                 </div>
+                
+                {attestation && (
+                  <div className="bg-green-900/20 border border-green-700 rounded p-3">
+                    <p className="text-green-400 text-sm mb-1">✅ Researcher Attestation Signed</p>
+                    <p className="text-slate-300 text-xs">Address: {attestation.address}</p>
+                  </div>
+                )}
+                
+                <div className="bg-slate-700/50 rounded p-3 text-sm">
+                  <p className="text-slate-300 mb-2"><strong>Provenance Information:</strong></p>
+                  <p className="text-slate-400">• Storage Payer: Server (0xDE84...4435) - Sponsored Upload</p>
+                  <p className="text-slate-400">• Dataset Author: {attestation ? attestation.address : 'Sign attestation to verify'}</p>
+                  <p className="text-slate-400">• Anchor Signer: Connected Wallet (for on-chain provenance)</p>
+                </div>
+                
                 <div className="flex flex-wrap gap-3">
                   {gatewayUrl && <a className="px-3 py-2 rounded bg-slate-700 text-slate-100 hover:bg-slate-600" href={gatewayUrl} target="_blank">Download</a>}
                   {proofUrl && <a className="px-3 py-2 rounded bg-slate-700 text-slate-100 hover:bg-slate-600" href={proofUrl} target="_blank">Download with Proof</a>}
                   <a className="px-3 py-2 rounded bg-slate-700 text-slate-100 hover:bg-slate-600" href={`https://storagescan-galileo.0g.ai/files?root=${encodeURIComponent(root)}`} target="_blank">View on StorageScan</a>
-                  <Button className="bg-purple-600 hover:bg-purple-500" onClick={handleAnchor}>Anchor on 0G Chain</Button>
+                  
+                  {!attestation && (
+                    <Button className="bg-blue-600 hover:bg-blue-500" onClick={handleAttestation}>
+                      Sign Attestation
+                    </Button>
+                  )}
+                  
+                  <Button className="bg-purple-600 hover:bg-purple-500" onClick={handleAnchor}>
+                    Anchor on 0G Chain (Your Wallet)
+                  </Button>
+                  
+                  <button 
+                    className="text-slate-400 text-sm underline hover:text-slate-300"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                  >
+                    {showAdvanced ? 'Hide' : 'Show'} Advanced Options
+                  </button>
                 </div>
+                
+                {showAdvanced && (
+                  <div className="bg-slate-800/60 rounded border border-slate-600 p-3">
+                    <p className="text-slate-300 text-sm mb-2">Alternative Anchoring:</p>
+                    <Button 
+                      className="bg-slate-600 hover:bg-slate-500 text-sm" 
+                      onClick={handleServerAnchor}
+                    >
+                      Use Server Anchor (Demo Mode)
+                    </Button>
+                    <p className="text-slate-400 text-xs mt-1">
+                      Note: Server anchoring shows server as uploader, not ideal for provenance
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
       </div>
+      
+      {/* Success Notification Modal */}
+      {successNotification && (
+        <SuccessNotification
+          title={successNotification.title}
+          message={successNotification.message}
+          txHash={successNotification.txHash}
+          explorerUrl={successNotification.explorerUrl}
+          onClose={() => setSuccessNotification(null)}
+        />
+      )}
     </section>
   );
 }
