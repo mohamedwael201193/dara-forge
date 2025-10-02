@@ -56,7 +56,7 @@ export class ComputeClient {
   }
 
   async chat(request: ComputeRequest): Promise<ComputeResponse> {
-    const response = await fetch(`${this.baseUrl}/api/compute/chat`, {
+    const response = await fetch(`${this.baseUrl}/api/compute?action=chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export class ComputeClient {
     onError?: (error: Error) => void
   ): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/api/compute/chat`, {
+      const response = await fetch(`${this.baseUrl}/api/compute?action=chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -117,7 +117,7 @@ export class ComputeClient {
   }
 
   async health(): Promise<ComputeHealthResponse> {
-    const response = await fetch(`${this.baseUrl}/api/compute/health`, {
+    const response = await fetch(`${this.baseUrl}/api/compute?action=health`, {
       method: 'GET',
     });
 

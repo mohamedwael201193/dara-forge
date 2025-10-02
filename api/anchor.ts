@@ -8,7 +8,36 @@ function toBytes32Smart(v?: string): `0x${string}` {
   return ethers.id(v) as `0x${string}`;
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+async function handleStatus(_req: VercelRequest, res: VercelResponse) {
+  try {
+    const rpcOk = !!process.env.OG_RPC_URL;
+    const pkOk = !!process.env.OG_STORAGE_PRIVATE_KEY;
+    const addr = process.env.DARA_CONTRACT || "";
+    const hasAddr = !!addr;
+
+    let chainId: string | null = null;
+    let hasCode: boolean | null = null;
+
+    if (rpcOk && hasAddr) {
+      const provider = new ethers.JsonRpcProvider(process.env.OG_RPC_URL!);
+      const net = await provider.getNetwork();
+      chainId = net.chainId?.toString?.() ?? null;
+      const code = await provider.getCode(addr);
+      hasCode = !!code && code !== "0x";
+    }
+
+    return res.status(200).json({
+      ok: true,
+      env: { OG_RPC_URL: rpcOk, OG_STORAGE_PRIVATE_KEY: pkOk, DARA_CONTRACT: hasAddr },
+      network: { chainId },
+      contract: { address: addr, hasCode }
+    });
+  } catch (e: any) {
+    return res.status(500).json({ ok: false, error: e?.message || "status error" });
+  }
+}
+
+async function handleAnchor(req: VercelRequest, res: VercelResponse) {
   try {
     if (req.method !== "POST") {
       res.setHeader("Allow", "POST");
@@ -77,6 +106,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (e: any) {
     console.error("Anchor error:", e?.stack || e?.message || e);
     return res.status(500).json({ ok: false, error: e?.message || "anchor failed" });
+  }
+}
+
+export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const { action } = req.query;
+
+  if (action === 'status') {
+    return handleStatus(req, res);
+  } else if (!action || action === 'anchor') {
+    return handleAnchor(req, res);
+  } else {
+    return res.status(400).json({ error: 'Invalid action. Use ?action=status or POST for anchoring' });
   }
 }
 

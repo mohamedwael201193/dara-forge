@@ -10,7 +10,7 @@ export async function uploadToZeroG(file: File) {
 }
 
 export async function checkRoot(root: string) {
-  const r = await fetch(`/api/storage/status?root=${encodeURIComponent(root)}`);
+  const r = await fetch(`/api/storage-utils?action=status&root=${encodeURIComponent(root)}`);
   const data = await r.json().catch(() => ({}));
   if (!r.ok || !data?.ok) throw new Error(data?.error || `Status failed (${r.status})`);
   return data as { ok: true; root: string; status: "pending" | "available"; indexer?: string };

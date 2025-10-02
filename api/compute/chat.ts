@@ -1,5 +1,5 @@
-import { ethers } from "ethers";
 import { createZGComputeNetworkBroker } from "@0glabs/0g-serving-broker";
+import { ethers } from "ethers";
 
 export default async function handler(req: any, res: any) {
   try {
@@ -8,7 +8,7 @@ export default async function handler(req: any, res: any) {
 
     const provider = new ethers.JsonRpcProvider(process.env.OG_EVM_RPC!);
     const wallet = new ethers.Wallet(process.env.OG_PRIVATE_KEY!, provider);
-    const broker: any = await createZGComputeNetworkBroker(wallet);
+    const broker: any = await createZGComputeNetworkBroker(wallet as any);
 
     const listFn = broker.inference?.listService?.bind(broker.inference) ?? broker.listService?.bind(broker);
     const services = listFn ? await listFn() : [];
@@ -31,7 +31,7 @@ export default async function handler(req: any, res: any) {
     });
     if (!r.ok) throw new Error(`Provider returned ${r.status}: ${await r.text().catch(() => "")}`);
 
-    const data = await r.json();
+    const data: any = await r.json();
     const text = data?.choices?.[0]?.message?.content ?? "";
     const processResp = broker.inference?.processResponse?.bind(broker.inference) ?? broker.processResponse?.bind(broker);
     if (processResp) { try { await processResp(providerAddress, text, data?.id); } catch {} }

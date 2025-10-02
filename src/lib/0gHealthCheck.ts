@@ -14,7 +14,7 @@ export interface HealthCheckResult {
 
 export async function checkHealth(): Promise<HealthCheckResult> {
   try {
-    const response = await fetch('/api/storage/health');
+    const response = await fetch('/api/storage-utils?action=health');
     const result = await response.json();
     return result;
   } catch (error) {

@@ -29,7 +29,7 @@ app.post('/api/storage/upload', upload.single('file'), (req, res) => {
 });
 
 // Health check endpoint
-app.get('/api/storage/health', (req, res) => {
+app.get('/api/storage-utils', (req, res) => {
   res.json({ status: 'ok', message: 'Local API server is running' });
 });
 

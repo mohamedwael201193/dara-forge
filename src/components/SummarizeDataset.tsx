@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Label } from "@/components/ui/label"
+import { Textarea } from '@/components/ui/textarea'
+import React, { useState } from 'react'
 
 
 import { Loader2, MessageSquareText } from "@/lib/icons"
@@ -29,7 +29,7 @@ export const SummarizeDataset: React.FC<SummarizeDatasetProps> = () => {
     setSummary('')
 
     try {
-      const response = await fetch('/api/compute/chat', {
+      const response = await fetch('/api/compute?action=chat', {
         method: 'POST',
         body: JSON.stringify({
           messages: [
