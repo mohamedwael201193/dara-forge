@@ -3,6 +3,7 @@
 ⚠️ **CRITICAL**: The following private keys were exposed in git history and must be considered compromised:
 
 ## Compromised Keys (REVOKE IMMEDIATELY)
+
 - `OG_STORAGE_PRIVATE_KEY=0xe7db771abed2bdb3cbfd995708087890006046098688409238d180d7e897ca8e`
 - `OG_DA_PRIVATE_KEY=0xe7db771abed2bdb3cbfd995708087890006046098688409238d180d7e897ca8e`
 - `OG_COMPUTE_API_KEY=0xe7db771abed2bdb3cbfd995708087890006046098688409238d180d7e897ca8e`
@@ -10,7 +11,9 @@
 ## Immediate Actions Required
 
 ### 1. Key Rotation
+
 Generate new keys for all compromised values:
+
 ```bash
 # Generate new wallet private key
 # Move any funds from compromised wallets to new wallets
@@ -18,9 +21,11 @@ Generate new keys for all compromised values:
 ```
 
 ### 2. Vercel Environment Variables
+
 Set these in **Vercel Project Settings → Environment Variables** (server-side only):
 
-**Server-only variables (NO VITE_ prefix):**
+**Server-only variables (NO VITE\_ prefix):**
+
 - `OG_CHAIN_ID=16602`
 - `OG_INDEXER_RPC=https://indexer-storage-testnet-turbo.0g.ai/`
 - `OG_RPC=https://evmrpc-testnet.0g.ai/`
@@ -32,7 +37,8 @@ Set these in **Vercel Project Settings → Environment Variables** (server-side 
 - `OG_STORAGE_PRIVATE_KEY=[NEW_KEY]`
 - `DARA_CONTRACT=0xC2Ee75BFe89eAA01706e09d8722A0C8a6E849FC9`
 
-**Client-side variables (VITE_ prefix exposed to browser):**
+**Client-side variables (VITE\_ prefix exposed to browser):**
+
 - `VITE_OG_RPC=https://evmrpc-testnet.0g.ai/`
 - `VITE_TEST_DATASETS_ENABLED=true`
 - `VITE_DEBUG_MODE=true`
@@ -57,6 +63,7 @@ Set these in **Vercel Project Settings → Environment Variables** (server-side 
 - `VITE_OG_INDEXER=https://indexer-storage-testnet-turbo.0g.ai/`
 
 ### 3. Git History Cleanup (Optional but Recommended)
+
 To completely remove sensitive data from git history:
 
 ```bash
@@ -72,19 +79,22 @@ git push origin --force --tags
 ```
 
 ### 4. Additional Security Measures
+
 - [ ] Review wallet balances and transaction history for unauthorized activity
 - [ ] Update any services/APIs using the compromised keys
 - [ ] Monitor for unusual activity on associated accounts
 - [ ] Consider rotating any related credentials (database passwords, etc.)
 
 ### 5. Prevention
+
 - ✅ `.env` now in `.gitignore` with comprehensive secret patterns
 - ✅ `.env` removed from git tracking
 - ✅ Only `.env.example` should be committed going forward
 - Use environment variables in production/Vercel instead of `.env` files
 
 ## Current Status
-- [x] `.env` removed from git tracking  
+
+- [x] `.env` removed from git tracking
 - [x] `.gitignore` updated with comprehensive secret patterns
 - [ ] Keys rotated and services updated
 - [ ] Vercel environment variables configured
