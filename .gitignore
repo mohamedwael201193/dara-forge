@@ -29,3 +29,36 @@ dist-ssr
 .env.*
 !.env.example
 
+# Secret and sensitive files
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+secrets.*
+config/secrets/
+.secrets/
+private/
+credentials/
+auth/
+.auth
+
+# API keys and tokens
+*api-key*
+*api_key*
+*secret*
+*token*
+*credential*
+*password*
+.private
+.secret
+
+# Wallet and blockchain keys
+wallet.json
+keystore/
+*.wallet
+*private-key*
+*private_key*
+mnemonic*
+seed*
+
