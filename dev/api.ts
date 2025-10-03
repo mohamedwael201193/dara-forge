@@ -4,6 +4,7 @@ import express from 'express';
 
 import anchorHandler from '../api/anchor';
 import attestHandler from '../api/attest';
+import computeHandler from '../api/compute';
 import proxyHandler from '../api/storage/proxy';
 import uploadHandler from '../api/storage/upload';
 
@@ -19,6 +20,7 @@ app.all('/api/storage/upload', (req, res) => uploadHandler(req as any, res as an
 app.all('/api/storage/proxy', (req, res) => proxyHandler(req as any, res as any));
 app.all('/api/anchor', (req, res) => anchorHandler(req as any, res as any));
 app.all('/api/attest', (req, res) => attestHandler(req as any, res as any));
+app.all('/api/compute', (req, res) => computeHandler(req as any, res as any));
 
 const PORT = Number(process.env.PORT || 3000);
 app.listen(PORT, () => {

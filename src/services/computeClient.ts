@@ -1,174 +1,41 @@
-export interface ComputeRequest {
-  model: 'llama-3.3-70b-instruct' | 'deepseek-r1-70b';
-  messages: Array<{
-    role: 'system' | 'user' | 'assistant';
-    content: string;
-  }>;
-  stream?: boolean;
-  tokenId?: string;
-  datasetRef?: string;
-}
-
-export interface ComputeResponse {
-  content: string;
-  provider: string;
-  model: string;
-  verified: boolean;
-  usage?: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-  raw?: any;
-}
-
-export interface ComputeHealthResponse {
+// Simple compute client using consolidated API
+export interface ComputeStatus {
   ok: boolean;
-  timestamp: string;
-  ledger: {
-    status: string;
-    availableBalance: string;
-    unit: string;
-  };
-  providers: {
-    healthy: number;
-    total: number;
-    details: Array<{
-      model: string;
-      address: string;
-      endpoint: string;
-      healthy: boolean;
-      name: string;
-      error?: string;
-    }>;
-  };
-  environment: {
-    chainId: string;
-    rpcUrl: string;
-  };
+  ledger?: any;
+  servicesCount?: number;
+  error?: string;
 }
 
-export class ComputeClient {
-  private baseUrl: string;
-
-  constructor(baseUrl = '') {
-    this.baseUrl = baseUrl;
-  }
-
-  async chat(request: ComputeRequest): Promise<ComputeResponse> {
-    const response = await fetch(`${this.baseUrl}/api/compute?action=chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  async chatStream(
-    request: ComputeRequest,
-    onChunk: (chunk: string) => void,
-    onComplete?: () => void,
-    onError?: (error: Error) => void
-  ): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseUrl}/api/compute?action=chat`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...request, stream: true }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Response body is not readable');
-      }
-
-      const decoder = new TextDecoder();
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          const chunk = decoder.decode(value, { stream: true });
-          onChunk(chunk);
-        }
-        onComplete?.();
-      } finally {
-        reader.releaseLock();
-      }
-    } catch (error) {
-      onError?.(error as Error);
-    }
-  }
-
-  async health(): Promise<ComputeHealthResponse> {
-    const response = await fetch(`${this.baseUrl}/api/compute?action=health`, {
-      method: 'GET',
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  async analyze(request: { text?: string; root?: string; model?: string; temperature?: number }) {
-    const response = await fetch(`${this.baseUrl}/api/compute?action=analyze`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return { ok: false, error: errorData.error || `HTTP ${response.status}: ${response.statusText}` };
-    }
-
-    return response.json();
-  }
-
-  async getResult(jobId: string) {
-    const response = await fetch(`${this.baseUrl}/api/compute?action=result&id=${encodeURIComponent(jobId)}`);
-    return response.json();
-  }
+export interface AnalysisResult {
+  ok: boolean;
+  model?: string;
+  provider?: string;
+  root?: string | null;
+  verified?: boolean;
+  content?: string;
+  usage?: any;
+  ts?: number;
+  error?: string;
 }
 
-// Default client instance
-export const computeClient = new ComputeClient();
+export const computeClient = {
+  async getComputeHealth(): Promise<ComputeStatus> {
+    const response = await fetch("/api/compute?action=health");
+    return response.json();
+  },
 
-// Helper function for simple chat requests
-export async function runInference(
-  model: ComputeRequest['model'],
-  messages: ComputeRequest['messages'],
-  options?: {
-    stream?: boolean;
-    tokenId?: string;
-    datasetRef?: string;
+  async startAnalysis(text: string, options: { root?: string; model?: string; temperature?: number } = {}): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+    const response = await fetch("/api/compute?action=analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, ...options })
+    });
+    return response.json();
+  },
+
+  async pollResult(jobId: string): Promise<AnalysisResult> {
+    const response = await fetch(`/api/compute?action=result&id=${jobId}`);
+    return response.json();
   }
-): Promise<ComputeResponse> {
-  return computeClient.chat({
-    model,
-    messages,
-    ...options,
-  });
-}
+};
 
