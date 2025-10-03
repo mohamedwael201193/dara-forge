@@ -1,6 +1,5 @@
 "use client";
 import { DARA_ABI, getDaraContract, getSigner } from "@/lib/ethersClient";
-import { buildManifest, DaraManifest, manifestHashHex } from "@/lib/manifest";
 import { gatewayUrlForRoot } from "@/services/ogStorage";
 import { uploadToZeroG } from "@/services/ogStorageClient";
 import { ethers } from "ethers";
@@ -31,21 +30,22 @@ export default function SampleRunCard() {
       // 1) Upload dataset to 0G Storage
       const ds = await uploadToZeroG(new File([dsBlob], "sample_abstracts.csv"));
 
-
       setDatasetRoot(ds.root || "");
       setDatasetTx(ds.tx || "");
 
-      // 2) Build manifest + hash
+      // 2) Build simple manifest + hash
       const accounts: string[] = await (window as any).ethereum.request({ method: "eth_requestAccounts" });
       const uploader = accounts[0];
-      const manifest: DaraManifest = buildManifest({
+      const manifest = {
         rootHash: ds.root,
         title: "Wave‑1 sample dataset import",
         uploader,
         app: "DARA",
         version: "0.1"
-      });
-      const mHash = manifestHashHex(manifest);
+      };
+      
+      // Simple hash for demo
+      const mHash = ethers.id(JSON.stringify(manifest));
       setManifestHash(mHash);
 
       // 3) Upload manifest.json to 0G Storage

@@ -1,10 +1,18 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-const BASE = (process.env.VITE_OG_INDEXER || "https://indexer-storage-testnet-turbo.0g.ai/").replace(/\/$/, "");
+
+const TURBO = (process.env.VITE_OG_INDEXER || "https://indexer-storage-testnet-turbo.0g.ai/").replace(/\/$/, "");
+const STANDARD = (process.env.OG_INDEXER || "https://indexer-storage-testnet-standard.0g.ai/").replace(/\/$/, "");
 
 function contentDisposition(filename?: string) {
   if (!filename) return undefined;
   // RFC 5987
   return `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`;
+}
+
+async function fetchFrom(base: string, root: string, proof: string) {
+  const url = `${base}/file?root=${encodeURIComponent(root)}${proof ? `&proof=${encodeURIComponent(proof)}` : ""}`;
+  const r = await fetch(url);
+  return { r, url };
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -15,27 +23,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!/^0x[0-9a-fA-F]{64}$/.test(root)) return res.status(400).send("Invalid root");
 
-    const url = `${BASE}/file?root=${encodeURIComponent(root)}${proof ? `&proof=${encodeURIComponent(proof)}` : ""}`;
-    const r = await fetch(url);
-    if (!r.ok) return res.status(r.status).send(await r.text());
+    // Try turbo first, then standard as fallback
+    let fr = await fetchFrom(TURBO, root, proof);
+    if (!fr.r.ok) {
+      console.log(`Turbo failed (${fr.r.status}), trying standard fallback...`);
+      const backup = await fetchFrom(STANDARD, root, proof);
+      if (backup.r.ok) fr = backup;
+    }
+    
+    if (!fr.r.ok) return res.status(fr.r.status).send(await fr.r.text());
 
-    const type = r.headers.get("content-type") || "application/octet-stream";
+    // Headers
+    const type = fr.r.headers.get("content-type") || "application/octet-stream";
     res.setHeader("Content-Type", type);
 
-    const len = r.headers.get("content-length");
+    const len = fr.r.headers.get("content-length");
     if (len) res.setHeader("Content-Length", len);
+
+    // Cache control for better performance
+    res.setHeader("Cache-Control", "public, max-age=300, stale-while-revalidate=600");
 
     const forced = contentDisposition(name);
     if (forced) {
       res.setHeader("Content-Disposition", forced);
     } else {
-      const upstream = r.headers.get("content-disposition");
+      const upstream = fr.r.headers.get("content-disposition");
       res.setHeader("Content-Disposition", upstream || contentDisposition(root) || "attachment");
     }
 
-    const buf = Buffer.from(await r.arrayBuffer());
+    const buf = Buffer.from(await fr.r.arrayBuffer());
     res.status(200).send(buf);
   } catch (e: any) {
+    console.error("Proxy error:", e);
     res.status(500).send(e?.message || "proxy error");
   }
 }

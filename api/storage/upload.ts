@@ -30,6 +30,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(405).json({ ok: false, error: "Method Not Allowed" });
     }
 
+    // Gate: Require connected wallet address
+    const walletAddress = String(req.headers["x-wallet-address"] || "");
+    if (!walletAddress) {
+      return res.status(401).json({ 
+        ok: false, 
+        error: "Missing X-Wallet-Address header. Please connect wallet and sign in first." 
+      });
+    }
+
+    // Optional: Validate address format
+    if (!/^0x[0-9a-fA-F]{40}$/.test(walletAddress)) {
+      return res.status(400).json({ 
+        ok: false, 
+        error: "Invalid wallet address format" 
+      });
+    }
+
     const { files } = await parseForm(req);
     if (!files.length) return res.status(400).json({ ok: false, error: "No files uploaded (field name 'file')." });
 

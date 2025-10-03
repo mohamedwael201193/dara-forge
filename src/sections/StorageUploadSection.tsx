@@ -211,6 +211,28 @@ export function StorageUploadSection() {
                   <p className="text-slate-300 text-sm mb-1">Merkle Root</p>
                   <code className="text-slate-100 break-all">{root}</code>
                 </div>
+
+                {files.length > 0 && (
+                  <div className="bg-slate-700/30 rounded-lg p-3">
+                    <p className="text-slate-300 text-sm mb-2">Dataset Manifest</p>
+                    <div className="text-xs text-slate-400 space-y-1">
+                      <p>Files: {files.length} • Total: {fmtKB(files.reduce((sum, f) => sum + f.size, 0))}</p>
+                      <p>Created: {new Date().toLocaleString()}</p>
+                      {files.length <= 3 ? (
+                        files.map((f, i) => (
+                          <p key={i}>• {f.name} ({fmtKB(f.size)})</p>
+                        ))
+                      ) : (
+                        <>
+                          {files.slice(0, 2).map((f, i) => (
+                            <p key={i}>• {f.name} ({fmtKB(f.size)})</p>
+                          ))}
+                          <p>• ... and {files.length - 2} more files</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {attestation && (
                   <div className="bg-green-900/20 border border-green-700 rounded p-3">
