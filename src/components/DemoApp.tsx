@@ -6,7 +6,7 @@ import { WalletStatus } from '@/components/WalletStatus';
 import { Brain, CheckCircle, MessageSquareText, Network, Send, Shield, Upload } from "@/lib/icons";
 import { StorageUploadSection } from '@/sections/StorageUploadSection';
 import React from 'react';
-import { SummarizeDataset } from './SummarizeDataset';
+import { AISummarizeSection } from '../sections/AISummarizeSection';
 
 export const DemoApp: React.FC = () => {
   return (
@@ -98,7 +98,7 @@ export const DemoApp: React.FC = () => {
                     Extract key findings, patterns, and research-relevant information automatically.
                   </p>
                 </div>
-                <SummarizeDataset />
+                <AISummarizeSection />
               </TabsContent>
 
               <TabsContent value="publish" className="space-y-6">

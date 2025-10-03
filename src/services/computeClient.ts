@@ -128,6 +128,28 @@ export class ComputeClient {
 
     return response.json();
   }
+
+  async analyze(request: { text?: string; root?: string; model?: string; temperature?: number }) {
+    const response = await fetch(`${this.baseUrl}/api/compute?action=analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(request),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return { ok: false, error: errorData.error || `HTTP ${response.status}: ${response.statusText}` };
+    }
+
+    return response.json();
+  }
+
+  async getResult(jobId: string) {
+    const response = await fetch(`${this.baseUrl}/api/compute?action=result&id=${encodeURIComponent(jobId)}`);
+    return response.json();
+  }
 }
 
 // Default client instance
