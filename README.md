@@ -1,5 +1,7 @@
 #⚡ DARA Forge: Decentralized AI Research Assistant
 
+<!-- Deployment trigger: 2025-10-03 -->
+
 ---
 
 ## 🚀 Project Overview
