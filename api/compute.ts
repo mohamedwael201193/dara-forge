@@ -76,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!text && !root) return bad(res, 400, "Provide text and/or root");
 
     // Try to ensure ledger is funded, but don't fail if it can't be funded
-    const ledgerResult = await ensureLedger();
+    await ensureLedger();
     const b = await getBroker();
 
     // Discover services
