@@ -110,8 +110,25 @@ export async function getBroker() {
 
 export async function ensureLedger(min = 0.05) {
   const b = await getBroker();
-  const led = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
-  const bal = Number(led.balance || "0");
-  if (bal < min) await b.ledger.addLedger(String(min));
-  return { before: bal };
+  
+  try {
+    // Try to get existing ledger
+    const led = await b.ledger.getLedger();
+    const bal = Number(led.balance || "0");
+    
+    if (bal < min) {
+      console.log(`Compute ledger balance ${bal} OG is below minimum ${min} OG. Attempting to fund...`);
+      await b.ledger.addLedger(String(min));
+      console.log(`✅ Successfully added ${min} OG to compute ledger`);
+    }
+    
+    return { before: bal, funded: bal < min };
+  } catch (error) {
+    console.warn("⚠️  Could not fund compute ledger:", (error as Error).message);
+    console.warn("   This may be due to insufficient wallet balance or network issues.");
+    console.warn("   Continuing with limited functionality - some operations may fail.");
+    
+    // Return a safe fallback
+    return { before: 0, funded: false, error: (error as Error).message };
+  }
 }

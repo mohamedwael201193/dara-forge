@@ -12,6 +12,7 @@ function bad(res: VercelResponse, code: number, msg: string) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const action = String(req.query.action || "health");
+    console.log(`[Compute API] ${req.method} request with action: ${action}`);
 
     if (req.method === "GET" && action === "diagnostics") {
       const info: any = {
@@ -74,7 +75,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { text, root, model = "deepseek-r1-70b", temperature = 0.2 } = req.body || {};
     if (!text && !root) return bad(res, 400, "Provide text and/or root");
 
-    await ensureLedger();
+    // Try to ensure ledger is funded, but don't fail if it can't be funded
+    const ledgerResult = await ensureLedger();
     const b = await getBroker();
 
     // Discover services
@@ -85,8 +87,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ) || services[0];
     if (!svc) return bad(res, 503, "No compute services available");
 
-    // Metadata: endpoint + model
-    const meta = await b.inference.getServiceMetadata(svc);
+    const providerAddress: string = svc.provider;
+
+    // Metadata: endpoint + model (must pass provider address)
+    const meta = await b.inference.getServiceMetadata(providerAddress);
     const endpoint = meta?.endpoint || meta?.url || svc?.url;
     const resolvedModel = meta?.model || svc?.model || model;
     if (!endpoint) return bad(res, 500, "Provider endpoint not found");
@@ -102,9 +106,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     ];
     const body = { messages, model: resolvedModel, temperature };
 
-    // Single-use signed headers
+    // Single-use signed headers (pass provider address and JSON-stringified messages)
     const headers = await b.inference.getRequestHeaders(
-      svc,
+      providerAddress,
       JSON.stringify(messages)
     );
 
@@ -125,14 +129,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       JSON.stringify(data);
     const chatID = data?.id;
 
-    // Verify response
-    const v = await b.inference.processResponse(svc, data, chatID);
+    // Verify response (pass provider address and received content)
+    const v = await b.inference.processResponse(providerAddress, data, chatID);
 
     const jobId = randomUUID();
     store[jobId] = {
       ok: true,
       model: resolvedModel,
-      provider: svc.provider,
+      provider: providerAddress,
       root: root || null,
       verified: !!v?.verified,
       content: answer,
