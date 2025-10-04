@@ -6,6 +6,16 @@ export async function getComputeHealth() {
   return r.json();
 }
 
+export async function initCompute(amount?: number) {
+  const r = await fetch(`/api/compute?action=init${amount ? `&amount=${encodeURIComponent(amount)}` : ""}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ amount }),
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
 export async function startAnalysis(opts: AnalyzeOptions) {
   const r = await fetch("/api/compute?action=analyze", {
     method: "POST",

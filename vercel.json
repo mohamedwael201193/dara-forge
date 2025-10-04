@@ -1,8 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  
-  "buildCommand": "ROLLUP_DISABLE_NATIVE=1 npm run build"
- 
+  "framework": "vite",
+  "installCommand": "npm install --legacy-peer-deps --loglevel=verbose",
+  "buildCommand": "ROLLUP_DISABLE_NATIVE=1 npm run build",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "nodejs20.x"
+    }
   }
+}
 
 

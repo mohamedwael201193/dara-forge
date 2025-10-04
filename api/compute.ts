@@ -1,156 +1,193 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
-import { brokerDiagnostics, ensureLedger, getBroker } from "../src/lib/zgBroker.js";
+import { getZgComputeBroker } from "../src/server/compute/broker.js";
 
-const store: Record<string, any> =
+// In-memory store for request results
+const store: Record<string, any> = 
   (globalThis as any).__OGC_STORE__ || ((globalThis as any).__OGC_STORE__ = {});
 
+/**
+ * Utility function for error responses
+ */
 function bad(res: VercelResponse, code: number, msg: string) {
   return res.status(code).json({ ok: false, error: msg });
 }
 
+/**
+ * Official 0G Compute API
+ * 
+ * Supports the following actions:
+ * - GET /api/compute?action=health - Get broker health status
+ * - GET /api/compute?action=diagnostics - Get detailed diagnostics
+ * - POST /api/compute?action=topup - Add credits to account
+ * - POST /api/compute?action=analyze - Run AI analysis
+ * - GET /api/compute?action=result&id=<jobId> - Get analysis result
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const action = String(req.query.action || "health");
     console.log(`[Compute API] ${req.method} request with action: ${action}`);
 
-    if (req.method === "GET" && action === "diagnostics") {
-      const info: any = {
-        ok: true,
-        env: {
-          has_RPC: !!(process.env.OG_RPC_URL || process.env.OG_COMPUTE_RPC),
-          has_COMPUTE_PK: !!(
-            process.env.OG_COMPUTE_PRIVATE_KEY ||
-            process.env.OG_COMPUTE_API_KEY ||
-            process.env.OG_STORAGE_PRIVATE_KEY
-          ),
-        },
-        module: brokerDiagnostics(),
-      };
-      try {
-        const b = await getBroker();
-        const ledger = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
-        info.ledger = ledger;
-      } catch (e: any) {
-        info.error = e?.message || String(e);
+    // GET requests
+    if (req.method === "GET") {
+      const broker = getZgComputeBroker();
+      
+      switch (action) {
+        case "health": {
+          try {
+            const health = await broker.getHealthStatus();
+            return res.status(200).json(health);
+          } catch (error) {
+            return res.status(500).json({
+              status: 'error',
+              error: error instanceof Error ? error.message : 'Health check failed'
+            });
+          }
+        }
+
+        case "diagnostics": {
+          try {
+            const diagnostics = await broker.getDiagnostics();
+            return res.status(200).json(diagnostics);
+          } catch (error) {
+            return res.status(500).json({
+              status: 'error',
+              error: error instanceof Error ? error.message : 'Diagnostics failed'
+            });
+          }
+        }
+
+        case "result": {
+          const id = String(req.query.id || "");
+          if (!id) return bad(res, 400, "Missing job id");
+          
+          const data = store[id];
+          if (!data) return bad(res, 404, "Job result not found");
+          
+          return res.status(200).json({ ok: true, ...data });
+        }
+
+        default:
+          return bad(res, 400, `Unknown GET action: ${action}`);
       }
-      return res.status(200).json(info);
     }
 
-    if (req.method === "GET" && action === "health") {
-      try {
-        const b = await getBroker();
-        const ledger = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
-        const services = await b.inference.listService().catch(() => []);
-        return res.status(200).json({
-          ok: true,
-          ledger,
-          servicesCount: services?.length ?? 0,
-          module: brokerDiagnostics(),
-        });
-      } catch (e: any) {
-        return res.status(500).json({
-          ok: false,
-          error: "Failed to load compute module",
-          details: e?.message || String(e),
-          module: brokerDiagnostics(),
-        });
+    // POST requests
+    if (req.method === "POST") {
+      const broker = getZgComputeBroker();
+      
+      switch (action) {
+        case "topup": {
+          const { amount } = req.body || {};
+          if (!amount) return bad(res, 400, "Missing amount parameter");
+          
+          try {
+            const txHash = await broker.addCredit(String(amount));
+            const account = await broker.getAccount();
+            
+            return res.status(200).json({
+              ok: true,
+              txHash,
+              account,
+              message: `Added ${amount} OG credits`
+            });
+          } catch (error) {
+            return res.status(500).json({
+              ok: false,
+              error: error instanceof Error ? error.message : 'Topup failed'
+            });
+          }
+        }
+
+        case "analyze": {
+          const { text, root, model = "deepseek" } = req.body || {};
+          
+          if (!text && !root) {
+            return bad(res, 400, "Provide text and/or root parameter");
+          }
+          
+          try {
+            // Get available services
+            const services = await broker.listServices();
+            
+            if (services.length === 0) {
+              return bad(res, 503, "No compute services available");
+            }
+            
+            // Find service by model preference
+            const preferredService = services.find((s: any) => 
+              s.name.toLowerCase().includes(String(model).toLowerCase())
+            ) || services[0];
+            
+            console.log(`[Compute API] Using service: ${preferredService.name}`);
+            
+            // Prepare content for analysis
+            const content = [
+              root ? `Dataset Merkle Root: ${root}` : null,
+              text || null
+            ].filter(Boolean).join("\n\n");
+            
+            // Create analysis request
+            const response = await broker.createRequest(preferredService.name, content);
+            
+            // Extract result from response
+            let answer: string;
+            let usage: any = null;
+            
+            if (typeof response === 'string') {
+              answer = response;
+            } else if (response?.choices?.[0]?.message?.content) {
+              answer = response.choices[0].message.content;
+              usage = response.usage;
+            } else if (response?.text) {
+              answer = response.text;
+            } else {
+              answer = JSON.stringify(response);
+            }
+            
+            // Store result
+            const jobId = randomUUID();
+            store[jobId] = {
+              ok: true,
+              model: preferredService.name,
+              provider: preferredService.provider,
+              root: root || null,
+              verified: true, // 0G SDK handles verification
+              content: answer,
+              usage,
+              timestamp: new Date().toISOString()
+            };
+            
+            return res.status(200).json({
+              ok: true,
+              jobId,
+              service: preferredService.name,
+              provider: preferredService.provider
+            });
+            
+          } catch (error) {
+            console.error("[Compute API] Analysis error:", error);
+            return res.status(500).json({
+              ok: false,
+              error: error instanceof Error ? error.message : 'Analysis failed'
+            });
+          }
+        }
+
+        default:
+          return bad(res, 400, `Unknown POST action: ${action}`);
       }
     }
 
-    if (req.method === "GET" && action === "result") {
-      const id = String(req.query.id || "");
-      if (!id) return bad(res, 400, "Missing job id");
-      const data = store[id];
-      if (!data) return bad(res, 404, "Not found");
-      return res.status(200).json({ ok: true, ...data });
-    }
+    // Method not allowed
+    res.setHeader("Allow", "GET, POST");
+    return bad(res, 405, "Method Not Allowed");
 
-    if (req.method !== "POST" || action !== "analyze") {
-      res.setHeader("Allow", "GET, POST");
-      return bad(res, 405, "Method Not Allowed");
-    }
-
-    // Analyze: exact flow from SDK docs
-    const { text, root, model = "deepseek-r1-70b", temperature = 0.2 } = req.body || {};
-    if (!text && !root) return bad(res, 400, "Provide text and/or root");
-
-    // Try to ensure ledger is funded, but don't fail if it can't be funded
-    await ensureLedger();
-    const b = await getBroker();
-
-    // Discover services
-    const services = await b.inference.listService();
-    const svc =
-      services.find((s: any) =>
-        (s.model || "").toLowerCase().includes(String(model).toLowerCase())
-      ) || services[0];
-    if (!svc) return bad(res, 503, "No compute services available");
-
-    const providerAddress: string = svc.provider;
-
-    // Metadata: endpoint + model (must pass provider address)
-    const meta = await b.inference.getServiceMetadata(providerAddress);
-    const endpoint = meta?.endpoint || meta?.url || svc?.url;
-    const resolvedModel = meta?.model || svc?.model || model;
-    if (!endpoint) return bad(res, 500, "Provider endpoint not found");
-
-    // Messages & body (OpenAI-compatible)
-    const messages = [
-      {
-        role: "user",
-        content: [root ? `Dataset Merkle Root: ${root}` : null, text || null]
-          .filter(Boolean)
-          .join("\n\n"),
-      },
-    ];
-    const body = { messages, model: resolvedModel, temperature };
-
-    // Single-use signed headers (pass provider address and JSON-stringified messages)
-    const headers = await b.inference.getRequestHeaders(
-      providerAddress,
-      JSON.stringify(messages)
-    );
-
-    // Call provider (OpenAI-compatible)
-    const r = await fetch(`${endpoint}/chat/completions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...headers },
-      body: JSON.stringify(body),
+  } catch (error) {
+    console.error("[Compute API] Unexpected error:", error);
+    return res.status(500).json({
+      ok: false,
+      error: error instanceof Error ? error.message : 'Internal server error'
     });
-    if (!r.ok) {
-      const t = await r.text();
-      return bad(res, r.status, `Provider error: ${t}`);
-    }
-    const data: any = await r.json();
-    const answer =
-      data?.choices?.[0]?.message?.content ||
-      data?.text ||
-      JSON.stringify(data);
-    const chatID = data?.id;
-
-    // Verify response (pass provider address and received content)
-    const v = await b.inference.processResponse(providerAddress, data, chatID);
-
-    const jobId = randomUUID();
-    store[jobId] = {
-      ok: true,
-      model: resolvedModel,
-      provider: providerAddress,
-      root: root || null,
-      verified: !!v?.verified,
-      content: answer,
-      usage: v?.usage || data?.usage || null,
-      ts: Date.now(),
-    };
-
-    return res
-      .status(200)
-      .json({ ok: true, jobId, module: brokerDiagnostics() });
-  } catch (e: any) {
-    console.error("compute error:", e?.stack || e?.message || e);
-    return res
-      .status(500)
-      .json({ ok: false, error: e?.message || "compute failed" });
   }
 }

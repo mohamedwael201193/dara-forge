@@ -108,27 +108,46 @@ export async function getBroker() {
   return _broker;
 }
 
-export async function ensureLedger(min = 0.05) {
-  const b = await getBroker();
-  
-  try {
-    // Try to get existing ledger
-    const led = await b.ledger.getLedger();
-    const bal = Number(led.balance || "0");
-    
-    if (bal < min) {
-      console.log(`Compute ledger balance ${bal} OG is below minimum ${min} OG. Attempting to fund...`);
-      await b.ledger.addLedger(String(min));
-      console.log(`✅ Successfully added ${min} OG to compute ledger`);
-    }
-    
-    return { before: bal, funded: bal < min };
-  } catch (error) {
-    console.warn("⚠️  Could not fund compute ledger:", (error as Error).message);
-    console.warn("   This may be due to insufficient wallet balance or network issues.");
-    console.warn("   Continuing with limited functionality - some operations may fail.");
-    
-    // Return a safe fallback
-    return { before: 0, funded: false, error: (error as Error).message };
+// Normalize balance shape across SDK versions
+function getBalanceNumber(ledger: any): number {
+  const b = ledger?.balance ?? ledger?.totalBalance ?? ledger?.total ?? "0";
+  const n = Number(b);
+  return Number.isFinite(n) ? n : 0;
+}
+
+// Attempt all known funding APIs across SDK versions
+async function fundAccount(b: any, amount: number) {
+  // Newer
+  if (typeof b?.ledger?.addLedger === "function") {
+    return b.ledger.addLedger(amount);
   }
+  // Also used in docs
+  if (typeof b?.ledger?.depositFund === "function") {
+    return b.ledger.depositFund(amount);
+  }
+  // Some versions may expose explicit account creation
+  if (typeof b?.ledger?.addAccount === "function") {
+    return b.ledger.addAccount(amount);
+  }
+  throw new Error("No compatible ledger funding API found (addLedger | depositFund | addAccount).");
+}
+
+export async function ensureLedger(min = Number(process.env.OG_COMPUTE_MIN || "0.1")) {
+  const b = await getBroker();
+  const led = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
+  const bal = getBalanceNumber(led);
+  if (bal < min) {
+    // Fund with (min - bal) rounded up a bit
+    const toFund = Math.max(min - bal, min);
+    await fundAccount(b, toFund);
+  }
+  return { before: bal };
+}
+
+// Explicit init endpoint can call this to force creation/funding
+export async function initComputeAccount(amount = Number(process.env.OG_COMPUTE_INIT_AMOUNT || "0.1")) {
+  const b = await getBroker();
+  await fundAccount(b, amount);
+  const ledger = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
+  return { ok: true, ledger };
 }

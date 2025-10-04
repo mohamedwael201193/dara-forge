@@ -8,19 +8,20 @@ export default defineConfig({
   plugins: [
     react(),
     nodePolyfills({
-      // Specific options to ensure Web3 libraries work
-      globals: {
-        Buffer: true,
-        global: true,
-        process: true,
-      },
-      protocolImports: true,
+      include: ['buffer', 'process', 'util', 'stream', 'crypto'],
+      globals: { 
+        Buffer: true, 
+        process: true 
+      }
     }),
   ],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: { 
+    'process.env': {} 
   },
   optimizeDeps: {
     exclude: ['@0glabs/0g-ts-sdk']
