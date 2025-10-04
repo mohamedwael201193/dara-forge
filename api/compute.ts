@@ -2,8 +2,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
 import { brokerDiagnostics, ensureLedger, getBroker } from "../src/lib/zgBroker.js";
 
-// Simple in-memory store for job results in warm instances
-const store: Record<string, any> = (globalThis as any).__OGC_STORE__ || ((globalThis as any).__OGC_STORE__ = {});
+const store: Record<string, any> =
+  (globalThis as any).__OGC_STORE__ || ((globalThis as any).__OGC_STORE__ = {});
 
 function bad(res: VercelResponse, code: number, msg: string) {
   return res.status(code).json({ ok: false, error: msg });
@@ -18,7 +18,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ok: true,
         env: {
           has_RPC: !!(process.env.OG_RPC_URL || process.env.OG_COMPUTE_RPC),
-          has_COMPUTE_PK: !!(process.env.OG_COMPUTE_PRIVATE_KEY || process.env.OG_COMPUTE_API_KEY || process.env.OG_STORAGE_PRIVATE_KEY),
+          has_COMPUTE_PK: !!(
+            process.env.OG_COMPUTE_PRIVATE_KEY ||
+            process.env.OG_COMPUTE_API_KEY ||
+            process.env.OG_STORAGE_PRIVATE_KEY
+          ),
         },
         module: brokerDiagnostics(),
       };
@@ -66,39 +70,45 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return bad(res, 405, "Method Not Allowed");
     }
 
-    // Analyze per docs
+    // Analyze: exact flow from SDK docs
     const { text, root, model = "deepseek-r1-70b", temperature = 0.2 } = req.body || {};
     if (!text && !root) return bad(res, 400, "Provide text and/or root");
 
     await ensureLedger();
     const b = await getBroker();
 
-    // Discover providers
+    // Discover services
     const services = await b.inference.listService();
     const svc =
-      services.find((s: any) => (s.model || "").toLowerCase().includes(String(model).toLowerCase())) ||
-      services[0];
+      services.find((s: any) =>
+        (s.model || "").toLowerCase().includes(String(model).toLowerCase())
+      ) || services[0];
     if (!svc) return bad(res, 503, "No compute services available");
 
-    // Service metadata (endpoint + model)
+    // Metadata: endpoint + model
     const meta = await b.inference.getServiceMetadata(svc);
     const endpoint = meta?.endpoint || meta?.url || svc?.url;
     const resolvedModel = meta?.model || svc?.model || model;
     if (!endpoint) return bad(res, 500, "Provider endpoint not found");
 
-    // Messages and request body
+    // Messages & body (OpenAI-compatible)
     const messages = [
-      { role: "user", content: [root ? `Dataset Merkle Root: ${root}` : null, text || null].filter(Boolean).join("\n\n") }
+      {
+        role: "user",
+        content: [root ? `Dataset Merkle Root: ${root}` : null, text || null]
+          .filter(Boolean)
+          .join("\n\n"),
+      },
     ];
     const body = { messages, model: resolvedModel, temperature };
 
-    // Optional: acknowledge provider
-    // await b.inference.acknowledgeProviderSigner(svc.provider);
+    // Single-use signed headers
+    const headers = await b.inference.getRequestHeaders(
+      svc,
+      JSON.stringify(messages)
+    );
 
-    // Single-use request headers
-    const headers = await b.inference.getRequestHeaders(svc, JSON.stringify(messages));
-
-    // Send request (OpenAI-compatible)
+    // Call provider (OpenAI-compatible)
     const r = await fetch(`${endpoint}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...headers },
@@ -109,7 +119,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return bad(res, r.status, `Provider error: ${t}`);
     }
     const data: any = await r.json();
-    const answer = data?.choices?.[0]?.message?.content || data?.text || JSON.stringify(data);
+    const answer =
+      data?.choices?.[0]?.message?.content ||
+      data?.text ||
+      JSON.stringify(data);
     const chatID = data?.id;
 
     // Verify response
@@ -127,9 +140,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ts: Date.now(),
     };
 
-    return res.status(200).json({ ok: true, jobId, module: brokerDiagnostics() });
+    return res
+      .status(200)
+      .json({ ok: true, jobId, module: brokerDiagnostics() });
   } catch (e: any) {
     console.error("compute error:", e?.stack || e?.message || e);
-    return res.status(500).json({ ok: false, error: e?.message || "compute failed" });
+    return res
+      .status(500)
+      .json({ ok: false, error: e?.message || "compute failed" });
   }
 }

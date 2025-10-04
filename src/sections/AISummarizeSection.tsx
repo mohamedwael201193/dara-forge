@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { computeClient } from "@/services/computeClient";
+import { pollResult, startAnalysis } from "@/services/computeClient";
 import { AlertCircle, Brain, CheckCircle, Clock, Cpu, Database, Loader2, Shield, Sparkles } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -52,26 +52,51 @@ export function AISummarizeSection({ datasetRoot }: AISummarizeSectionProps) {
       setActiveJob({ ...newJob, progress: 10 });
 
       // Call the real 0G Compute API
-      const result = await computeClient.startAnalysis(userText.trim() || '', {
-        root: datasetRoot || undefined
+      const { ok, jobId } = await startAnalysis({
+        text: userText.trim() || undefined,
+        root: datasetRoot || undefined,
+        model: selectedModel,
+        temperature: 0.2
       });
 
-      // Analysis completed successfully
-      const completedJob = {
-        ...newJob,
-        status: 'complete' as const,
-        result: {
-          id: result.id,
-          content: result.result,
-          verified: result.verified,
-          provider: result.provider,
-          duration: result.duration
-        },
-        progress: 100
-      };
+      if (!ok) throw new Error("Failed to start analysis");
+
+      // Poll for results
+      let attempts = 0;
+      const maxAttempts = 30;
       
-      setActiveJob(completedJob);
-      setJobHistory(prev => [completedJob, ...prev.slice(0, 4)]); // Keep last 5
+      const pollInterval = setInterval(async () => {
+        attempts++;
+        try {
+          const result = await pollResult(jobId);
+          if (result?.ok) {
+            clearInterval(pollInterval);
+            
+            // Analysis completed successfully
+            const completedJob = {
+              ...newJob,
+              status: 'complete' as const,
+              result: {
+                id: result.jobId || jobId,
+                content: result.content,
+                verified: result.verified,
+                provider: result.provider,
+                duration: `${((Date.now() - newJob.startTime) / 1000).toFixed(1)}s`
+              },
+              progress: 100
+            };
+            
+            setActiveJob(completedJob);
+            setJobHistory(prev => [completedJob, ...prev.slice(0, 4)]);
+          } else if (attempts >= maxAttempts) {
+            clearInterval(pollInterval);
+            throw new Error("Analysis timed out");
+          }
+        } catch (pollError) {
+          clearInterval(pollInterval);
+          throw pollError;
+        }
+      }, 2000);
 
     } catch (error) {
       const errorJob = {

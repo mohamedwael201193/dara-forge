@@ -13,40 +13,73 @@ export function brokerDiagnostics() {
   return { kind: _modKind, path: _modPath };
 }
 
+async function tryEsm(spec: string): Promise<BrokerModule | null> {
+  try {
+    const m = (await import(spec)) as BrokerModule;
+    return m;
+  } catch {
+    return null;
+  }
+}
+
+async function tryCjs(spec: string): Promise<any | null> {
+  try {
+    const { createRequire } = await import("node:module");
+    const req = createRequire(import.meta.url);
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const m = req(spec);
+    return m as BrokerModule;
+  } catch {
+    return null;
+  }
+}
+
 async function loadBrokerFactory(): Promise<{
   create: (wallet: any) => Promise<any>;
   moduleKind: "esm" | "cjs" | "unknown";
   modulePath: string;
 }> {
   const override = process.env.BROKER_IMPORT_PATH;
+  const base = "@0glabs/0g-serving-broker";
   const candidates = override
     ? [override]
     : [
-        "@0glabs/0g-serving-broker",
-        "@0glabs/0g-serving-broker/index.js",
-        "@0glabs/0g-serving-broker/dist/index.js",
-        "@0glabs/0g-serving-broker/dist/cjs/index.cjs",
-        "@0glabs/0g-serving-broker/dist/cjs/index.js",
+        base,
+        `${base}/index.js`,
+        `${base}/dist/index.js`,
+        `${base}/dist/cjs/index.cjs`,
+        `${base}/dist/cjs/index.js`,
       ];
 
   const errors: string[] = [];
 
   for (const p of candidates) {
-    try {
-      const mod = (await import(p)) as BrokerModule;
+    // 1) try ESM
+    const esm = await tryEsm(p);
+    if (esm) {
       const fn =
-        mod?.createZGComputeNetworkBroker ||
-        mod?.default?.createZGComputeNetworkBroker;
+        esm.createZGComputeNetworkBroker ||
+        esm.default?.createZGComputeNetworkBroker;
       if (typeof fn === "function") {
-        const kind =
-          mod?.createZGComputeNetworkBroker ? "esm" :
-          mod?.default?.createZGComputeNetworkBroker ? "cjs" :
-          "unknown";
-        return { create: fn, moduleKind: kind, modulePath: p };
+        _modKind = esm.createZGComputeNetworkBroker ? "esm" : "cjs";
+        _modPath = p;
+        return { create: fn, moduleKind: _modKind, modulePath: p };
       }
-      errors.push(`Loaded ${p} but no createZGComputeNetworkBroker export`);
-    } catch (e: any) {
-      errors.push(`${p}: ${e?.message || String(e)}`);
+      errors.push(`ESM ${p} loaded but no createZGComputeNetworkBroker export`);
+    }
+
+    // 2) try CJS
+    const cjs = await tryCjs(p);
+    if (cjs) {
+      const fn =
+        cjs.createZGComputeNetworkBroker ||
+        cjs.default?.createZGComputeNetworkBroker;
+      if (typeof fn === "function") {
+        _modKind = cjs.createZGComputeNetworkBroker ? "cjs" : "esm";
+        _modPath = p;
+        return { create: fn, moduleKind: _modKind, modulePath: p };
+      }
+      errors.push(`CJS ${p} loaded but no createZGComputeNetworkBroker export`);
     }
   }
   throw new Error(`Failed to load 0G broker module. Tried: ${candidates.join(", ")}. Errors: ${errors.join(" | ")}`);
