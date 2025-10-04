@@ -1,64 +1,169 @@
-// Simple fallback compute handler without 0G SDK for now
-import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { randomUUID } from "node:crypto";
+﻿import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { getBroker } from '../src/lib/brokerService.js';
 
-const store: Record<string, any> = (globalThis as any).__OGC_STORE__ || ((globalThis as any).__OGC_STORE__ = {});
+export default async function handler(
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
 
-function bad(res: VercelResponse, code: number, msg: string) {
-  return res.status(code).json({ ok: false, error: msg });
-}
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    const action = String(req.query.action || "health");
+    const { prompt, type } = req.body;
 
-    if (req.method === "GET" && action === "health") {
-      // Mock health response
-      return res.status(200).json({ 
-        ok: true, 
-        ledger: { balance: "1.0" }, 
-        servicesCount: 1,
-        message: "0G Compute temporarily using mock responses - SDK integration in progress"
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'Invalid prompt' });
+    }
+
+    console.log('Processing 0G Compute request...');
+
+    // Get the broker instance
+    const broker = await getBroker();
+    
+    // Get service details 
+    const providerAddress = process.env.ZG_COMPUTE_PROVIDER || "0xf07240Efa67755B5311bc75784a061eDB47165Dd";
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      // Mock response for development
+      console.log('Using mock 0G Compute response for development');
+      
+      return res.status(200).json({
+        success: true,
+        requestId: `mock-${Date.now()}`,
+        response: `**Development Mode - Mock AI Analysis**
+
+This is a simulated response demonstrating the 0G Compute integration. In production, this will be processed by real decentralized AI providers with cryptographic verification.
+
+**Your Input:** "${prompt.substring(0, 150)}${prompt.length > 150 ? '...' : ''}"
+
+**Mock Analysis:**
+• Data Quality Assessment: High-quality structured input detected
+• Processing Method: Decentralized AI computation via 0G Network
+• Verification Status: Cryptographically verified (simulated)
+• Response Time: <2 seconds (typical 0G Compute performance)
+
+**Next Steps:**
+- Deploy to production to enable real 0G Compute
+- Configure provider credentials for live verification
+- Experience true decentralized AI with on-chain proofs
+
+*This integration is ready for Wave 3 deployment!*`,
+        metadata: {
+          model: 'llama-3.3-70b-instruct',
+          timestamp: new Date().toISOString(),
+          verified: true,
+          provider: providerAddress,
+          mode: 'development',
+          note: 'Mock response - production will use real 0G Compute'
+        }
+      });
+    }
+    
+    // Production 0G Compute logic
+    const endpoint = process.env.ZG_COMPUTE_ENDPOINT || `https://evmrpc-testnet.0g.ai`;
+    const model = 'llama-3.3-70b-instruct';
+    
+    // Get request headers for billing
+    const headers = await broker.inference.getRequestHeaders(providerAddress, prompt);
+    
+    // Prepare OpenAI-compatible request
+    const requestBody = {
+      messages: [
+        {
+          role: 'system',
+          content: type === 'summarize' 
+            ? 'You are a data analysis expert. Analyze the provided dataset and provide insights about data quality, patterns, and potential research applications. Focus on actionable insights.'
+            : 'You are a helpful AI assistant. Provide a clear and informative response to the user query.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      model: model,
+      max_tokens: 1000,
+      temperature: 0.7
+    };
+
+    console.log('Submitting request to 0G Compute provider...');
+    
+    // Make request to the 0G provider
+    const response = await fetch(`${endpoint}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      throw new Error(`0G Compute request failed: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json() as any;
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      throw new Error('Invalid response format from 0G Compute');
+    }
+
+    const responseContent = data.choices[0].message.content;
+    const chatId = data.id; // For verifiable services
+
+    console.log('Processing 0G Compute response...');
+    
+    // Process and verify the response (for verifiable services)
+    let verified = false;
+    try {
+      const verifyResult = await broker.inference.processResponse(
+        providerAddress,
+        responseContent,
+        chatId
+      );
+      verified = verifyResult === true;
+    } catch (verifyError) {
+      console.warn('Response verification failed:', verifyError);
+      // Continue without verification for now
+    }
+
+    return res.status(200).json({
+      success: true,
+      requestId: chatId,
+      response: responseContent,
+      metadata: {
+        model: model,
+        timestamp: new Date().toISOString(),
+        verified: verified,
+        provider: providerAddress
+      }
+    });
+
+  } catch (error) {
+    console.error('Compute API error:', error);
+    
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    
+    // Provide more specific error messages
+    if (errorMessage.includes('insufficient balance')) {
+      return res.status(402).json({
+        error: 'Insufficient balance',
+        message: 'Not enough tokens to process this request. Please add funds to your account.'
+      });
+    }
+    
+    if (errorMessage.includes('network')) {
+      return res.status(503).json({
+        error: 'Network error',
+        message: 'Unable to connect to 0G Compute network. Please try again later.'
       });
     }
 
-    if (req.method === "GET" && action === "result") {
-      const id = String(req.query.id || "");
-      if (!id) return bad(res, 400, "Missing job id");
-      const data = store[id];
-      if (!data) return bad(res, 404, "Not found");
-      return res.status(200).json({ ok: true, ...data });
-    }
-
-    if (req.method !== "POST" || action !== "analyze") {
-      res.setHeader("Allow", "GET, POST");
-      return bad(res, 405, "Method Not Allowed");
-    }
-
-    const { text, root, model = "llama-3.3-70b-instruct" } = req.body || {};
-    if (!text && !root) return bad(res, 400, "Provide text and/or root");
-
-    // Mock analysis response
-    const jobId = randomUUID();
-    
-    // Simulate processing time
-    setTimeout(() => {
-      const mockResult = {
-        model: model,
-        provider: "mock-provider",
-        root: root || null,
-        verified: true,
-        content: `Mock AI Analysis:\n\nThis is a simulated analysis response for the provided ${text ? 'text' : 'dataset'}. The 0G Compute integration is temporarily using mock responses while we resolve SDK compatibility issues.\n\n${text ? `Input text: "${text.slice(0, 100)}${text.length > 100 ? '...' : ''}"` : ''}\n${root ? `Dataset root: ${root}` : ''}\n\nOnce the 0G SDK integration is complete, this will be replaced with actual verifiable compute results from decentralized providers.`,
-        usage: { prompt_tokens: 50, completion_tokens: 100, total_tokens: 150 },
-        ts: Date.now()
-      };
-      
-      store[jobId] = mockResult;
-    }, 2000); // 2 second delay to simulate processing
-
-    return res.status(200).json({ ok: true, jobId });
-  } catch (e: any) {
-    console.error("compute error:", e?.stack || e?.message || e);
-    return res.status(500).json({ ok: false, error: e?.message || "compute failed" });
+    return res.status(500).json({
+      error: 'Internal server error',
+      message: 'Failed to process compute request',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    });
   }
 }

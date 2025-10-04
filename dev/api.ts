@@ -2,11 +2,14 @@ import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
 
-import anchorHandler from '../api/anchor';
-import attestHandler from '../api/attest';
-import computeHandler from '../api/compute';
-import proxyHandler from '../api/storage/proxy';
-import uploadHandler from '../api/storage/upload';
+// Set development environment
+process.env.NODE_ENV = 'development';
+
+import anchorHandler from '../api/anchor.js';
+import attestHandler from '../api/attest.js';
+import computeHandler from '../api/compute.js';
+import proxyHandler from '../api/storage/proxy.js';
+import uploadHandler from '../api/storage/upload.js';
 
 const app = express();
 

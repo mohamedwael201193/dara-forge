@@ -29,24 +29,24 @@ export const SummarizeDataset: React.FC<SummarizeDatasetProps> = () => {
     setSummary('')
 
     try {
-      const response = await fetch('/api/compute?action=chat', {
+      const response = await fetch('/api/compute', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          messages: [
-            { role: 'system', content: 'You are a helpful assistant that summarizes text.' },
-            { role: 'user', content: `Summarize the following text: ${inputText}` },
-          ],
-          modelHint: 'llama-3.3-70b-instruct', // Or other preferred model
+          prompt: `Please provide a clear and concise summary of the following text: ${inputText}`,
+          type: 'summarize',
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to get summary from 0G Compute.')
+        throw new Error(data.error || data.message || 'Failed to get summary from 0G Compute.')
       }
 
-      setSummary(data.response.choices[0].message.content)
+      setSummary(data.response)
     } catch (err: any) {
       console.error('Summarization failed:', err)
       setError(`Summarization failed: ${err.message || String(err)}`)

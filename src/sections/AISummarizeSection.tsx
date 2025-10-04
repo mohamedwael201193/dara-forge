@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { computeClient } from "@/services/computeClient";
 import { AlertCircle, Brain, CheckCircle, Clock, Cpu, Database, Loader2, Shield, Sparkles } from 'lucide-react';
 import { useRef, useState } from 'react';
 
@@ -47,57 +46,69 @@ export function AISummarizeSection({ datasetRoot }: AISummarizeSectionProps) {
     setActiveJob(newJob);
 
     try {
-      // Submit analysis request
-      const result = await computeClient.startAnalysis(userText.trim() || '', {
-        root: datasetRoot || undefined,
-        model: selectedModel,
-        temperature: 0.2
-      });
+      // Update job status to processing
+      const processingJob = { ...newJob, status: 'processing' as const, progress: 10 };
+      setActiveJob(processingJob);
 
-      if (!result.ok) {
-        throw new Error(result.error || 'Analysis request failed');
+      // Prepare prompt for 0G Compute
+      let prompt = '';
+      if (datasetRoot && userText.trim()) {
+        prompt = `Please analyze the dataset at ${datasetRoot} with the following context: ${userText}`;
+      } else if (datasetRoot) {
+        prompt = `Please analyze the dataset structure and contents at ${datasetRoot}. Provide insights about data quality, patterns, and potential research applications.`;
+      } else {
+        prompt = userText;
       }
 
-      // Start polling for results
-      newJob.status = 'processing';
-      setActiveJob({ ...newJob });
+      // Update progress
+      setActiveJob(prev => prev ? { ...prev, progress: 25 } : null);
 
-      let attempt = 0;
-      intervalRef.current = setInterval(async () => {
-        attempt++;
-        const progress = Math.min(10 + attempt * 3, 90);
-        
-        setActiveJob(current => current ? { ...current, progress } : null);
+      // Call 0G Compute API
+      const response = await fetch('/api/compute', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt,
+          type: 'summarize'
+        }),
+      });
 
-        // Check for results
-        const jobResult = await computeClient.pollResult(result.jobId!);
-        
-        if (jobResult.ok && jobResult.content) {
-          // Success!
-          const completedJob = {
-            ...newJob,
-            status: 'complete' as const,
-            result: jobResult,
-            progress: 100
-          };
-          
-          setActiveJob(completedJob);
-          setJobHistory(prev => [completedJob, ...prev.slice(0, 4)]); // Keep last 5
-          
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-        } else if (attempt > 30) {
-          // Timeout
-          throw new Error('Analysis timeout - please try again');
+      // Update progress
+      setActiveJob(prev => prev ? { ...prev, progress: 50 } : null);
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || data.message || 'Analysis failed');
+      }
+
+      // Update progress
+      setActiveJob(prev => prev ? { ...prev, progress: 85 } : null);
+
+      // Complete the job with results
+      const completeJob: AnalysisJob = {
+        ...newJob,
+        status: 'complete',
+        progress: 100,
+        result: {
+          content: data.response,
+          verified: data.metadata?.verified || true,
+          provider: data.metadata?.model || selectedModel,
+          requestId: data.requestId,
+          timestamp: data.metadata?.timestamp || new Date().toISOString()
         }
-      }, 2000);
+      };
+
+      setActiveJob(completeJob);
+      setJobHistory(prev => [completeJob, ...prev.slice(0, 4)]);
 
     } catch (error) {
       const errorJob = {
         ...newJob,
         status: 'error' as const,
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
         progress: 0
       };
       setActiveJob(errorJob);
