@@ -53,11 +53,11 @@ export const getBroker = async (): Promise<any> => {
 // Mock broker for development
 const createMockBroker = () => ({
   inference: {
-    getRequestHeaders: async (providerAddress: string, content: string) => ({
+    getRequestHeaders: async (providerAddress: string, _content: string) => ({
       'x-0g-provider': providerAddress,
       'x-0g-content-hash': 'mock-hash',
     }),
-    processResponse: async (providerAddress: string, content: string, chatId: string) => true,
+    processResponse: async (_providerAddress: string, _content: string, _chatId: string) => true,
     acknowledgeProviderSigner: async (providerAddress: string) => {
       console.log(`Mock acknowledging provider: ${providerAddress}`);
     }
