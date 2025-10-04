@@ -27,7 +27,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "api"],
+  "include": ["src", "api", "types"],
   "exclude": ["hardhat.config.*", "scripts", "contracts", "node_modules"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

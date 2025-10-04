@@ -1,144 +1,70 @@
-// Simple compute client using consolidated API
-export interface ComputeRequest {
-  model: 'llama-3.3-70b-instruct' | 'deepseek-r1-70b';
-  messages: Array<{
-    role: 'system' | 'user' | 'assistant';
-    content: string;
-  }>;
-  stream?: boolean;
-  tokenId?: string;
-  datasetRef?: string;
-}
-
-export interface ComputeHealthResponse {
-  ok: boolean;
-  timestamp?: string;
-  ledger?: {
-    status: string;
-    availableBalance: string;
-    unit: string;
-  };
-  providers?: {
-    healthy: number;
-    total: number;
-    details: Array<{
-      model: string;
-      address: string;
-      endpoint: string;
-      healthy: boolean;
-      name: string;
-      error?: string;
-    }>;
-  };
-  environment?: {
-    chainId: string;
-    rpcUrl: string;
-  };
-}
-
-export interface ComputeStatus {
-  ok: boolean;
-  ledger?: any;
-  servicesCount?: number;
-  error?: string;
+// Updated compute client for real 0G integration
+export interface AnalysisRequest {
+  analysisContext: string;
+  rootHash?: string;
+  model?: string;
 }
 
 export interface AnalysisResult {
-  ok: boolean;
-  model?: string;
-  provider?: string;
-  root?: string | null;
-  verified?: boolean;
-  content?: string;
-  usage?: any;
-  ts?: number;
-  error?: string;
+  id: string;
+  result: string;
+  verified: boolean;
+  provider: string;
+  model: string;
+  duration: string;
 }
 
-export const computeClient = {
-  async getComputeHealth(): Promise<ComputeStatus> {
-    const response = await fetch("/api/compute?action=health");
-    return response.json();
-  },
+export interface HealthStatus {
+  status: string;
+  network?: {
+    connected: boolean;
+    walletBalance: string;
+    contractsWorking: boolean;
+  };
+  servicesCount: number;
+  services: Array<{
+    provider: string;
+    model: string;
+    verifiability: string;
+  }>;
+}
 
-  async health(): Promise<ComputeHealthResponse> {
-    const response = await fetch("/api/compute?action=health");
-    const data = await response.json();
-    return {
-      ok: data.ok,
-      timestamp: new Date().toISOString(),
-      ledger: data.ledger ? {
-        status: data.ledger.balance ? 'active' : 'inactive',
-        availableBalance: data.ledger.balance || '0',
-        unit: 'ETH'
-      } : undefined,
-      providers: {
-        healthy: data.servicesCount || 0,
-        total: data.servicesCount || 0,
-        details: []
-      },
-      environment: {
-        chainId: '16602',
-        rpcUrl: 'https://evmrpc-testnet.0g.ai'
-      }
-    };
-  },
+export interface AnalysisError {
+  message: string;
+}
 
-  async chat(request: ComputeRequest): Promise<{ content: string; provider: string; model: string; verified: boolean; usage?: any; raw?: any }> {
-    const response = await fetch("/api/compute?action=analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        text: request.messages[request.messages.length - 1]?.content || '',
-        model: request.model
-      })
-    });
+class ComputeClient {
+  async getHealth(): Promise<HealthStatus> {
+    const response = await fetch('/api/compute?action=health');
     
-    const result = await response.json();
-    
-    if (!result.ok || !result.jobId) {
-      throw new Error(result.error || 'Chat request failed');
+    if (!response.ok) {
+      const error = await response.json() as AnalysisError;
+      throw new Error(error.message || 'Failed to get health status');
     }
     
-    // Poll for result
-    let attempts = 0;
-    while (attempts < 30) { // Max 30 attempts (90 seconds)
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      const pollResult = await this.pollResult(result.jobId);
-      
-      if (pollResult.ok && pollResult.content) {
-        return {
-          content: pollResult.content,
-          provider: pollResult.provider || 'unknown',
-          model: pollResult.model || request.model,
-          verified: pollResult.verified || false,
-          usage: pollResult.usage,
-          raw: pollResult
-        };
-      }
-      
-      if (pollResult.error) {
-        throw new Error(pollResult.error);
-      }
-      
-      attempts++;
-    }
-    
-    throw new Error('Chat request timed out');
-  },
-
-  async startAnalysis(text: string, options: { root?: string; model?: string; temperature?: number } = {}): Promise<{ ok: boolean; jobId?: string; error?: string }> {
-    const response = await fetch("/api/compute?action=analyze", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, ...options })
-    });
-    return response.json();
-  },
-
-  async pollResult(jobId: string): Promise<AnalysisResult> {
-    const response = await fetch(`/api/compute?action=result&id=${jobId}`);
     return response.json();
   }
-};
 
+  async startAnalysis(analysisContext: string, options?: { root?: string; model?: string }): Promise<AnalysisResult> {
+    const requestBody: AnalysisRequest = {
+      analysisContext,
+      rootHash: options?.root,
+      model: options?.model
+    };
+
+    const response = await fetch('/api/compute', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Analysis failed');
+    }
+
+    return response.json();
+  }
+}
+
+export const computeClient = new ComputeClient();

@@ -47,51 +47,31 @@ export function AISummarizeSection({ datasetRoot }: AISummarizeSectionProps) {
     setActiveJob(newJob);
 
     try {
-      // Submit analysis request
+      // Update status to processing
+      newJob.status = 'processing';
+      setActiveJob({ ...newJob, progress: 10 });
+
+      // Call the real 0G Compute API
       const result = await computeClient.startAnalysis(userText.trim() || '', {
-        root: datasetRoot || undefined,
-        model: selectedModel,
-        temperature: 0.2
+        root: datasetRoot || undefined
       });
 
-      if (!result.ok) {
-        throw new Error(result.error || 'Analysis request failed');
-      }
-
-      // Start polling for results
-      newJob.status = 'processing';
-      setActiveJob({ ...newJob });
-
-      let attempt = 0;
-      intervalRef.current = setInterval(async () => {
-        attempt++;
-        const progress = Math.min(10 + attempt * 3, 90);
-        
-        setActiveJob(current => current ? { ...current, progress } : null);
-
-        // Check for results
-        const jobResult = await computeClient.pollResult(result.jobId!);
-        
-        if (jobResult.ok && jobResult.content) {
-          // Success!
-          const completedJob = {
-            ...newJob,
-            status: 'complete' as const,
-            result: jobResult,
-            progress: 100
-          };
-          
-          setActiveJob(completedJob);
-          setJobHistory(prev => [completedJob, ...prev.slice(0, 4)]); // Keep last 5
-          
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-          }
-        } else if (attempt > 30) {
-          // Timeout
-          throw new Error('Analysis timeout - please try again');
-        }
-      }, 2000);
+      // Analysis completed successfully
+      const completedJob = {
+        ...newJob,
+        status: 'complete' as const,
+        result: {
+          id: result.id,
+          content: result.result,
+          verified: result.verified,
+          provider: result.provider,
+          duration: result.duration
+        },
+        progress: 100
+      };
+      
+      setActiveJob(completedJob);
+      setJobHistory(prev => [completedJob, ...prev.slice(0, 4)]); // Keep last 5
 
     } catch (error) {
       const errorJob = {

@@ -1,7 +1,8 @@
-// Simple fallback compute handler without 0G SDK for now
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { randomUUID } from "node:crypto";
+import { brokerDiagnostics, ensureLedger, getBroker } from "../src/lib/zgBroker.js";
 
+// Simple in-memory store for job results in warm instances
 const store: Record<string, any> = (globalThis as any).__OGC_STORE__ || ((globalThis as any).__OGC_STORE__ = {});
 
 function bad(res: VercelResponse, code: number, msg: string) {
@@ -12,14 +13,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const action = String(req.query.action || "health");
 
+    if (req.method === "GET" && action === "diagnostics") {
+      const info: any = {
+        ok: true,
+        env: {
+          has_RPC: !!(process.env.OG_RPC_URL || process.env.OG_COMPUTE_RPC),
+          has_COMPUTE_PK: !!(process.env.OG_COMPUTE_PRIVATE_KEY || process.env.OG_COMPUTE_API_KEY || process.env.OG_STORAGE_PRIVATE_KEY),
+        },
+        module: brokerDiagnostics(),
+      };
+      try {
+        const b = await getBroker();
+        const ledger = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
+        info.ledger = ledger;
+      } catch (e: any) {
+        info.error = e?.message || String(e);
+      }
+      return res.status(200).json(info);
+    }
+
     if (req.method === "GET" && action === "health") {
-      // Mock health response
-      return res.status(200).json({ 
-        ok: true, 
-        ledger: { balance: "1.0" }, 
-        servicesCount: 1,
-        message: "0G Compute temporarily using mock responses - SDK integration in progress"
-      });
+      try {
+        const b = await getBroker();
+        const ledger = await b.ledger.getLedger().catch(() => ({ balance: "0" }));
+        const services = await b.inference.listService().catch(() => []);
+        return res.status(200).json({
+          ok: true,
+          ledger,
+          servicesCount: services?.length ?? 0,
+          module: brokerDiagnostics(),
+        });
+      } catch (e: any) {
+        return res.status(500).json({
+          ok: false,
+          error: "Failed to load compute module",
+          details: e?.message || String(e),
+          module: brokerDiagnostics(),
+        });
+      }
     }
 
     if (req.method === "GET" && action === "result") {
@@ -35,28 +66,68 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return bad(res, 405, "Method Not Allowed");
     }
 
-    const { text, root, model = "llama-3.3-70b-instruct" } = req.body || {};
+    // Analyze per docs
+    const { text, root, model = "deepseek-r1-70b", temperature = 0.2 } = req.body || {};
     if (!text && !root) return bad(res, 400, "Provide text and/or root");
 
-    // Mock analysis response
-    const jobId = randomUUID();
-    
-    // Simulate processing time
-    setTimeout(() => {
-      const mockResult = {
-        model: model,
-        provider: "mock-provider",
-        root: root || null,
-        verified: true,
-        content: `Mock AI Analysis:\n\nThis is a simulated analysis response for the provided ${text ? 'text' : 'dataset'}. The 0G Compute integration is temporarily using mock responses while we resolve SDK compatibility issues.\n\n${text ? `Input text: "${text.slice(0, 100)}${text.length > 100 ? '...' : ''}"` : ''}\n${root ? `Dataset root: ${root}` : ''}\n\nOnce the 0G SDK integration is complete, this will be replaced with actual verifiable compute results from decentralized providers.`,
-        usage: { prompt_tokens: 50, completion_tokens: 100, total_tokens: 150 },
-        ts: Date.now()
-      };
-      
-      store[jobId] = mockResult;
-    }, 2000); // 2 second delay to simulate processing
+    await ensureLedger();
+    const b = await getBroker();
 
-    return res.status(200).json({ ok: true, jobId });
+    // Discover providers
+    const services = await b.inference.listService();
+    const svc =
+      services.find((s: any) => (s.model || "").toLowerCase().includes(String(model).toLowerCase())) ||
+      services[0];
+    if (!svc) return bad(res, 503, "No compute services available");
+
+    // Service metadata (endpoint + model)
+    const meta = await b.inference.getServiceMetadata(svc);
+    const endpoint = meta?.endpoint || meta?.url || svc?.url;
+    const resolvedModel = meta?.model || svc?.model || model;
+    if (!endpoint) return bad(res, 500, "Provider endpoint not found");
+
+    // Messages and request body
+    const messages = [
+      { role: "user", content: [root ? `Dataset Merkle Root: ${root}` : null, text || null].filter(Boolean).join("\n\n") }
+    ];
+    const body = { messages, model: resolvedModel, temperature };
+
+    // Optional: acknowledge provider
+    // await b.inference.acknowledgeProviderSigner(svc.provider);
+
+    // Single-use request headers
+    const headers = await b.inference.getRequestHeaders(svc, JSON.stringify(messages));
+
+    // Send request (OpenAI-compatible)
+    const r = await fetch(`${endpoint}/chat/completions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+    });
+    if (!r.ok) {
+      const t = await r.text();
+      return bad(res, r.status, `Provider error: ${t}`);
+    }
+    const data: any = await r.json();
+    const answer = data?.choices?.[0]?.message?.content || data?.text || JSON.stringify(data);
+    const chatID = data?.id;
+
+    // Verify response
+    const v = await b.inference.processResponse(svc, data, chatID);
+
+    const jobId = randomUUID();
+    store[jobId] = {
+      ok: true,
+      model: resolvedModel,
+      provider: svc.provider,
+      root: root || null,
+      verified: !!v?.verified,
+      content: answer,
+      usage: v?.usage || data?.usage || null,
+      ts: Date.now(),
+    };
+
+    return res.status(200).json({ ok: true, jobId, module: brokerDiagnostics() });
   } catch (e: any) {
     console.error("compute error:", e?.stack || e?.message || e);
     return res.status(500).json({ ok: false, error: e?.message || "compute failed" });
