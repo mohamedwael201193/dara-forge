@@ -20,6 +20,7 @@
     "hh:deploy:anchor": "hardhat run scripts/deploy-anchor.cjs --network galileo",
     "compute:smoke": "tsx scripts/compute-smoke.ts",
     "test:compute": "tsx scripts/test-0g-compute.ts",
+    "test:da": "tsx scripts/test-0g-da.ts",
     "fund:account": "tsx scripts/fund-account.ts",
     "fund:providers": "tsx scripts/fund-providers.ts",
     "setup:0g": "node scripts/setup-0g-account.mjs"

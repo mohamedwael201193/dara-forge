@@ -22,6 +22,37 @@ app.all('/api/anchor', (req, res) => anchorHandler(req as any, res as any));
 app.all('/api/attest', (req, res) => attestHandler(req as any, res as any));
 app.all('/api/compute', (req, res) => computeHandler(req as any, res as any));
 
+// DA endpoints
+app.post('/api/da', async (req, res) => {
+  try {
+    const daHandler = await import('../api/da.js');
+    return daHandler.default(req as any, res as any);
+  } catch (error) {
+    console.error('[Dev API] DA endpoint error:', error);
+    res.status(500).json({ ok: false, error: 'DA endpoint failed' });
+  }
+});
+
+app.post('/api/da/publish', async (req, res) => {
+  try {
+    const publishHandler = await import('../api/da/publish.js');
+    return publishHandler.default(req as any, res as any);
+  } catch (error) {
+    console.error('[Dev API] DA publish error:', error);
+    res.status(500).json({ ok: false, error: 'DA publish failed' });
+  }
+});
+
+app.get('/api/da/verify', async (req, res) => {
+  try {
+    const verifyHandler = await import('../api/da/verify.js');
+    return verifyHandler.default(req as any, res as any);
+  } catch (error) {
+    console.error('[Dev API] DA verify error:', error);
+    res.status(500).json({ ok: false, error: 'DA verify failed' });
+  }
+});
+
 const PORT = Number(process.env.PORT || 3000);
 app.listen(PORT, () => {
   console.log(`Dev API server listening on http://localhost:${PORT}`);

@@ -15,6 +15,16 @@ export default function SampleRunCard() {
   const [logId, setLogId] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>("");
+  
+  // DA State
+  const [daInfo, setDaInfo] = useState<{
+    blobHash: string;
+    dataRoot: string;
+    epoch: number;
+    quorumId: number;
+    verified: boolean;
+    timestamp: string;
+  } | null>(null);
 
   const explorer = (process.env.NEXT_PUBLIC_OG_EXPLORER || "").replace(/\/$/, "");
 
@@ -96,6 +106,49 @@ export default function SampleRunCard() {
     }
   }
 
+  async function publishToDA() {
+    if (!datasetRoot) {
+      setError("Need dataset root for DA publishing");
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+
+    try {
+      // Load the same sample data for DA publishing
+      const res = await fetch("/sample-data/sample_abstracts.csv");
+      if (!res.ok) throw new Error("Failed to load sample dataset");
+      const fileData = await res.arrayBuffer();
+      const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileData)));
+
+      const response = await fetch('/api/da', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          data: base64Data,
+          metadata: { 
+            datasetId: `sample-${Date.now()}`,
+            rootHash: datasetRoot,
+            fileName: "sample_abstracts.csv"
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`DA submission failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setDaInfo(result);
+    } catch (error: any) {
+      setError(`DA publishing failed: ${error.message}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="rounded-lg border p-4 space-y-3">
       <h3 className="text-lg font-semibold">Wave‑1: Minimal Verifiable Run</h3>
@@ -109,6 +162,9 @@ export default function SampleRunCard() {
         </button>
         <button onClick={commitOnChain} disabled={busy || (!datasetRoot && !manifestRoot)} className="px-3 py-2 border rounded">
           2) Commit on 0G Chain
+        </button>
+        <button onClick={publishToDA} disabled={busy || !datasetRoot} className="px-3 py-2 border rounded bg-blue-500 text-white">
+          3) Publish to 0G DA
         </button>
       </div>
 
@@ -141,6 +197,21 @@ export default function SampleRunCard() {
           </div>
         )}
         {logId && <div>Log ID (event): <code>{logId}</code></div>}
+        
+        {/* DA Information */}
+        {daInfo && (
+          <div className="bg-blue-50 border border-blue-200 rounded p-3">
+            <div className="text-sm font-medium text-blue-800 mb-2">🎯 0G Data Availability</div>
+            <div className="text-xs text-blue-700 space-y-1">
+              <div>DA Blob Hash: <code className="bg-blue-100 px-1 rounded">{daInfo.blobHash}</code></div>
+              <div>DA Data Root: <code className="bg-blue-100 px-1 rounded">{daInfo.dataRoot}</code></div>
+              <div>DA Status: <span className={`inline-block px-2 py-1 rounded text-xs ${daInfo.verified ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                {daInfo.verified ? "Available" : "Pending"}
+              </span></div>
+              <div>DA Epoch: {daInfo.epoch}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <p className="text-xs text-muted-foreground">

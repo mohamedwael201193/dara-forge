@@ -1,5 +1,6 @@
 import { AnimatedButton } from "@/components/AnimatedButton";
 import { SuccessNotification } from "@/components/SuccessNotification";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useOgUpload } from "@/hooks/useOgUpload";
@@ -7,15 +8,17 @@ import { anchorWithWallet } from "@/lib/chain/anchorClient";
 import { requireEthersSigner } from "@/lib/ethersClient";
 import { cn } from "@/lib/utils";
 import {
-    Anchor,
-    CheckCircle,
-    ChevronDown,
-    ChevronUp,
-    Download,
-    Eye,
-    PenTool,
-    Server,
-    Shield
+  Anchor,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Database,
+  Download,
+  ExternalLink,
+  Eye,
+  PenTool,
+  Server,
+  Shield
 } from "lucide-react";
 import React from "react";
 
@@ -35,10 +38,25 @@ export function StorageUploadSection() {
     txHash?: string;
     explorerUrl?: string;
   } | null>(null);
+  
+  // DA State
+  const [daInfo, setDaInfo] = React.useState<{
+    blobHash: string;
+    dataRoot: string;
+    epoch: number;
+    quorumId: number;
+    verified: boolean;
+    timestamp: string;
+    txHash?: string;
+    blockNumber?: number;
+  } | null>(null);
+  const [daStatus, setDaStatus] = React.useState<"idle" | "publishing" | "published" | "error">("idle");
+  const [daError, setDaError] = React.useState<string>("");
 
   function onInput(e: React.ChangeEvent<HTMLInputElement>) {
     setRoot(""); setError(""); setStatus("idle");
     setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
+    setDaInfo(null); setDaStatus("idle"); setDaError("");
     const list = e.target.files ? Array.from(e.target.files) : [];
     setFiles(list);
   }
@@ -50,6 +68,7 @@ export function StorageUploadSection() {
       setFiles(list);
       setRoot(""); setError(""); setStatus("idle");
       setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
+      setDaInfo(null); setDaStatus("idle"); setDaError("");
     }
   }
 
@@ -72,6 +91,56 @@ export function StorageUploadSection() {
     } catch (e: any) {
       setError(e?.message || "Upload failed");
       setStatus("error");
+    }
+  }
+
+  async function handleDAPublish() {
+    if (!files.length || !root) {
+      setDaError("Need files and storage root for DA publishing");
+      return;
+    }
+
+    setDaStatus("publishing");
+    setDaError("");
+
+    try {
+      // Convert files to base64 for DA submission
+      const fileData = await files[0].arrayBuffer();
+      const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileData)));
+
+      const API_BASE = import.meta.env.DEV ? 'http://localhost:3000' : '';
+
+      const response = await fetch(`${API_BASE}/api/da`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'submit',
+          data: base64Data,
+          metadata: { 
+            datasetId: `dataset-${Date.now()}`,
+            rootHash: root,
+            fileName: files[0].name,
+            fileSize: files[0].size
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`DA submission failed: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setDaInfo(result);
+      setDaStatus("published");
+
+      setSuccessNotification({
+        title: "Published to 0G DA! 🎯",
+        message: "Your dataset is now permanently available on the Data Availability network.",
+      });
+
+    } catch (error: any) {
+      setDaError(`DA publishing failed: ${error.message}`);
+      setDaStatus("error");
     }
   }
 
@@ -212,6 +281,62 @@ export function StorageUploadSection() {
                   <code className="text-slate-100 break-all">{root}</code>
                 </div>
 
+                {/* DA Information Section */}
+                {daInfo && (
+                  <div className="space-y-2 p-3 bg-slate-800/60 border border-slate-600 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-400">
+                      <CheckCircle className="w-4 h-4" />
+                      <span className="font-medium">Published to 0G DA</span>
+                    </div>
+                    
+                    <div className="text-sm space-y-2">
+                      <div>
+                        <span className="text-slate-400">Blob Hash:</span>
+                        <code className="ml-2 text-xs text-slate-300">{daInfo.blobHash.slice(0, 16)}...</code>
+                      </div>
+                      
+                      <div>
+                        <span className="text-slate-400">Data Root:</span>
+                        <code className="ml-2 text-xs text-slate-300">{daInfo.dataRoot.slice(0, 16)}...</code>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-slate-400">Epoch:</span>
+                          <span className="ml-2 text-slate-300">{daInfo.epoch}</span>
+                        </div>
+                        
+                        <div>
+                          <span className="text-slate-400">Status:</span>
+                          <Badge variant="outline" className="ml-2 text-green-400 border-green-400">
+                            {daInfo.verified ? '✓ Verified' : 'Pending'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {daInfo.txHash && (
+                        <div className="mt-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-blue-400 border-blue-400 hover:bg-blue-400/10"
+                            onClick={() => window.open(`https://chainscan-galileo.0g.ai/tx/${daInfo.txHash}`, '_blank')}
+                          >
+                            <ExternalLink className="w-3 h-3 mr-2" />
+                            View Transaction on Explorer
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {daError && (
+                  <div className="bg-red-900/20 border border-red-700 rounded p-3">
+                    <p className="text-red-400 text-sm">DA Error: {daError}</p>
+                  </div>
+                )}
+
                 {files.length > 0 && (
                   <div className="bg-slate-700/30 rounded-lg p-3">
                     <p className="text-slate-300 text-sm mb-2">Dataset Manifest</p>
@@ -303,6 +428,28 @@ export function StorageUploadSection() {
                   >
                     Anchor on 0G Chain
                   </AnimatedButton>
+                  
+                  {/* DA Publish Button */}
+                  {!daInfo && daStatus !== "publishing" && (
+                    <AnimatedButton 
+                      variant="secondary"
+                      icon={Database}
+                      onClick={handleDAPublish}
+                      disabled={!root}
+                    >
+                      Publish to 0G DA
+                    </AnimatedButton>
+                  )}
+                  
+                  {daStatus === "publishing" && (
+                    <AnimatedButton 
+                      variant="secondary"
+                      icon={Database}
+                      disabled
+                    >
+                      Publishing to DA...
+                    </AnimatedButton>
+                  )}
                   
                   <AnimatedButton 
                     variant="secondary"
