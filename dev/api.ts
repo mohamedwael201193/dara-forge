@@ -2,9 +2,6 @@ import cors from 'cors';
 import 'dotenv/config';
 import express from 'express';
 
-// Set development environment
-process.env.NODE_ENV = 'development';
-
 import anchorHandler from '../api/anchor.js';
 import attestHandler from '../api/attest.js';
 import computeHandler from '../api/compute.js';
