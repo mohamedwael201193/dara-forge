@@ -7,6 +7,7 @@ import { useOgUpload } from "@/hooks/useOgUpload";
 import { anchorWithWallet } from "@/lib/chain/anchorClient";
 import { requireEthersSigner } from "@/lib/ethersClient";
 import { cn } from "@/lib/utils";
+import { useDataStore } from "@/store/dataStore";
 import {
   Anchor,
   CheckCircle,
@@ -26,9 +27,22 @@ function fmtKB(n: number) { return `${(n / 1024).toFixed(2)} KB`; }
 
 export function StorageUploadSection() {
   const { uploadFiles } = useOgUpload();
+  
+  // Global store
+  const { 
+    uploadedDatasets,
+    daPublications,
+    currentUpload,
+    currentDA,
+    addUploadedDataset,
+    addDAPublication,
+    setCurrentUpload,
+    setCurrentDA
+  } = useDataStore();
+  
+  // Local UI state
   const [files, setFiles] = React.useState<File[]>([]);
   const [status, setStatus] = React.useState<"idle" | "preparing" | "registering" | "checking" | "done" | "error">("idle");
-  const [root, setRoot] = React.useState<string>("");
   const [error, setError] = React.useState<string>("");
   const [attestation, setAttestation] = React.useState<{address: string, signature: string} | null>(null);
   const [showAdvanced, setShowAdvanced] = React.useState(false);
@@ -40,23 +54,23 @@ export function StorageUploadSection() {
   } | null>(null);
   
   // DA State
-  const [daInfo, setDaInfo] = React.useState<{
-    blobHash: string;
-    dataRoot: string;
-    epoch: number;
-    quorumId: number;
-    verified: boolean;
-    timestamp: string;
-    txHash?: string;
-    blockNumber?: number;
-  } | null>(null);
   const [daStatus, setDaStatus] = React.useState<"idle" | "publishing" | "published" | "error">("idle");
   const [daError, setDaError] = React.useState<string>("");
 
+  // Get current data from store
+  const root = currentUpload?.rootHash || "";
+  const daInfo = currentDA;
+
   function onInput(e: React.ChangeEvent<HTMLInputElement>) {
-    setRoot(""); setError(""); setStatus("idle");
+    // Reset local state
+    setError(""); setStatus("idle");
     setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
-    setDaInfo(null); setDaStatus("idle"); setDaError("");
+    setDaStatus("idle"); setDaError("");
+    
+    // Reset global state
+    setCurrentUpload(null);
+    setCurrentDA(null);
+    
     const list = e.target.files ? Array.from(e.target.files) : [];
     setFiles(list);
   }
@@ -66,9 +80,15 @@ export function StorageUploadSection() {
     const list = Array.from(e.dataTransfer.files || []);
     if (list.length) {
       setFiles(list);
-      setRoot(""); setError(""); setStatus("idle");
+      
+      // Reset local state
+      setError(""); setStatus("idle");
       setAttestation(null); setShowAdvanced(false); setSuccessNotification(null);
-      setDaInfo(null); setDaStatus("idle"); setDaError("");
+      setDaStatus("idle"); setDaError("");
+      
+      // Reset global state
+      setCurrentUpload(null);
+      setCurrentDA(null);
     }
   }
 
@@ -86,7 +106,18 @@ export function StorageUploadSection() {
         setStatus("error");
         return;
       }
-      setRoot(out.root);
+      
+      // Save to global store
+      const uploadResult = {
+        datasetId: `dataset-${Date.now()}`,
+        rootHash: out.root,
+        fileName: files[0]?.name || 'unknown',
+        fileSize: files[0]?.size || 0,
+        uploadTime: new Date().toISOString(),
+        txHash: undefined
+      };
+      
+      addUploadedDataset(uploadResult);
       setStatus("done");
     } catch (e: any) {
       setError(e?.message || "Upload failed");
@@ -130,7 +161,9 @@ export function StorageUploadSection() {
       }
 
       const result = await response.json();
-      setDaInfo(result);
+      
+      // Save to global store
+      addDAPublication(result);
       setDaStatus("published");
 
       setSuccessNotification({

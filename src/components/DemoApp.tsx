@@ -1,3 +1,4 @@
+import { ActivityHistory } from '@/components/ActivityHistory';
 import ConnectWalletButton from '@/components/ConnectWalletButton';
 import { DAPublish } from "@/components/DAPublish";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WalletStatus } from '@/components/WalletStatus';
 import { Brain, CheckCircle, MessageSquareText, Network, Send, Shield, Upload } from "@/lib/icons";
 import { StorageUploadSection } from '@/sections/StorageUploadSection';
+import { Activity } from "lucide-react";
 import React from 'react';
 import { AISummarizeSection } from '../sections/AISummarizeSection';
 
@@ -54,7 +56,7 @@ export const DemoApp: React.FC = () => {
         {/* Main Demo Tabs */}
         <div className="p-8 bg-slate-900">
           <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 bg-slate-800 border border-slate-700">
+            <TabsList className="grid w-full grid-cols-5 bg-slate-800 border border-slate-700">
               <TabsTrigger 
                 value="upload" 
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 hover:text-white"
@@ -75,6 +77,13 @@ export const DemoApp: React.FC = () => {
               >
                 <Send className="w-4 h-4 mr-2" />
                 DA Publish
+              </TabsTrigger>
+              <TabsTrigger 
+                value="activity"
+                className="data-[state=active]:bg-indigo-600 data-[state=active]:text-white text-slate-300 hover:text-white"
+              >
+                <Activity className="w-4 h-4 mr-2" />
+                Activity
               </TabsTrigger>
               <TabsTrigger 
                 value="status"
@@ -110,6 +119,17 @@ export const DemoApp: React.FC = () => {
                   </p>
                 </div>
                 <DAPublish />
+              </TabsContent>
+
+              <TabsContent value="activity" className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-white mb-2">Session Activity</h2>
+                  <p className="text-slate-300 max-w-2xl mx-auto">
+                    Track all your uploads, DA publications, AI analyses, and blockchain transactions in one place. 
+                    Monitor the complete workflow of your research data through the 0G ecosystem.
+                  </p>
+                </div>
+                <ActivityHistory />
               </TabsContent>
 
               <TabsContent value="status" className="space-y-6">

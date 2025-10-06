@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { useDataStore } from '@/store/dataStore';
 import { AlertCircle, Brain, CheckCircle, Loader2, Shield, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 
@@ -15,10 +16,22 @@ interface AnalysisResult {
 }
 
 export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
+  // Global store
+  const { 
+    currentUpload,
+    computeResults,
+    currentCompute,
+    addComputeResult,
+    setCurrentCompute
+  } = useDataStore();
+  
+  // Local UI state
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState<AnalysisResult | null>(null);
+  
+  // Get result from store
+  const result = currentCompute;
 
   const handleAnalyze = async () => {
     if (!text.trim()) {
@@ -28,10 +41,13 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
 
     setLoading(true);
     setError('');
-    setResult(null);
+    setCurrentCompute(null);
 
     try {
       console.log('🚀 Calling real 0G Compute API...');
+      
+      // Use the dataset root from store if available, or from prop
+      const rootHash = currentUpload?.rootHash || datasetRoot;
       
       const response = await fetch('/api/compute', {
         method: 'POST',
@@ -40,7 +56,7 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
         },
         body: JSON.stringify({
           text: text.trim(),
-          datasetRoot: datasetRoot
+          datasetRoot: rootHash
         }),
       });
 
@@ -55,14 +71,19 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
       console.log('Model:', data.model);
       console.log('Verified:', data.verified);
       
-      setResult({
+      // Save to global store
+      const computeResult = {
         answer: data.answer,
         provider: data.provider,
         model: data.model,
         verified: data.verified,
         chatID: data.chatID,
-        timestamp: data.timestamp
-      });
+        timestamp: data.timestamp,
+        rootHash: rootHash || undefined,
+        input: text.trim()
+      };
+      
+      addComputeResult(computeResult);
 
     } catch (err: any) {
       console.error('❌ 0G Compute error:', err);
@@ -98,9 +119,10 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
           />
         </div>
 
-        {datasetRoot && (
+        {(currentUpload?.rootHash || datasetRoot) && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 bg-muted rounded">
-            <code className="font-mono text-xs">{datasetRoot}</code>
+            <span className="text-xs font-medium">Dataset:</span>
+            <code className="font-mono text-xs">{currentUpload?.rootHash || datasetRoot}</code>
           </div>
         )}
 
