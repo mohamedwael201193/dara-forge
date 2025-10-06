@@ -62,3 +62,58 @@ keystore/
 mnemonic*
 seed*
 
+# 0G Network specific sensitive files
+0g-config/
+wallet-backups/
+.env.0g
+.env.testnet
+.env.mainnet
+
+# Smart contract deployment artifacts
+deployments/
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Research data and uploads (potentially sensitive)
+research-data/
+datasets/
+uploads/
+test-data/
+
+# Internal documentation with sensitive info
+docs/internal/
+docs/deployment/
+docs/security/
+notes/
+TODO.md
+SECURITY.md
+deployment-notes.txt
+private-docs/
+
+# Development scripts with credentials
+scripts/deploy-*.js
+scripts/fund-*.js
+scripts/setup-production.js
+
+# Production builds and cache
+/.next/
+/out/
+/build
+dist/
+.cache/
+coverage/
+.nyc_output/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+backup/
+
