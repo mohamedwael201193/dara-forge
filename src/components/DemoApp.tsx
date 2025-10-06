@@ -5,8 +5,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WalletStatus } from '@/components/WalletStatus';
 import { Brain, CheckCircle, MessageSquareText, Network, Send, Shield, Upload } from "@/lib/icons";
+import { NFTsComingSoon } from '@/sections/NFTsComingSoon';
 import { StorageUploadSection } from '@/sections/StorageUploadSection';
-import { Activity } from "lucide-react";
+import { Activity, Gem } from "lucide-react";
 import React from 'react';
 import { AISummarizeSection } from '../sections/AISummarizeSection';
 
@@ -56,7 +57,7 @@ export const DemoApp: React.FC = () => {
         {/* Main Demo Tabs */}
         <div className="p-8 bg-slate-900">
           <Tabs defaultValue="upload" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-slate-800 border border-slate-700">
+            <TabsList className="grid w-full grid-cols-6 bg-slate-800 border border-slate-700">
               <TabsTrigger 
                 value="upload" 
                 className="data-[state=active]:bg-blue-600 data-[state=active]:text-white text-slate-300 hover:text-white"
@@ -77,6 +78,13 @@ export const DemoApp: React.FC = () => {
               >
                 <Send className="w-4 h-4 mr-2" />
                 DA Publish
+              </TabsTrigger>
+              <TabsTrigger 
+                value="nfts"
+                className="data-[state=active]:bg-pink-600 data-[state=active]:text-white text-slate-300 hover:text-white"
+              >
+                <Gem className="w-4 h-4 mr-2" />
+                Research NFTs
               </TabsTrigger>
               <TabsTrigger 
                 value="activity"
@@ -119,6 +127,17 @@ export const DemoApp: React.FC = () => {
                   </p>
                 </div>
                 <DAPublish />
+              </TabsContent>
+
+              <TabsContent value="nfts" className="space-y-6">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-white mb-2">Research NFTs</h2>
+                  <p className="text-slate-300 max-w-2xl mx-auto">
+                    Transform your scientific achievements into verifiable digital assets. Mint NFTs for research milestones, 
+                    dataset ownership, and peer review contributions on the blockchain.
+                  </p>
+                </div>
+                <NFTsComingSoon />
               </TabsContent>
 
               <TabsContent value="activity" className="space-y-6">
