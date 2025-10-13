@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { CheckCircle, Copy, ExternalLink, Wallet } from '@/lib/icons';
 import { useState } from 'react';
+// Import centralized chain configuration 
+import { CHAIN_CONFIG } from '@/config/chain';
 
 export const WalletConnect = () => {
   const [isConnecting, setIsConnecting] = useState(false);
@@ -11,19 +13,14 @@ export const WalletConnect = () => {
   const [_chainId, _setChainId] = useState("");
   const { toast } = useToast();
 
-  // Simulated 0G Chain configuration
-const OG_CHAIN_CONFIG = {
-  chainId: '0x40da', // 16602 in hex
-
-  chainName: 'Galileo (Testnet)',
-  nativeCurrency: {
-    name: '0G',
-    symbol: '0G',
-    decimals: 18,
-  },
-  rpcUrls: ['https://evmrpc-testnet.0g.ai'],
-  blockExplorerUrls: ['https://chainscan-galileo.0g.ai'],
-};
+  // 0G Chain configuration from centralized config
+  const OG_CHAIN_CONFIG = {
+    chainId: `0x${CHAIN_CONFIG.chainId.toString(16)}`, // Convert to hex
+    chainName: CHAIN_CONFIG.name,
+    nativeCurrency: CHAIN_CONFIG.nativeCurrency,
+    rpcUrls: CHAIN_CONFIG.rpcUrls.default.http,
+    blockExplorerUrls: CHAIN_CONFIG.blockExplorers.default.url ? [CHAIN_CONFIG.blockExplorers.default.url] : [],
+  };
 
   const connectWallet = async () => {
     setIsConnecting(true);

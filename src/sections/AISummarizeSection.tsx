@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
+import { callComputeWithCircuitBreaker, computeCircuitBreaker } from '@/services/computeCircuitBreaker';
 import { useDataStore } from '@/store/dataStore';
 import { AlertCircle, Brain, CheckCircle, Loader2, Shield, Sparkles } from 'lucide-react';
 import { useState } from 'react';
@@ -44,27 +45,36 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
     setCurrentCompute(null);
 
     try {
-      console.log('🚀 Calling real 0G Compute API...');
+      // Check circuit breaker status
+      const status = computeCircuitBreaker.getStatus();
+      console.log('🔄 Circuit breaker status:', status);
       
-      // Use the dataset root from store if available, or from prop
-      const rootHash = currentUpload?.rootHash || datasetRoot;
-      
-      const response = await fetch('/api/compute', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          text: text.trim(),
-          datasetRoot: rootHash
-        }),
-      });
+      // Use circuit breaker protected compute call
+      const data = await callComputeWithCircuitBreaker(async () => {
+        console.log('🚀 Calling real 0G Compute API...');
+        
+        // Use the dataset root from store if available, or from prop
+        const rootHash = currentUpload?.rootHash || datasetRoot;
+        
+        const response = await fetch('/api/compute', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: text.trim(),
+            datasetRoot: rootHash
+          }),
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok || !data.ok) {
-        throw new Error(data.error || `HTTP ${response.status}`);
-      }
+        if (!response.ok || !data.ok) {
+          throw new Error(data.error || `HTTP ${response.status}`);
+        }
+
+        return data;
+      }, '0G Compute AI Analysis');
 
       console.log('✅ Real 0G Compute response received');
       console.log('Provider:', data.provider);
@@ -79,7 +89,7 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
         verified: data.verified,
         chatID: data.chatID,
         timestamp: data.timestamp,
-        rootHash: rootHash || undefined,
+        rootHash: currentUpload?.rootHash || datasetRoot || undefined,
         input: text.trim()
       };
       
@@ -87,7 +97,25 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
 
     } catch (err: any) {
       console.error('❌ 0G Compute error:', err);
-      setError(err.message || 'Failed to analyze with 0G Compute');
+      
+      // Handle circuit breaker errors with graceful degradation
+      if (err.message.includes('Circuit:')) {
+        const status = computeCircuitBreaker.getStatus();
+        const gracefulOptions = computeCircuitBreaker.getGracefulOptions();
+        
+        let errorMessage = computeCircuitBreaker.getStatusMessage();
+        
+        if (gracefulOptions.offlineMode) {
+          errorMessage += ' You can continue working with other features while compute service is restored.';
+        } else if (gracefulOptions.retryEstimate > 0) {
+          const retryMinutes = Math.ceil(gracefulOptions.retryEstimate / 60000);
+          errorMessage += ` Estimated retry time: ${retryMinutes} minutes.`;
+        }
+        
+        setError(errorMessage);
+      } else {
+        setError(err.message || 'Failed to analyze with 0G Compute');
+      }
     } finally {
       setLoading(false);
     }

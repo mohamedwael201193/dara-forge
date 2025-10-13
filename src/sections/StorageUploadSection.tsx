@@ -7,19 +7,20 @@ import { useOgUpload } from "@/hooks/useOgUpload";
 import { anchorWithWallet } from "@/lib/chain/anchorClient";
 import { requireEthersSigner } from "@/lib/ethersClient";
 import { cn } from "@/lib/utils";
+import { useActivityRecorder } from "@/services/activityRecorder";
 import { useDataStore } from "@/store/dataStore";
 import {
-  Anchor,
-  CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Database,
-  Download,
-  ExternalLink,
-  Eye,
-  PenTool,
-  Server,
-  Shield
+    Anchor,
+    CheckCircle,
+    ChevronDown,
+    ChevronUp,
+    Database,
+    Download,
+    ExternalLink,
+    Eye,
+    PenTool,
+    Server,
+    Shield
 } from "lucide-react";
 import React from "react";
 
@@ -27,6 +28,7 @@ function fmtKB(n: number) { return `${(n / 1024).toFixed(2)} KB`; }
 
 export function StorageUploadSection() {
   const { uploadFiles } = useOgUpload();
+  const { recordChainAnchor } = useActivityRecorder();
   
   // Global store
   const { 
@@ -180,7 +182,23 @@ export function StorageUploadSection() {
   async function handleAnchor() {
     if (!root) return;
     try {
-      const { txHash, explorerUrl } = await anchorWithWallet(root as `0x${string}`);
+      const { txHash, explorerUrl, activityData } = await anchorWithWallet(
+        root as `0x${string}`,
+        undefined, // manifest
+        undefined, // project
+        {
+          datasetId: currentUpload?.datasetId,
+          storageIndexer: currentUpload?.indexer,
+          daEndpoint: currentDA?.daEndpointUsed,
+          description: `Storage section anchor: ${currentUpload?.fileName || 'unknown file'}`
+        }
+      );
+      
+      // Record the anchor activity with enhanced metadata
+      if (activityData) {
+        recordChainAnchor(activityData);
+      }
+      
       setSuccessNotification({
         title: "Dataset Anchored Successfully! 🎉",
         message: "Your dataset has been permanently anchored on 0G Chain with full provenance.",

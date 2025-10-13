@@ -13,9 +13,9 @@ export class OGChainService {
   private signer: ethers.Signer | null = null
   private contract: ethers.Contract | null = null
   
-  // Use your deployed contract address
+  // Use your deployed contract address from centralized config
   private readonly CONTRACT_ADDRESS = process.env.VITE_DARA_CONTRACT || '0xC2Ee75BFe89eAA01706e09d8722A0C8a6E849FC9'
-  private readonly CHAIN_ID = 16602
+  private readonly CHAIN_ID = parseInt(process.env.VITE_OG_CHAIN_ID || '16602', 10)
   
   // FIXED: Complete ABI for your DARA contract
   private readonly CONTRACT_ABI = [
@@ -70,13 +70,13 @@ export class OGChainService {
           params: [{
             chainId: `0x${this.CHAIN_ID.toString(16)}`,
             chainName: 'Galileo (Testnet)',
-            rpcUrls: [process.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/'],
+            rpcUrls: [process.env.VITE_OG_RPC || import.meta.env.VITE_OG_RPC || 'https://evmrpc-testnet.0g.ai/'],
             nativeCurrency: {
               name: '0G',
               symbol: '0G',
               decimals: 18
             },
-            blockExplorerUrls: [process.env.VITE_OG_EXPLORER || 'https://chainscan-galileo.0g.ai']
+            blockExplorerUrls: [process.env.VITE_OG_EXPLORER || import.meta.env.VITE_OG_EXPLORER || 'https://chainscan-galileo.0g.ai']
           }]
         })
       } else {
@@ -170,7 +170,7 @@ export class OGChainService {
 
   // Get explorer URL for transaction
   getExplorerUrl(txHash: string): string {
-    const baseUrl = process.env.VITE_OG_EXPLORER || 'https://chainscan-galileo.0g.ai'
+    const baseUrl = process.env.VITE_OG_EXPLORER || import.meta.env.VITE_OG_EXPLORER || 'https://chainscan-galileo.0g.ai'
     return `${baseUrl}/tx/${txHash}`
   }
 }

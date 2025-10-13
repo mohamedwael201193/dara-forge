@@ -117,3 +117,7 @@ coverage/
 *.tmp
 backup/
 
+CONFIGURATION_AUDIT.md
+TEST_MATRIX.md
+docs/CLI_VERIFICATION.md
+samples/sample.txt

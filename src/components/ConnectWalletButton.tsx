@@ -15,7 +15,7 @@ async function addGalileoIfMissing() {
     await wc.transport.request({
       method: 'wallet_addEthereumChain',
       params: [{
-        chainId: '0x40da', // 16602
+        chainId: `0x${(import.meta.env.VITE_OG_CHAIN_ID ? parseInt(import.meta.env.VITE_OG_CHAIN_ID, 10) : 16602).toString(16)}`, // Environment-aware
         chainName: 'Galileo (Testnet)',
         nativeCurrency: { name: '0G', symbol: '0G', decimals: 18 },
         rpcUrls: [import.meta.env.VITE_OG_RPC ?? 'https://evmrpc-testnet.0g.ai/'],

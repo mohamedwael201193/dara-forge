@@ -1,6 +1,7 @@
 import ConnectWalletButton from '@/components/ConnectWalletButton'
+import { CHAIN_CONFIG } from '@/config/chain'
 import { useDataStore } from '@/store/dataStore'
-import { useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount, useAppKitNetwork } from '@reown/appkit/react'
 import { motion } from 'framer-motion'
 import {
     Activity,
@@ -11,6 +12,7 @@ import {
     Copy,
     Download,
     ExternalLink,
+    FileSearch,
     Shield,
     Upload,
     User,
@@ -19,47 +21,100 @@ import {
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
+interface ActivityEntry {
+  kind: 'storage' | 'da' | 'chain' | 'compute' | 'passport'
+  label: string
+  timestamp: string
+  artifacts: {
+    root?: string
+    blobHash?: string
+    dataRoot?: string
+    tx?: string
+    sig?: string
+    url?: string
+  }
+  verifyLink: string
+}
+
 const ProfilePage = () => {
   const navigate = useNavigate()
   const [copiedAddress, setCopiedAddress] = useState(false)
   const [filterType, setFilterType] = useState('all')
+  const [exportFormat, setExportFormat] = useState<'json' | 'csv'>('json')
   const { address, isConnected } = useAppKitAccount()
-  const { uploadedDatasets, daPublications, computeResults } = useDataStore()
+  const { caipNetwork } = useAppKitNetwork()
+  const { uploadedDatasets, daPublications, computeResults, chainAnchors } = useDataStore()
 
-  // Combine all activities with timestamps
-  const allActivities = [
-    ...uploadedDatasets.map((item, index) => ({
-      type: 'storage',
-      id: item.datasetId || `storage-${index}`,
-      title: item.fileName,
+  // Create verifiable activity entries with typed payloads
+  const createVerifyLink = (kind: ActivityEntry['kind'], artifacts: ActivityEntry['artifacts']): string => {
+    const params = new URLSearchParams()
+    if (artifacts.root) params.set('root', artifacts.root)
+    if (artifacts.blobHash) params.set('blob', artifacts.blobHash)
+    if (artifacts.dataRoot) params.set('dataRoot', artifacts.dataRoot)
+    if (artifacts.tx) params.set('tx', artifacts.tx)
+    if (artifacts.sig) params.set('sig', artifacts.sig)
+    if (artifacts.url) params.set('attestationUrl', artifacts.url)
+    return `/verify?${params.toString()}`
+  }
+
+  const allActivities: ActivityEntry[] = [
+    // Storage activities
+    ...uploadedDatasets.map((item, index): ActivityEntry => ({
+      kind: 'storage',
+      label: `Uploaded: ${item.fileName}`,
       timestamp: item.uploadTime || new Date().toISOString(),
-      hash: item.rootHash,
-      status: 'completed',
-      icon: Upload
+      artifacts: {
+        root: item.rootHash,
+        tx: item.txHash
+      },
+      verifyLink: createVerifyLink('storage', { root: item.rootHash, tx: item.txHash })
     })),
-    ...computeResults.map((item, index) => ({
-      type: 'compute',
-      id: item.chatID || `compute-${index}`,
-      title: `AI Analysis: ${item.provider}`,
+    
+    // DA activities
+    ...daPublications.map((item, index): ActivityEntry => ({
+      kind: 'da',
+      label: 'Data Availability Publication',
       timestamp: item.timestamp || new Date().toISOString(),
-      hash: item.answer?.substring(0, 32) + '...' || 'N/A',
-      status: 'completed',
-      icon: Brain
+      artifacts: {
+        blobHash: item.blobHash,
+        dataRoot: item.dataRoot,
+        tx: item.txHash
+      },
+      verifyLink: createVerifyLink('da', { 
+        blobHash: item.blobHash, 
+        dataRoot: item.dataRoot, 
+        tx: item.txHash 
+      })
     })),
-    ...daPublications.map((item, index) => ({
-      type: 'da',
-      id: item.blobHash || `da-${index}`,
-      title: 'Data Availability Publication',
+    
+    // Chain anchor activities
+    ...chainAnchors.map((item, index): ActivityEntry => ({
+      kind: 'chain',
+      label: 'Blockchain Anchor',
       timestamp: item.timestamp || new Date().toISOString(),
-      hash: item.blobHash || 'N/A',
-      status: 'completed',
-      icon: Shield
+      artifacts: {
+        root: item.rootHash,
+        tx: item.txHash
+      },
+      verifyLink: createVerifyLink('chain', { root: item.rootHash, tx: item.txHash })
+    })),
+    
+    // Compute activities
+    ...computeResults.map((item, index): ActivityEntry => ({
+      kind: 'compute',
+      label: `AI Analysis: ${item.provider}`,
+      timestamp: item.timestamp || new Date().toISOString(),
+      artifacts: {
+        sig: item.chatID, // Using chatID as signature/identifier
+        root: item.rootHash
+      },
+      verifyLink: createVerifyLink('compute', { sig: item.chatID, root: item.rootHash })
     }))
   ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 
   const filteredActivities = filterType === 'all' 
     ? allActivities 
-    : allActivities.filter(activity => activity.type === filterType)
+    : allActivities.filter(activity => activity.kind === filterType)
 
   const achievements = [
     {
@@ -115,23 +170,54 @@ const ProfilePage = () => {
   const exportActivities = () => {
     const data = {
       address,
+      network: {
+        name: CHAIN_CONFIG.name,
+        chainId: CHAIN_CONFIG.chainId,
+        symbol: CHAIN_CONFIG.nativeCurrency.symbol
+      },
       exportDate: new Date().toISOString(),
       activities: allActivities,
       summary: {
         totalActivities: allActivities.length,
         storageUploads: uploadedDatasets.length,
         computeAnalyses: computeResults.length,
-        daPublications: daPublications.length
+        daPublications: daPublications.length,
+        chainAnchors: chainAnchors.length
       }
     }
     
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `dara-forge-activity-${address?.substring(0, 8)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    if (exportFormat === 'json') {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dara-forge-activity-${address?.substring(0, 8)}.json`
+      a.click()
+      URL.revokeObjectURL(url)
+    } else {
+      // CSV export
+      const csvHeaders = 'Kind,Label,Timestamp,Root,BlobHash,DataRoot,TxHash,Signature,VerifyLink\n'
+      const csvRows = allActivities.map(activity => [
+        activity.kind,
+        `"${activity.label}"`,
+        activity.timestamp,
+        activity.artifacts.root || '',
+        activity.artifacts.blobHash || '',
+        activity.artifacts.dataRoot || '',
+        activity.artifacts.tx || '',
+        activity.artifacts.sig || '',
+        `"${window.location.origin}${activity.verifyLink}"`
+      ].join(','))
+      
+      const csvContent = csvHeaders + csvRows.join('\n')
+      const blob = new Blob([csvContent], { type: 'text/csv' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `dara-forge-activity-${address?.substring(0, 8)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    }
   }
 
   if (!isConnected) {
@@ -175,41 +261,51 @@ const ProfilePage = () => {
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-white mb-1">Research Profile</h1>
-                  <div className="flex items-center space-x-3">
-                    <code className="text-xs font-mono text-blue-400 bg-slate-700/50 px-2 py-1 rounded">
-                      {address?.substring(0, 6)}...{address?.substring(-4)}
-                    </code>
-                    <motion.button
-                      className="p-1 hover:bg-white/10 rounded transition-colors"
-                      onClick={handleCopyAddress}
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      {copiedAddress ? (
-                        <Check className="w-4 h-4 text-emerald-400" />
-                      ) : (
-                        <Copy className="w-4 h-4 text-gray-400" />
-                      )}
-                    </motion.button>
-                    <a
-                      href={`https://explorer.galileo.web3q.io/address/${address}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1 hover:bg-white/10 rounded transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4 text-gray-400" />
-                    </a>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-3">
+                      <code className="text-xs font-mono text-blue-400 bg-slate-700/50 px-2 py-1 rounded">
+                        {address?.substring(0, 6)}...{address?.substring(-4)}
+                      </code>
+                      <motion.button
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                        onClick={handleCopyAddress}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                      >
+                        {copiedAddress ? (
+                          <Check className="w-4 h-4 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-4 h-4 text-gray-400" />
+                        )}
+                      </motion.button>
+                      <a
+                        href={`${CHAIN_CONFIG.blockExplorers.default.url}/address/${address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-1 hover:bg-white/10 rounded transition-colors"
+                      >
+                        <ExternalLink className="w-4 h-4 text-gray-400" />
+                      </a>
+                    </div>
+                    <div className="flex items-center space-x-4 text-xs text-slate-400">
+                      <span>Network: {CHAIN_CONFIG.name}</span>
+                      <span>•</span>
+                      <span>Chain ID: {CHAIN_CONFIG.chainId}</span>
+                      <span>•</span>
+                      <span>Currency: {CHAIN_CONFIG.nativeCurrency.symbol}</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Quick Stats */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
                 {[
                   { label: 'Total Activities', value: allActivities.length, icon: Activity },
-                  { label: 'Files Uploaded', value: uploadedDatasets.length, icon: Upload },
-                  { label: 'AI Analyses', value: computeResults.length, icon: Brain },
-                  { label: 'Publications', value: daPublications.length, icon: Shield }
+                  { label: 'Storage', value: uploadedDatasets.length, icon: Upload },
+                  { label: 'DA Publications', value: daPublications.length, icon: Shield },
+                  { label: 'Chain Anchors', value: chainAnchors.length, icon: ExternalLink },
+                  { label: 'Compute Jobs', value: computeResults.length, icon: Brain }
                 ].map((stat, index) => (
                   <motion.div
                     key={stat.label}
@@ -254,8 +350,19 @@ const ProfilePage = () => {
                   >
                     <option value="all">All Activities</option>
                     <option value="storage">Storage</option>
-                    <option value="compute">Compute</option>
                     <option value="da">DA Layer</option>
+                    <option value="chain">Chain</option>
+                    <option value="compute">Compute</option>
+                    <option value="passport">Passport</option>
+                  </select>
+                  
+                  <select 
+                    className="bg-slate-700/50 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white focus:border-blue-400/50 focus:outline-none"
+                    value={exportFormat}
+                    onChange={(e) => setExportFormat(e.target.value as 'json' | 'csv')}
+                  >
+                    <option value="json">JSON</option>
+                    <option value="csv">CSV</option>
                   </select>
                   
                   <motion.button
@@ -265,7 +372,7 @@ const ProfilePage = () => {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Download className="w-4 h-4" />
-                    <span>Export</span>
+                    <span>Export {exportFormat.toUpperCase()}</span>
                   </motion.button>
                 </div>
               </div>
@@ -273,41 +380,95 @@ const ProfilePage = () => {
               {/* Activity Timeline */}
               <div className="space-y-4 max-h-96 overflow-y-auto">
                 {filteredActivities.length > 0 ? (
-                  filteredActivities.map((activity, index) => (
-                    <motion.div
-                      key={`${activity.type}-${activity.id}`}
-                      className="flex items-start space-x-4 p-4 bg-slate-700/20 rounded-xl hover:bg-slate-700/30 transition-colors"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.05 }}
-                    >
-                      <div className={`p-2 rounded-lg ${
-                        activity.type === 'storage' ? 'bg-blue-500/20 text-blue-400' :
-                        activity.type === 'compute' ? 'bg-purple-500/20 text-purple-400' :
-                        activity.type === 'da' ? 'bg-emerald-500/20 text-emerald-400' :
-                        'bg-gray-500/20 text-gray-400'
-                      }`}>
-                        <activity.icon className="w-4 h-4" />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-white font-medium truncate">{activity.title}</h3>
-                          <span className="text-xs text-gray-400 flex-shrink-0">
-                            {new Date(activity.timestamp).toLocaleDateString()}
-                          </span>
+                  filteredActivities.map((activity, index) => {
+                    const getIcon = (kind: ActivityEntry['kind']) => {
+                      switch (kind) {
+                        case 'storage': return Upload
+                        case 'da': return Shield
+                        case 'chain': return ExternalLink
+                        case 'compute': return Brain
+                        case 'passport': return FileSearch
+                        default: return Activity
+                      }
+                    }
+                    
+                    const Icon = getIcon(activity.kind)
+                    
+                    return (
+                      <motion.div
+                        key={`${activity.kind}-${activity.timestamp}-${index}`}
+                        className="flex items-start space-x-4 p-4 bg-slate-700/20 rounded-xl hover:bg-slate-700/30 transition-colors cursor-pointer group"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.05 }}
+                        onClick={() => navigate(activity.verifyLink)}
+                        whileHover={{ scale: 1.01 }}
+                      >
+                        <div className={`p-2 rounded-lg ${
+                          activity.kind === 'storage' ? 'bg-blue-500/20 text-blue-400' :
+                          activity.kind === 'da' ? 'bg-emerald-500/20 text-emerald-400' :
+                          activity.kind === 'chain' ? 'bg-purple-500/20 text-purple-400' :
+                          activity.kind === 'compute' ? 'bg-amber-500/20 text-amber-400' :
+                          'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <div className="flex items-center space-x-4 text-sm text-gray-400">
-                          <span className="font-mono text-xs truncate">{activity.hash}</span>
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            activity.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
-                          }`}>
-                            {activity.status}
-                          </span>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-2">
+                            <h3 className="text-white font-medium truncate group-hover:text-blue-300 transition-colors">
+                              {activity.label}
+                            </h3>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-400 flex-shrink-0">
+                                {new Date(activity.timestamp).toLocaleDateString()}
+                              </span>
+                              <FileSearch className="w-4 h-4 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                          </div>
+                          
+                          {/* Artifacts Display */}
+                          <div className="space-y-1 text-xs text-gray-400">
+                            {activity.artifacts.root && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-slate-500">Root:</span>
+                                <code className="font-mono bg-slate-800/50 px-1 rounded">
+                                  {activity.artifacts.root.substring(0, 12)}...
+                                </code>
+                              </div>
+                            )}
+                            {activity.artifacts.blobHash && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-slate-500">Blob:</span>
+                                <code className="font-mono bg-slate-800/50 px-1 rounded">
+                                  {activity.artifacts.blobHash.substring(0, 12)}...
+                                </code>
+                              </div>
+                            )}
+                            {activity.artifacts.tx && (
+                              <div className="flex items-center space-x-2">
+                                <span className="text-slate-500">Tx:</span>
+                                <code className="font-mono bg-slate-800/50 px-1 rounded">
+                                  {activity.artifacts.tx.substring(0, 12)}...
+                                </code>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              'bg-emerald-500/20 text-emerald-400'
+                            }`}>
+                              verifiable
+                            </span>
+                            <span className="text-xs text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                              Click to verify →
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))
+                      </motion.div>
+                    )
+                  })
                 ) : (
                   <div className="text-center py-12">
                     <Clock className="w-12 h-12 text-gray-400 mx-auto mb-4" />

@@ -8,6 +8,10 @@ interface UploadResult {
   fileSize: number;
   uploadTime: string;
   txHash?: string;
+  // Enhanced fields for verification parity
+  indexer?: string;
+  uploadEndpoint?: string;
+  manifestPath?: string;
 }
 
 interface DAResult {
@@ -19,6 +23,17 @@ interface DAResult {
   timestamp: string;
   txHash?: string;
   blockNumber?: number;
+  // Enhanced fields for publish-verify parity
+  daEndpointUsed?: string;
+  availabilityConfirmed?: boolean;
+  availabilityCheckedAt?: string;
+  retryAttempts?: number;
+  verificationHistory?: Array<{
+    endpoint: string;
+    timestamp: string;
+    success: boolean;
+    error?: string;
+  }>;
 }
 
 interface ComputeResult {
@@ -30,6 +45,33 @@ interface ComputeResult {
   timestamp: string;
   rootHash?: string;
   input?: string;
+}
+
+interface ChainAnchorResult {
+  txHash: string;
+  timestamp: string;
+  rootHash: string;
+  explorerUrl: string;
+  datasetId: string;
+  blockNumber?: number;
+  contractAddress?: string;
+  manifestHash?: string;
+  projectId?: string;
+  gasUsed?: string;
+  gasPrice?: string;
+  confirmations?: number;
+  status?: 'pending' | 'confirmed' | 'failed';
+  description?: string;
+  // Enhanced verification metadata for publish-verify parity
+  verificationMetadata?: {
+    storageIndexer?: string;
+    daEndpoint?: string;
+    verifyLinks?: {
+      storage?: string;
+      da?: string;
+      chain?: string;
+    };
+  };
 }
 
 interface DataStore {
@@ -46,7 +88,7 @@ interface DataStore {
   currentCompute: ComputeResult | null;
   
   // Chain Data
-  chainAnchors: { txHash: string; rootHash: string; timestamp: string }[];
+  chainAnchors: ChainAnchorResult[];
   
   // Actions
   setCurrentUpload: (upload: UploadResult | null) => void;
@@ -55,7 +97,7 @@ interface DataStore {
   addDAPublication: (da: DAResult) => void;
   setCurrentCompute: (compute: ComputeResult | null) => void;
   addComputeResult: (compute: ComputeResult) => void;
-  addChainAnchor: (anchor: { txHash: string; rootHash: string; timestamp: string }) => void;
+  addChainAnchor: (anchor: ChainAnchorResult) => void;
   clearAllData: () => void;
 }
 

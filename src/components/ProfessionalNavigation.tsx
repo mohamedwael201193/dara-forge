@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
-import { Brain, Database, Home, Menu, Sparkles, User, X } from 'lucide-react'
+import { Brain, CheckCircle, Database, GitBranch, Home, Menu, Sparkles, User, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import ConnectWalletButton from './ConnectWalletButton'
@@ -12,6 +12,8 @@ const ProfessionalNavigation = () => {
   const navItems = [
     { label: 'Home', path: '/', icon: Home },
     { label: '0G Tech', path: '/tech', icon: Database },
+    { label: 'Pipeline', path: '/pipeline', icon: GitBranch },
+    { label: 'Verify', path: '/verify', icon: CheckCircle },
     { label: 'NFTs', path: '/nfts', icon: Sparkles },
     { label: 'Profile', path: '/profile', icon: User }
   ]

@@ -16,6 +16,8 @@ const Home = lazy(() => import('./pages/Home'));
 const TechPage = lazy(() => import('./pages/TechPage'));
 const NFTsPage = lazy(() => import('./pages/NFTsPage'));
 const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const PipelinePage = lazy(() => import('./pages/PipelinePage'));
+const VerifyPage = lazy(() => import('./pages/VerifyPage'));
 
 const queryClient = new QueryClient();
 
@@ -61,6 +63,20 @@ const AnimatedRoutes = () => {
           <PageWrapper>
             <Suspense fallback={<PageTransitionLoader />}>
               <ProfilePage />
+            </Suspense>
+          </PageWrapper>
+        } />
+        <Route path="/pipeline" element={
+          <PageWrapper>
+            <Suspense fallback={<PageTransitionLoader />}>
+              <PipelinePage />
+            </Suspense>
+          </PageWrapper>
+        } />
+        <Route path="/verify" element={
+          <PageWrapper>
+            <Suspense fallback={<PageTransitionLoader />}>
+              <VerifyPage />
             </Suspense>
           </PageWrapper>
         } />

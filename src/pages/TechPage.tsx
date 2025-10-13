@@ -1,49 +1,31 @@
 import { DemoApp } from '@/components/DemoApp'
-import { AnimatePresence, motion } from 'framer-motion'
-import { CheckCircle, Cpu, Database, Shield, Zap } from 'lucide-react'
-import { useState } from 'react'
+import { motion } from 'framer-motion'
+import {
+  ArrowRight,
+  CheckCircle,
+  Cpu,
+  Database,
+  ExternalLink,
+  FileText,
+  Shield,
+  Zap
+} from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 const TechPage = () => {
-  const [activeTab, setActiveTab] = useState('storage')
+  const navigate = useNavigate()
 
-  const tabs = [
-    {
-      id: 'storage',
-      label: '0G Storage',
-      icon: Database,
-      color: 'text-blue-400',
-      description: 'Decentralized file storage with cryptographic verification'
-    },
-    {
-      id: 'compute',
-      label: '0G Compute',
-      icon: Cpu,
-      color: 'text-emerald-400',
-      description: 'AI processing and analysis with verifiable results'
-    },
-    {
-      id: 'da',
-      label: 'Data Availability',
-      icon: Shield,
-      color: 'text-amber-400',
-      description: 'Permanent data availability and integrity proofs'
-    },
-    {
-      id: 'chain',
-      label: '0G Chain',
-      icon: Zap,
-      color: 'text-purple-400',
-      description: 'Blockchain anchoring and transaction management'
-    }
-  ]
+  const handleEndToEndDemo = () => {
+    navigate('/pipeline?demo=sample-dataset')
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 pt-20">
-      {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900/20 to-slate-900 pt-24">
+      {/* Hero Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
@@ -55,17 +37,28 @@ const TechPage = () => {
               Every component is live and functional on the 0G Galileo testnet.
             </p>
 
+            {/* Action Button */}
+            <div className="flex justify-center mb-8">
+              <button
+                onClick={handleEndToEndDemo}
+                className="btn-primary px-8 py-4 text-lg hover:scale-105 transition-transform duration-300"
+              >
+                <ExternalLink className="w-6 h-6 mr-3" />
+                Try Full Pipeline Demo
+              </button>
+            </div>
+
             {/* Status Indicators */}
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
+            <div className="flex flex-wrap justify-center gap-4">
               {[
                 { label: 'Storage', status: 'operational' },
                 { label: 'Compute', status: 'operational' },
                 { label: 'DA Layer', status: 'operational' },
                 { label: 'Chain', status: 'operational' }
               ].map((service) => (
-                <div key={service.label} className="flex items-center space-x-2 card-professional px-4 py-2 hover-glow">
+                <div key={service.label} className="flex items-center space-x-2 card-professional px-3 py-2">
                   <CheckCircle className="w-4 h-4 text-emerald-verified" />
-                  <span className="text-small text-slate-300">{service.label}</span>
+                  <span className="text-sm text-slate-300">{service.label}</span>
                   <div className="w-2 h-2 bg-emerald-verified rounded-full animate-pulse" />
                 </div>
               ))}
@@ -74,241 +67,90 @@ const TechPage = () => {
         </div>
       </section>
 
-      {/* Tab Navigation */}
-      <section className="px-4 sm:px-6 lg:px-8 mb-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-wrap justify-center gap-2 mb-8">
-            {tabs.map((tab) => (
-              <motion.button
-                key={tab.id}
-                className={`flex items-center space-x-3 px-6 py-4 rounded-xl transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? 'bg-slate-800 border-2 border-blue-400/50 shadow-lg shadow-blue-400/20'
-                    : 'bg-slate-800/30 border border-slate-700/50 hover:bg-slate-800/50 hover:border-slate-600'
-                }`}
-                onClick={() => setActiveTab(tab.id)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <div className={`p-2 rounded-lg bg-slate-700/50 ${activeTab === tab.id ? 'bg-slate-600' : ''}`}>
-                  <tab.icon className={`w-5 h-5 ${tab.color}`} />
-                </div>
-                <div className="text-left">
-                  <div className="font-semibold text-white">{tab.label}</div>
-                  <div className="text-sm text-gray-400 hidden sm:block">{tab.description}</div>
-                </div>
-                {activeTab === tab.id && (
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400"
-                    layoutId="activeTab"
-                  />
-                )}
-              </motion.button>
-            ))}
+      {/* Quick Architecture Overview */}
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-slate-900/30">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            className="text-center mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-2xl font-bold text-white mb-4">Research Pipeline Flow</h2>
+          </motion.div>
+
+          {/* Simplified Flow */}
+          <div className="flex flex-wrap justify-center items-center gap-4 mb-8">
+            {[
+              { icon: Database, label: 'Storage', color: 'text-blue-400', desc: 'Upload data' },
+              { icon: ArrowRight, label: '', color: 'text-slate-500' },
+              { icon: Shield, label: 'DA', color: 'text-amber-400', desc: 'Publish availability' },
+              { icon: ArrowRight, label: '', color: 'text-slate-500' },
+              { icon: Zap, label: 'Chain', color: 'text-purple-400', desc: 'Anchor on blockchain' },
+              { icon: ArrowRight, label: '', color: 'text-slate-500' },
+              { icon: Cpu, label: 'Compute', color: 'text-emerald-400', desc: 'Process & verify' },
+              { icon: ArrowRight, label: '', color: 'text-slate-500' },
+              { icon: FileText, label: 'Passport', color: 'text-cyan-400', desc: 'Download proof' }
+            ].map((step, index) => {
+              const Icon = step.icon
+              return step.label ? (
+                <motion.div
+                  key={index}
+                  className="flex flex-col items-center max-w-[100px]"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: index * 0.05 }}
+                >
+                  <div className={`p-3 rounded-xl bg-slate-800 border border-slate-700 mb-2`}>
+                    <Icon className={`w-5 h-5 ${step.color}`} />
+                  </div>
+                  <span className="text-sm font-medium text-slate-300">{step.label}</span>
+                  <span className="text-xs text-slate-500 text-center">{step.desc}</span>
+                </motion.div>
+              ) : (
+                <Icon key={index} className={`w-5 h-5 ${step.color}`} />
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* Tab Content - All 0G Functionality */}
-      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+      {/* Full DARA Platform Interface */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-              className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8"
-            >
-              {/* Technology Overview */}
-              <div className="mb-8">
-                <div className="flex items-center space-x-4 mb-4">
-                  {(() => {
-                    const currentTab = tabs.find(tab => tab.id === activeTab)
-                    return currentTab ? (
-                      <>
-                        <div className="p-3 bg-slate-700/50 rounded-xl">
-                          <currentTab.icon className={`w-8 h-8 ${currentTab.color}`} />
-                        </div>
-                        <div>
-                          <h2 className="text-2xl font-bold text-white">{currentTab.label}</h2>
-                          <p className="text-gray-400">{currentTab.description}</p>
-                        </div>
-                      </>
-                    ) : null
-                  })()}
-                </div>
-              </div>
+          <motion.div
+            className="text-center mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <h2 className="text-3xl font-bold text-white mb-4">DARA Research Platform</h2>
+            <p className="text-lg text-slate-400">Complete 0G integration - All components live and operational</p>
+          </motion.div>
 
-              {/* Full DemoApp Integration */}
-              <div className="bg-slate-900/50 rounded-xl p-6 border border-slate-700/30">
-                <div className="mb-6">
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    Interactive Platform
-                  </h3>
-                  <p className="text-gray-400">
-                    All 0G services are fully operational. Upload files, run AI analysis, publish to DA layer, 
-                    and anchor on blockchain. Every operation is live on the 0G Galileo testnet.
-                  </p>
-                </div>
-
-                {/* This preserves ALL existing functionality */}
+          {/* Full Height Demo Platform */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl overflow-hidden"
+          >
+            <div className="p-4 border-b border-slate-700/50 bg-slate-800/50">
+              <h4 className="text-lg font-semibold text-white mb-2">
+                Live 0G Technology Stack
+              </h4>
+              <p className="text-sm text-slate-400">
+                Full-featured interface with Storage, Compute, DA Layer, and Chain - Every operation connects to 0G Galileo testnet
+              </p>
+            </div>
+            
+            {/* Full Height DemoApp - No Scroll Constraints */}
+            <div className="bg-slate-900/20">
+              <div className="p-4">
                 <DemoApp />
               </div>
-
-              {/* Technology Details */}
-              <div className="mt-8 grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {activeTab === 'storage' && [
-                  {
-                    title: 'Decentralized Storage',
-                    description: 'Files stored across distributed nodes with cryptographic verification',
-                    features: ['Merkle Root Verification', 'Redundant Storage', 'Cryptographic Proofs']
-                  },
-                  {
-                    title: 'File Integrity',
-                    description: 'Every uploaded file gets a unique hash for tamper detection',
-                    features: ['SHA-256 Hashing', 'Integrity Checks', 'Version Control']
-                  },
-                  {
-                    title: 'Global Access',
-                    description: 'Access your files from anywhere with permanent availability',
-                    features: ['CDN Distribution', 'Fast Retrieval', 'Global Nodes']
-                  }
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <h4 className="font-semibold text-white mb-2">{item.title}</h4>
-                    <p className="text-gray-400 text-sm mb-4">{item.description}</p>
-                    <ul className="space-y-1">
-                      {item.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center space-x-2 text-sm text-gray-300">
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                ))}
-
-                {activeTab === 'compute' && [
-                  {
-                    title: 'AI Processing',
-                    description: 'Run AI models on decentralized compute infrastructure',
-                    features: ['Multiple Providers', 'Verifiable Results', 'Cost Optimization']
-                  },
-                  {
-                    title: 'Research Analysis',
-                    description: 'Specialized AI models for scientific data analysis',
-                    features: ['Data Summarization', 'Pattern Recognition', 'Insight Generation']
-                  },
-                  {
-                    title: 'Compute Verification',
-                    description: 'Cryptographic proofs ensure computation integrity',
-                    features: ['Result Verification', 'Audit Trails', 'Quality Assurance']
-                  }
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <h4 className="font-semibold text-white mb-2">{item.title}</h4>
-                    <p className="text-gray-400 text-sm mb-4">{item.description}</p>
-                    <ul className="space-y-1">
-                      {item.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center space-x-2 text-sm text-gray-300">
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                ))}
-
-                {activeTab === 'da' && [
-                  {
-                    title: 'Data Availability',
-                    description: 'Ensure permanent access to published research data',
-                    features: ['Blob Storage', 'Availability Proofs', 'Redundancy']
-                  },
-                  {
-                    title: 'Integrity Verification',
-                    description: 'Cryptographic proofs ensure data hasn\'t been tampered with',
-                    features: ['Hash Verification', 'Merkle Proofs', 'Audit Trails']
-                  },
-                  {
-                    title: 'Censorship Resistance',
-                    description: 'No single point of failure or control over your data',
-                    features: ['Distributed Storage', 'Permissionless Access', 'Global Network']
-                  }
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <h4 className="font-semibold text-white mb-2">{item.title}</h4>
-                    <p className="text-gray-400 text-sm mb-4">{item.description}</p>
-                    <ul className="space-y-1">
-                      {item.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center space-x-2 text-sm text-gray-300">
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                ))}
-
-                {activeTab === 'chain' && [
-                  {
-                    title: 'Blockchain Anchoring',
-                    description: 'Anchor research metadata on 0G Chain for immutable records',
-                    features: ['Transaction Finality', 'Immutable Records', 'Global Consensus']
-                  },
-                  {
-                    title: 'Smart Contracts',
-                    description: 'Automated verification and ownership management',
-                    features: ['Ownership Tracking', 'Automated Verification', 'Royalty Distribution']
-                  },
-                  {
-                    title: 'Network Security',
-                    description: 'Secured by validator network with economic incentives',
-                    features: ['Validator Network', 'Economic Security', 'Slashing Conditions']
-                  }
-                ].map((item, index) => (
-                  <motion.div
-                    key={index}
-                    className="bg-slate-800/50 p-6 rounded-xl border border-slate-700/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.1 }}
-                  >
-                    <h4 className="font-semibold text-white mb-2">{item.title}</h4>
-                    <p className="text-gray-400 text-sm mb-4">{item.description}</p>
-                    <ul className="space-y-1">
-                      {item.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center space-x-2 text-sm text-gray-300">
-                          <CheckCircle className="w-3 h-3 text-emerald-400" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          </AnimatePresence>
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>
