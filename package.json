@@ -19,6 +19,7 @@
     "hh:compile": "hardhat compile",
     "hh:deploy:anchor": "hardhat run scripts/deploy-anchor.cjs --network galileo",
     "compute:smoke": "tsx scripts/compute-smoke.ts",
+    "compute:fund": "tsx scripts/compute-fund.ts",
     "test:compute": "tsx scripts/test-0g-compute.ts",
     "test:da": "tsx scripts/test-0g-da.ts",
     "fund:account": "tsx scripts/fund-account.ts",
@@ -30,7 +31,7 @@
     "test:watch": "vitest watch"
   },
   "dependencies": {
-    "@0glabs/0g-serving-broker": "0.4.3",
+    "@0glabs/0g-serving-broker": "^0.5.4",
     "@0glabs/0g-ts-sdk": "^0.3.1",
     "@ecies/ciphers": "^0.2.4",
     "@hookform/resolvers": "^3.10.0",
