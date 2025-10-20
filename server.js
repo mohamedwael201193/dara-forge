@@ -1,22 +1,22 @@
 // server.js - Standalone API server for Render
-import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
+import express from 'express';
 
 // Import your existing API handlers
 import anchorHandler from './api/anchor.js';
 import attestHandler from './api/attest.js';
-import computeHandler from './api/compute.js';
 import computeHealthHandler from './api/compute-health.js';
-import daHandler from './api/da.js';
-import storageUtilsHandler from './api/storage-utils.js';
-import uploadHandler from './api/storage/upload.js';
-import proxyHandler from './api/storage/proxy.js';
-import resolveHandler from './api/storage/resolve.js';
-import downloadHandler from './api/storage/download.js';
+import computeHandler from './api/compute.js';
 import analyzeHandler from './api/compute/analyze.js';
+import daHandler from './api/da.js';
 import publishHandler from './api/da/publish.js';
 import verifyHandler from './api/da/verify.js';
+import storageUtilsHandler from './api/storage-utils.js';
+import downloadHandler from './api/storage/download.js';
+import proxyHandler from './api/storage/proxy.js';
+import resolveHandler from './api/storage/resolve.js';
+import uploadHandler from './api/storage/upload.js';
 
 config();
 
