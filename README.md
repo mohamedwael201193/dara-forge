@@ -2,6 +2,8 @@
 
 ### _The World's First Intelligent Research NFT Platform Powered by Complete 0G Stack Integration_
 
+> **Latest Deployment**: October 20, 2025 - Production Ready
+
 <div align="center">
 
 ![DARA Forge Banner](https://img.shields.io/badge/DARA%20Forge-Research%20iNFTs-purple?style=for-the-badge&logo=sparkles&logoColor=white)
@@ -742,4 +744,3 @@ _Built by [Mohamed Wael](https://github.com/mohamed-wael) • Powered by [0G Net
 **🔬 Transform Research • 🧠 Own Intelligence • 🌍 Shape the Future**
 
 </div>
- 
