@@ -219,8 +219,16 @@ export async function analyzeWithAI(text: string, datasetRoot?: string) {
         continue; // Try next provider
       }
 
-      const data = await response.json();
-      const answer = data.choices?.[0]?.message?.content;
+      const rawText = await response.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(rawText);
+      } catch {
+        data = { id: "", choices: [], content: rawText };
+      }
+
+      const answer =
+        data.choices?.[0]?.message?.content || data.content || rawText;
       const chatID = data.id;
 
       if (!answer) {
@@ -231,26 +239,96 @@ export async function analyzeWithAI(text: string, datasetRoot?: string) {
 
       console.log("[0G Broker] Response received, length:", answer.length);
 
-      // Verify response (for TEE providers)
+      // Extract attestation from response headers (common header names for 0G/TEE)
+      const pickHeader = (names: string[]): string | undefined => {
+        for (const name of names) {
+          const value = response.headers.get(name);
+          if (value) return value;
+        }
+        return undefined;
+      };
+
+      const attSig = pickHeader([
+        "x-0g-signature",
+        "x-tee-signature",
+        "x-attestation-signature",
+        "x-provider-signature",
+        "x-phala-signature",
+      ]);
+
+      const attSigner = pickHeader([
+        "x-0g-signer",
+        "x-attestation-signer",
+        "x-provider",
+        "x-provider-signer",
+      ]);
+
+      // Build digest over the response body for verification
+      const attDigest = ethers.keccak256(ethers.toUtf8Bytes(rawText));
+
+      const attestation = {
+        attSig: attSig || "",
+        attSigner: attSigner || service.provider,
+        attDigest: attDigest,
+        scheme: "raw-hash" as const,
+        headers: Object.fromEntries([...response.headers.entries()]),
+      };
+
+      console.log("[0G Broker] Attestation extracted:", {
+        hasSig: !!attSig,
+        signer: attSigner || service.provider,
+        digest: attDigest.substring(0, 10) + "...",
+      });
+
+      // Quick server-side attestation check (if signature present)
       let verified = false;
-      try {
-        verified = await broker.inference.processResponse(
-          service.provider,
-          answer,
-          chatID
-        );
-        console.log("[0G Broker] Verification result:", verified);
-      } catch (error) {
-        console.log("[0G Broker] Verification not available for this provider");
+      if (attSig && /^0x[0-9a-fA-F]{130}$/.test(attSig)) {
+        try {
+          let recovered: string | undefined;
+          try {
+            // Try EIP-191 message signing first
+            recovered = ethers.verifyMessage(rawText, attSig);
+          } catch {
+            // Fall back to raw hash recovery
+            recovered = ethers.recoverAddress(attDigest, attSig);
+          }
+
+          if (recovered) {
+            const expectedSigner = attSigner || service.provider;
+            verified = recovered.toLowerCase() === expectedSigner.toLowerCase();
+            console.log("[0G Broker] Attestation verification:", {
+              recovered,
+              expected: expectedSigner,
+              verified,
+            });
+          }
+        } catch (error) {
+          console.warn("[0G Broker] Attestation recovery failed:", error);
+        }
+      } else {
+        // Fall back to SDK verification if available
+        try {
+          verified = await broker.inference.processResponse(
+            service.provider,
+            answer,
+            chatID
+          );
+          console.log("[0G Broker] SDK verification result:", verified);
+        } catch (error) {
+          console.log(
+            "[0G Broker] Verification not available for this provider"
+          );
+        }
       }
 
-      // Success! Return the result
+      // Success! Return the result with real attestation
       return {
         answer,
         provider: service.provider,
         model: metadata.model,
         verified,
         chatID,
+        attestation,
         timestamp: new Date().toISOString(),
       };
     } catch (error: any) {

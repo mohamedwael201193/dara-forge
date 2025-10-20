@@ -1149,6 +1149,36 @@
   }
 }
 
+/* Research iNFT specific animations */
+@keyframes circuit-pulse {
+  0%, 100% { 
+    box-shadow: 
+      0 0 20px rgba(147, 51, 234, 0.3), 
+      0 0 40px rgba(59, 130, 246, 0.2),
+      inset 0 0 20px rgba(147, 51, 234, 0.1); 
+  }
+  50% { 
+    box-shadow: 
+      0 0 30px rgba(147, 51, 234, 0.5), 
+      0 0 60px rgba(59, 130, 246, 0.3),
+      inset 0 0 30px rgba(147, 51, 234, 0.2); 
+  }
+}
+
+@keyframes data-flow {
+  0% { transform: translateX(-100%) scaleX(0); }
+  50% { transform: translateX(0%) scaleX(1); }
+  100% { transform: translateX(100%) scaleX(0); }
+}
+
+.animate-circuit-pulse {
+  animation: circuit-pulse 3s ease-in-out infinite;
+}
+
+.animate-data-flow {
+  animation: data-flow 4s ease-in-out infinite;
+}
+
 /* Accessibility: Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
   .gradient-mesh,
@@ -1156,7 +1186,9 @@
   .connection-line,
   .dna-helix,
   .data-dot,
-  .neural-pulse {
+  .neural-pulse,
+  .animate-circuit-pulse,
+  .animate-data-flow {
     animation: none !important;
   }
   

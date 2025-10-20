@@ -1,35 +1,45 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { Brain, CheckCircle, Database, GitBranch, Home, Menu, Sparkles, User, X } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import ConnectWalletButton from './ConnectWalletButton'
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Brain,
+  CheckCircle,
+  Database,
+  GitBranch,
+  Home,
+  Menu,
+  Sparkles,
+  User,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import ConnectWalletButton from "./ConnectWalletButton";
 
 const ProfessionalNavigation = () => {
-  const [isScrolled, setIsScrolled] = useState(false)
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const location = useLocation()
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
 
   const navItems = [
-    { label: 'Home', path: '/', icon: Home },
-    { label: '0G Tech', path: '/tech', icon: Database },
-    { label: 'Pipeline', path: '/pipeline', icon: GitBranch },
-    { label: 'Verify', path: '/verify', icon: CheckCircle },
-    { label: 'NFTs', path: '/nfts', icon: Sparkles },
-    { label: 'Profile', path: '/profile', icon: User }
-  ]
+    { label: "Home", path: "/", icon: Home },
+    { label: "0G Tech", path: "/tech", icon: Database },
+    { label: "Pipeline", path: "/pipeline", icon: GitBranch },
+    { label: "Verify", path: "/verify", icon: CheckCircle },
+    { label: "Research iNFTs", path: "/infts", icon: Sparkles },
+    { label: "Profile", path: "/profile", icon: User },
+  ];
 
   // Handle scroll effect
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+      setIsScrolled(window.scrollY > 50);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isActive = (path: string) => {
-    return location.pathname === path
-  }
+    return location.pathname === path;
+  };
 
   return (
     <>
@@ -37,9 +47,9 @@ const ProfessionalNavigation = () => {
         role="navigation"
         aria-label="Main navigation"
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled 
-            ? 'bg-slate-900/95 backdrop-blur-md border-b border-slate-800/50 shadow-2xl' 
-            : 'bg-transparent'
+          isScrolled
+            ? "bg-slate-900/95 backdrop-blur-md border-b border-slate-800/50 shadow-2xl"
+            : "bg-transparent"
         }`}
         initial={{ y: -100 }}
         animate={{ y: 0 }}
@@ -52,22 +62,28 @@ const ProfessionalNavigation = () => {
               <motion.div
                 className="flex items-center space-x-3 group"
                 whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <div className="relative">
-                <Brain className="w-8 h-8 lg:w-10 lg:h-10 text-blue-400 group-hover:text-blue-300 transition-colors" />
-                <motion.div
-                  className="absolute inset-0 bg-blue-400/20 rounded-full blur-md"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl lg:text-2xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
-                  DARA Forge
-                </h1>
-                <p className="text-xs text-gray-400">Research NFT Platform</p>
-              </div>
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="relative">
+                  <Brain className="w-8 h-8 lg:w-10 lg:h-10 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                  <motion.div
+                    className="absolute inset-0 bg-blue-400/20 rounded-full blur-md"
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "easeInOut",
+                    }}
+                  />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-xl lg:text-2xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                    DARA Forge
+                  </h1>
+                  <p className="text-xs text-gray-400">
+                    Research iNFT Platform
+                  </p>
+                </div>
               </motion.div>
             </Link>
 
@@ -78,8 +94,8 @@ const ProfessionalNavigation = () => {
                   <motion.div
                     className={`relative flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
                       isActive(item.path)
-                        ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/20'
-                        : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                        ? "bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/20"
+                        : "text-gray-300 hover:text-white hover:bg-slate-800/50"
                     }`}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -89,7 +105,7 @@ const ProfessionalNavigation = () => {
                   >
                     <item.icon className="w-4 h-4" />
                     <span className="font-medium">{item.label}</span>
-                    
+
                     {isActive(item.path) && (
                       <motion.div
                         className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-400 rounded-full"
@@ -177,7 +193,7 @@ const ProfessionalNavigation = () => {
                   </span>
                 </div>
                 <p className="text-sm text-gray-400">
-                  Decentralized Research NFT Platform
+                  Decentralized Research iNFT Platform
                 </p>
               </div>
 
@@ -189,8 +205,8 @@ const ProfessionalNavigation = () => {
                       <motion.div
                         className={`flex items-center space-x-4 w-full p-4 rounded-xl transition-all duration-300 ${
                           isActive(item.path)
-                            ? 'bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10'
-                            : 'text-gray-300 hover:text-white hover:bg-slate-800/50'
+                            ? "bg-blue-500/20 text-blue-400 shadow-lg shadow-blue-500/10"
+                            : "text-gray-300 hover:text-white hover:bg-slate-800/50"
                         }`}
                         onClick={() => setIsMobileMenuOpen(false)}
                         initial={{ opacity: 0, x: -20 }}
@@ -198,11 +214,13 @@ const ProfessionalNavigation = () => {
                         transition={{ delay: index * 0.1 }}
                         whileHover={{ x: 5 }}
                       >
-                        <div className={`p-2 rounded-lg ${
-                          isActive(item.path) 
-                            ? 'bg-blue-500/30' 
-                            : 'bg-slate-700/50'
-                        }`}>
+                        <div
+                          className={`p-2 rounded-lg ${
+                            isActive(item.path)
+                              ? "bg-blue-500/30"
+                              : "bg-slate-700/50"
+                          }`}
+                        >
                           <item.icon className="w-4 h-4" />
                         </div>
                         <span className="font-medium">{item.label}</span>
@@ -221,7 +239,7 @@ const ProfessionalNavigation = () => {
         )}
       </AnimatePresence>
     </>
-  )
-}
+  );
+};
 
-export default ProfessionalNavigation
+export default ProfessionalNavigation;
