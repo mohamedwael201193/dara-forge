@@ -10,15 +10,23 @@ config();
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// CORS configuration
+// CORS configuration - Allow Vercel deployment
 app.use(cors({
   origin: [
+    /https:\/\/dara-forge.*\.vercel\.app$/,  // Any Vercel subdomain with regex
     'https://dara-forge.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:4173',
+    'https://dara-forge-git-main-mohamedwael201193.vercel.app', // Git branch deployments
+    'https://dara-forge-mohamedwael201193.vercel.app',          // Alternative Vercel domain
+    'http://localhost:5173',  // Local dev
+    'http://localhost:4173',  // Local preview
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Wallet-Address'],
 }));
+
+// Explicit preflight handling
+app.options('*', cors());
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -29,6 +37,17 @@ app.get('/health', (req, res) => {
     status: 'healthy', 
     timestamp: new Date().toISOString(),
     env: process.env.NODE_ENV || 'production'
+  });
+});
+
+// Debug endpoint to check CORS and origin
+app.get('/debug', (req, res) => {
+  res.json({
+    origin: req.get('Origin'),
+    referer: req.get('Referer'),
+    userAgent: req.get('User-Agent'),
+    headers: req.headers,
+    timestamp: new Date().toISOString()
   });
 });
 
