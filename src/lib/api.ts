@@ -5,6 +5,12 @@ const API_BASE =
     ? "http://localhost:3000"
     : "https://dara-api.onrender.com");
 
+// Expose API base for debugging in console
+if (typeof window !== "undefined") {
+  (window as any).DARA_API_BASE = API_BASE;
+  console.log("🔧 DARA API Base URL:", API_BASE);
+}
+
 export function apiUrl(endpoint: string): string {
   // Remove ALL leading slashes and add single slash
   const path = endpoint.replace(/^\/+/, "");
