@@ -9,9 +9,226 @@ import multer from 'multer';
 import os from 'os';
 import path from 'path';
 
-// Import real 0G services
-import { ensureLedger, getBroker } from './src/server/compute/broker.js';
-import { publishToDA } from './src/server/da/daService.js';
+import { createRequire } from 'module';
+import nodeCrypto from 'node:crypto';
+
+// Polyfill crypto for Node.js if needed (0G SDK requires it)
+if (!(globalThis).crypto) {
+  (globalThis).crypto = nodeCrypto.webcrypto;
+}
+
+// --- Inline DA client (ported from src/server/da/daClient.ts) ---
+const DA_RPC = process.env.VITE_OG_RPC || process.env.OG_DA_RPC || 'https://evmrpc-testnet.0g.ai/';
+
+class OGDAClient {
+  constructor() {
+    this.wallet = null;
+    this.provider = null;
+    this.initialized = false;
+  }
+
+  async initialize() {
+    if (this.initialized) return;
+    const PRIVATE_KEY = process.env.OG_DA_PRIVATE_KEY || process.env.OG_STORAGE_PRIVATE_KEY;
+    if (!PRIVATE_KEY) throw new Error('OG_DA_PRIVATE_KEY is required');
+
+    this.provider = new ethers.JsonRpcProvider(DA_RPC);
+    this.wallet = new ethers.Wallet(PRIVATE_KEY, this.provider);
+    console.log('[0G DA] Client initialized for wallet:', this.wallet.address);
+
+    const balance = await this.provider.getBalance(this.wallet.address);
+    console.log('[0G DA] Wallet balance:', ethers.formatEther(balance), 'OG');
+
+    if (Number(ethers.formatEther(balance)) < 0.01) {
+      // allow low threshold but warn
+      console.warn('[0G DA] Wallet balance low (<0.01 OG) - DA operations may fail');
+    }
+
+    this.initialized = true;
+  }
+
+  async submitBlob(data, metadata) {
+    await this.initialize();
+
+    const MAX_BLOB_SIZE = 32505852;
+    if (data.length > MAX_BLOB_SIZE) throw new Error(`Data too large: ${data.length}`);
+
+    try {
+      const blobHash = ethers.keccak256(data);
+      const dataRoot = ethers.keccak256(ethers.concat([blobHash, ethers.toUtf8Bytes(metadata?.datasetId || '')]));
+
+      // Create a self-transaction embedding the blob hash in the data field to record commitment on-chain
+      const tx = {
+        to: this.wallet.address,
+        value: 0,
+        data: ethers.concat([ethers.toUtf8Bytes('DA:'), ethers.getBytes(blobHash)]),
+        gasLimit: 50000
+      };
+
+      const transaction = await this.wallet.sendTransaction(tx);
+      const receipt = await transaction.wait();
+
+      return {
+        blobHash,
+        dataRoot,
+        epoch: Math.floor(Date.now() / 1000),
+        quorumId: 1,
+        verified: true,
+        timestamp: new Date().toISOString(),
+        txHash: transaction.hash,
+        blockNumber: receipt?.blockNumber,
+        size: data.length
+      };
+    } catch (err) {
+      console.error('[0G DA] Submission error:', err);
+      throw new Error('DA submission failed: ' + (err?.message || err));
+    }
+  }
+
+  async verifyAvailability(blobHash) {
+    await this.initialize();
+    try {
+      const latestBlock = await this.provider.getBlockNumber();
+      const searchBlocks = 50;
+      for (let i = 0; i < searchBlocks; i++) {
+        const blockNumber = latestBlock - i;
+        if (blockNumber < 0) break;
+        const block = await this.provider.getBlockWithTransactions(blockNumber);
+        for (const tx of block.transactions) {
+          if (!tx || !tx.data) continue;
+          const cleanBlob = blobHash.toLowerCase().replace('0x', '');
+          if (tx.data.toLowerCase().includes(cleanBlob)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (err) {
+      console.error('[0G DA] verifyAvailability error:', err);
+      return false;
+    }
+  }
+}
+
+const _daClient = new OGDAClient();
+
+async function publishToDA(data, metadata) {
+  return _daClient.submitBlob(data, metadata);
+}
+
+// --- Inline Compute broker helpers (port/core from src/server/compute/broker.ts) ---
+const require = createRequire(import.meta.url);
+let createZGComputeNetworkBroker;
+try {
+  const sdk = require('@0glabs/0g-serving-broker');
+  createZGComputeNetworkBroker = sdk.createZGComputeNetworkBroker || sdk.default?.createZGComputeNetworkBroker;
+  if (!createZGComputeNetworkBroker) throw new Error('createZGComputeNetworkBroker not found');
+} catch (err) {
+  console.error('[0G Broker] Failed to load SDK:', err);
+}
+
+const COMPUTE_RPC = process.env.OG_COMPUTE_RPC || process.env.OG_RPC_URL || 'https://evmrpc-testnet.0g.ai';
+const COMPUTE_PRIVATE_KEY = process.env.OG_COMPUTE_PRIVATE_KEY || process.env.OG_STORAGE_PRIVATE_KEY;
+
+let _brokerInstance = null;
+
+// Simple in-memory job store for compute results
+const computeJobStore = new Map();
+
+async function getBroker() {
+  if (_brokerInstance) return _brokerInstance;
+  if (!createZGComputeNetworkBroker) throw new Error('Compute SDK not available');
+  if (!COMPUTE_PRIVATE_KEY) throw new Error('OG_COMPUTE_PRIVATE_KEY required');
+
+  const provider = new ethers.JsonRpcProvider(COMPUTE_RPC);
+  const wallet = new ethers.Wallet(COMPUTE_PRIVATE_KEY, provider);
+
+  _brokerInstance = await createZGComputeNetworkBroker(wallet);
+  console.log('[0G Broker] Initialized with wallet', wallet.address);
+  return _brokerInstance;
+}
+
+async function ensureLedger(minBalance = 0.5) {
+  const broker = await getBroker();
+  try {
+    const account = await broker.ledger.getLedger();
+    const balance = Number(ethers.formatEther(account.totalBalance));
+    if (balance < minBalance) {
+      await broker.ledger.depositFund(minBalance);
+    }
+  } catch (err) {
+    if (String(err).includes('does not exist')) {
+      await broker.ledger.addLedger(minBalance);
+    } else {
+      throw err;
+    }
+  }
+}
+
+async function analyzeWithAI(text, datasetRoot) {
+  const broker = await getBroker();
+  await ensureLedger(0.5);
+
+  const services = await broker.inference.listService();
+  if (!services || services.length === 0) throw new Error('No compute services available');
+
+  const preferred = process.env.OG_COMPUTE_PREF_PROVIDER;
+  let service = null;
+  if (preferred) service = services.find(s => s.provider.toLowerCase() === preferred.toLowerCase());
+  if (!service) service = services[0];
+
+  // Acknowledge provider signer
+  try { await broker.inference.acknowledgeProviderSigner(service.provider); } catch (e) { }
+
+  const metadata = await broker.inference.getServiceMetadata(service.provider);
+  const content = datasetRoot ? `Analyze Merkle root ${datasetRoot}:\n${text}` : text;
+  const messages = [{ role: 'user', content }];
+
+  const headers = await broker.inference.getRequestHeaders(service.provider, JSON.stringify(messages));
+
+  const response = await fetch(`${metadata.endpoint}/chat/completions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...headers },
+    body: JSON.stringify({ model: metadata.model, messages })
+  });
+
+  if (!response.ok) {
+    const txt = await response.text();
+    throw new Error(`Provider error: ${response.status} ${txt}`);
+  }
+
+  const rawText = await response.text();
+  let data;
+  try { data = JSON.parse(rawText); } catch { data = { id: '', choices: [], content: rawText }; }
+  const answer = data.choices?.[0]?.message?.content || data.content || rawText;
+
+  // Attestation extraction
+  const pickHeader = names => names.map(n => response.headers.get(n)).find(Boolean);
+  const attSig = pickHeader(['x-0g-signature','x-tee-signature','x-attestation-signature','x-provider-signature']);
+  const attSigner = pickHeader(['x-0g-signer','x-attestation-signer','x-provider','x-provider-signer']) || service.provider;
+  const attDigest = ethers.keccak256(ethers.toUtf8Bytes(rawText));
+
+  let verified = false;
+  if (attSig && /^0x[0-9a-fA-F]{130}$/.test(attSig)) {
+    try {
+      let recovered;
+      try { recovered = ethers.verifyMessage(rawText, attSig); } catch { recovered = ethers.recoverAddress(attDigest, attSig); }
+      if (recovered) verified = recovered.toLowerCase() === attSigner.toLowerCase();
+    } catch (e) { /* ignore */ }
+  } else {
+    try { verified = await broker.inference.processResponse(service.provider, answer, data.id); } catch (e) { /* ignore */ }
+  }
+
+  return {
+    answer,
+    provider: service.provider,
+    model: metadata.model,
+    verified,
+    chatID: data.id,
+    attestation: { attSig: attSig || '', attSigner, attDigest },
+    timestamp: new Date().toISOString()
+  };
+}
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -268,21 +485,29 @@ app.post('/api/compute', async (req, res) => {
     const broker = await getBroker();
     await ensureLedger(0.5);
 
-    console.log('[COMPUTE] Submitting task to 0G Compute network...');
-    const result = await broker.submitTask({
-      model: model,
-      input: text,
-      datasetRoot: datasetRoot
+    console.log('[COMPUTE] Submitting task to 0G Compute network (via analyzeWithAI)...');
+    const result = await analyzeWithAI(text, datasetRoot);
+
+    // Create a job id and store the result for retrieval
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+    computeJobStore.set(jobId, {
+      status: 'completed',
+      output: result.answer,
+      provider: result.provider,
+      model: result.model,
+      verified: result.verified,
+      attestation: result.attestation,
+      timestamp: result.timestamp
     });
 
-    console.log('[COMPUTE] ✅ Task submitted! Job ID:', result.jobId);
+    console.log('[COMPUTE] ✅ Task completed! Job ID:', jobId);
     
     res.json({
       ok: true,
-      jobId: result.jobId,
+      jobId,
       provider: result.provider,
-      model: model,
-      timestamp: new Date().toISOString()
+      model: result.model,
+      timestamp: result.timestamp
     });
   } catch (error) {
     console.error('[COMPUTE] Error:', error);
@@ -297,17 +522,24 @@ app.get('/api/compute', async (req, res) => {
     if (action === 'health') {
       res.json({ ok: true, status: '0G Compute operational' });
     } else if (action === 'result' && id) {
-      const broker = await getBroker();
-      const result = await broker.getTaskResult(id);
-      
-      res.json({
-        ok: true,
-        jobId: id,
-        status: result.status,
-        result: result.output,
-        provider: result.provider,
-        model: result.model
-      });
+      // Return stored result if available
+      if (computeJobStore.has(id)) {
+        const r = computeJobStore.get(id);
+        return res.json({ ok: true, jobId: id, status: r.status, result: r.output, provider: r.provider, model: r.model });
+      }
+
+      // Fallback: try broker.getTaskResult if supported
+      try {
+        const broker = await getBroker();
+        if (broker && typeof broker.getTaskResult === 'function') {
+          const result = await broker.getTaskResult(id);
+          return res.json({ ok: true, jobId: id, status: result.status, result: result.output, provider: result.provider, model: result.model });
+        }
+      } catch (e) {
+        console.warn('[COMPUTE] getTaskResult fallback failed:', e.message || e);
+      }
+
+      res.status(404).json({ ok: false, message: 'Job not found' });
     } else {
       res.status(400).json({ ok: false, message: 'Invalid action' });
     }
