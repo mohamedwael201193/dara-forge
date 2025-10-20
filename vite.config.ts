@@ -23,16 +23,21 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ['@0glabs/0g-ts-sdk']
+    exclude: ["@0glabs/0g-ts-sdk"],
   },
   build: {
     rollupOptions: {
-      external: ['@0glabs/0g-ts-sdk']
-    }
+      external: ["@0glabs/0g-ts-sdk"],
+    },
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:3000'
-    }
-  }
+      "/api": "http://localhost:3000",
+    },
+  },
+  preview: {
+    host: true,
+    port: 5173,
+    allowedHosts: ["dara-forge.up.railway.app", "localhost"],
+  },
 });

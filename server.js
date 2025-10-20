@@ -10,6 +10,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // CORS - Allow Vercel domain and localhost
 const allowedOrigins = [
   'https://dara-forge.vercel.app',
+  'https://dara-forge.up.railway.app',
   'http://localhost:5173',
   'http://localhost:3000',
   'http://localhost:5174' // Vite alternative port
