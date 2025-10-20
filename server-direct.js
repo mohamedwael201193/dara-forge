@@ -1,6 +1,6 @@
 // server-direct.js - Direct 0G SDK Integration (NO MOCKS, NO TS IMPORTS)
-import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 import { createZGComputeNetworkBroker } from '@0glabs/0g-serving-broker';
+import { Indexer, ZgFile } from '@0glabs/0g-ts-sdk';
 import cors from 'cors';
 import 'dotenv/config';
 import { ethers } from 'ethers';
