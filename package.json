@@ -18,7 +18,7 @@
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview",
+    "preview": "vite preview --host 0.0.0.0 --port $PORT",
     "hh:compile": "hardhat compile",
     "hh:deploy:anchor": "hardhat run scripts/deploy-anchor.cjs --network galileo",
     "compute:smoke": "tsx scripts/compute-smoke.ts",
