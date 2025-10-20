@@ -83,6 +83,76 @@ app.get('/api/storage-utils', async (req, res) => {
   }
 });
 
+// Storage resolve endpoint
+app.get('/api/storage/resolve', (req, res) => {
+  try {
+    const { root, name } = req.query;
+    res.json({
+      ok: true,
+      root: root || 'mock-root',
+      name: name || 'dataset',
+      url: `https://mock-storage.example.com/${root || 'test'}`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Storage resolve error:', error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// OG Verify endpoint
+app.get('/api/og-verify', async (req, res) => {
+  try {
+    const { root, wait_ms = 5000 } = req.query;
+    // Mock verification response
+    res.json({
+      ok: true,
+      verified: true,
+      root: root || 'mock-root',
+      timestamp: new Date().toISOString(),
+      wait_ms: parseInt(wait_ms)
+    });
+  } catch (error) {
+    console.error('OG verify error:', error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// Compute GET endpoint (for health, result, diagnostics)
+app.get('/api/compute', async (req, res) => {
+  try {
+    const { action, id } = req.query;
+    
+    if (action === 'health') {
+      res.json({
+        ok: true,
+        status: 'healthy',
+        timestamp: new Date().toISOString()
+      });
+    } else if (action === 'result') {
+      res.json({
+        ok: true,
+        id: id || 'mock-id',
+        status: 'completed',
+        result: 'Mock computation result',
+        timestamp: new Date().toISOString()
+      });
+    } else if (action === 'diagnostics') {
+      res.json({
+        ok: true,
+        status: 'operational',
+        services: ['compute', 'storage', 'network'],
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(400).json({ ok: false, message: 'Invalid action parameter' });
+    }
+  } catch (error) {
+    console.error('Compute GET error:', error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
 // Compute health
 app.get('/api/compute-health', async (req, res) => {
   res.json({
@@ -123,6 +193,34 @@ app.post('/api/compute', async (req, res) => {
     });
   } catch (error) {
     console.error('Compute error:', error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// Compute analyze (alternative endpoint)
+app.post('/api/compute/analyze', async (req, res) => {
+  try {
+    const { text } = req.body;
+    
+    if (!text) {
+      return res.status(400).json({
+        ok: false,
+        message: 'Text is required'
+      });
+    }
+
+    // Mock AI analysis response
+    res.json({
+      ok: true,
+      answer: `Analysis of: "${text.substring(0, 50)}..." - Mock response for Render deployment.`,
+      provider: '0xMockProvider',
+      model: 'mock-model',
+      verified: false,
+      chatID: `chat_${Date.now()}`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Compute analyze error:', error);
     res.status(500).json({ ok: false, message: error.message });
   }
 });

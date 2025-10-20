@@ -1,8 +1,9 @@
 // Simple compute client using consolidated API
+import { apiUrl } from "../lib/api";
 export interface ComputeRequest {
-  model: 'llama-3.3-70b-instruct' | 'deepseek-r1-70b';
+  model: "llama-3.3-70b-instruct" | "deepseek-r1-70b";
   messages: Array<{
-    role: 'system' | 'user' | 'assistant';
+    role: "system" | "user" | "assistant";
     content: string;
   }>;
   stream?: boolean;
@@ -57,88 +58,104 @@ export interface AnalysisResult {
 
 export const computeClient = {
   async getComputeHealth(): Promise<ComputeStatus> {
-    const response = await fetch("/api/compute?action=health");
+    const response = await fetch(apiUrl("/api/compute?action=health"));
     return response.json();
   },
 
   async health(): Promise<ComputeHealthResponse> {
-    const response = await fetch("/api/compute?action=health");
+    const response = await fetch(apiUrl("/api/compute?action=health"));
     const data = await response.json();
     return {
       ok: data.ok,
       timestamp: new Date().toISOString(),
-      ledger: data.ledger ? {
-        status: data.ledger.balance ? 'active' : 'inactive',
-        availableBalance: data.ledger.balance || '0',
-        unit: 'ETH'
-      } : undefined,
+      ledger: data.ledger
+        ? {
+            status: data.ledger.balance ? "active" : "inactive",
+            availableBalance: data.ledger.balance || "0",
+            unit: "ETH",
+          }
+        : undefined,
       providers: {
         healthy: data.servicesCount || 0,
         total: data.servicesCount || 0,
-        details: []
+        details: [],
       },
       environment: {
-        chainId: '16602',
-        rpcUrl: 'https://evmrpc-testnet.0g.ai'
-      }
+        chainId: "16602",
+        rpcUrl: "https://evmrpc-testnet.0g.ai",
+      },
     };
   },
 
-  async chat(request: ComputeRequest): Promise<{ content: string; provider: string; model: string; verified: boolean; usage?: any; raw?: any }> {
+  async chat(
+    request: ComputeRequest
+  ): Promise<{
+    content: string;
+    provider: string;
+    model: string;
+    verified: boolean;
+    usage?: any;
+    raw?: any;
+  }> {
     const response = await fetch("/api/compute?action=analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        text: request.messages[request.messages.length - 1]?.content || '',
-        model: request.model
-      })
+        text: request.messages[request.messages.length - 1]?.content || "",
+        model: request.model,
+      }),
     });
-    
+
     const result = await response.json();
-    
+
     if (!result.ok || !result.jobId) {
-      throw new Error(result.error || 'Chat request failed');
+      throw new Error(result.error || "Chat request failed");
     }
-    
+
     // Poll for result
     let attempts = 0;
-    while (attempts < 30) { // Max 30 attempts (90 seconds)
-      await new Promise(resolve => setTimeout(resolve, 3000));
+    while (attempts < 30) {
+      // Max 30 attempts (90 seconds)
+      await new Promise((resolve) => setTimeout(resolve, 3000));
       const pollResult = await this.pollResult(result.jobId);
-      
+
       if (pollResult.ok && pollResult.content) {
         return {
           content: pollResult.content,
-          provider: pollResult.provider || 'unknown',
+          provider: pollResult.provider || "unknown",
           model: pollResult.model || request.model,
           verified: pollResult.verified || false,
           usage: pollResult.usage,
-          raw: pollResult
+          raw: pollResult,
         };
       }
-      
+
       if (pollResult.error) {
         throw new Error(pollResult.error);
       }
-      
+
       attempts++;
     }
-    
-    throw new Error('Chat request timed out');
+
+    throw new Error("Chat request timed out");
   },
 
-  async startAnalysis(text: string, options: { root?: string; model?: string; temperature?: number } = {}): Promise<{ ok: boolean; jobId?: string; error?: string }> {
+  async startAnalysis(
+    text: string,
+    options: { root?: string; model?: string; temperature?: number } = {}
+  ): Promise<{ ok: boolean; jobId?: string; error?: string }> {
     const response = await fetch("/api/compute?action=analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, ...options })
+      body: JSON.stringify({ text, ...options }),
     });
     return response.json();
   },
 
   async pollResult(jobId: string): Promise<AnalysisResult> {
-    const response = await fetch(`/api/compute?action=result&id=${jobId}`);
+    const response = await fetch(
+      apiUrl(`/api/compute?action=result&id=${jobId}`)
+    );
     return response.json();
-  }
+  },
 };
-

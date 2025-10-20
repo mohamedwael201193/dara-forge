@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
+import { apiUrl } from "../lib/api";
 
 // Types for the compute API responses
 interface ComputeAccount {
@@ -25,7 +26,7 @@ interface ComputeService {
 }
 
 interface ComputeHealth {
-  status: 'healthy' | 'error';
+  status: "healthy" | "error";
   broker?: {
     endpoint: string;
     connected: boolean;
@@ -71,18 +72,19 @@ export function useZgComputeHealth() {
   const checkHealth = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/compute?action=health');
+      const response = await fetch(apiUrl("/api/compute?action=health"));
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}`);
       }
-      
+
       setHealth(data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Health check failed';
+      const message =
+        err instanceof Error ? err.message : "Health check failed";
       setError(message);
       setHealth(null);
     } finally {
@@ -100,7 +102,7 @@ export function useZgComputeHealth() {
     loading,
     error,
     checkHealth,
-    isHealthy: health?.status === 'healthy'
+    isHealthy: health?.status === "healthy",
   };
 }
 
@@ -115,57 +117,62 @@ export function useZgComputeAccount() {
   const fetchAccount = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/compute?action=diagnostics');
+      const response = await fetch(apiUrl("/api/compute?action=diagnostics"));
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}`);
       }
-      
+
       if (data.account) {
         setAccount(data.account);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch account';
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch account";
       setError(message);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  const addCredit = useCallback(async (amount: string) => {
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const response = await fetch('/api/compute?action=topup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ amount })
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}`);
+  const addCredit = useCallback(
+    async (amount: string) => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch("/api/compute?action=topup", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ amount }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP ${response.status}`);
+        }
+
+        // Refresh account after successful topup
+        await fetchAccount();
+
+        return data.txHash;
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to add credit";
+        setError(message);
+        throw err;
+      } finally {
+        setLoading(false);
       }
-      
-      // Refresh account after successful topup
-      await fetchAccount();
-      
-      return data.txHash;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to add credit';
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchAccount]);
+    },
+    [fetchAccount]
+  );
 
   return {
     account,
@@ -173,7 +180,7 @@ export function useZgComputeAccount() {
     error,
     fetchAccount,
     addCredit,
-    hasBalance: account ? parseFloat(account.availableFormatted) > 0 : false
+    hasBalance: account ? parseFloat(account.availableFormatted) > 0 : false,
   };
 }
 
@@ -189,50 +196,51 @@ export function useZgComputeAnalysis() {
     setLoading(true);
     setError(null);
     setResult(null);
-    
+
     try {
       // Start analysis
-      const analyzeResponse = await fetch('/api/compute?action=analyze', {
-        method: 'POST',
+      const analyzeResponse = await fetch("/api/compute?action=analyze", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(request)
+        body: JSON.stringify(request),
       });
-      
+
       const analyzeData = await analyzeResponse.json();
-      
+
       if (!analyzeResponse.ok) {
         throw new Error(analyzeData.error || `HTTP ${analyzeResponse.status}`);
       }
-      
+
       const jobId = analyzeData.jobId;
       if (!jobId) {
-        throw new Error('No job ID returned from analysis');
+        throw new Error("No job ID returned from analysis");
       }
-      
+
       // Poll for result
       let attempts = 0;
       const maxAttempts = 30; // 30 seconds timeout
-      
+
       while (attempts < maxAttempts) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second
-        
-        const resultResponse = await fetch(`/api/compute?action=result&id=${jobId}`);
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+
+        const resultResponse = await fetch(
+          apiUrl(`/api/compute?action=result&id=${jobId}`)
+        );
         const resultData = await resultResponse.json();
-        
+
         if (resultResponse.ok && resultData.ok) {
           setResult(resultData);
           return resultData;
         }
-        
+
         attempts++;
       }
-      
-      throw new Error('Analysis timed out');
-      
+
+      throw new Error("Analysis timed out");
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Analysis failed';
+      const message = err instanceof Error ? err.message : "Analysis failed";
       setError(message);
       throw err;
     } finally {
@@ -251,7 +259,7 @@ export function useZgComputeAnalysis() {
     result,
     runAnalysis,
     clearResult,
-    hasResult: !!result
+    hasResult: !!result,
   };
 }
 
@@ -266,20 +274,21 @@ export function useZgComputeServices() {
   const fetchServices = useCallback(async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await fetch('/api/compute?action=diagnostics');
+      const response = await fetch(apiUrl("/api/compute?action=diagnostics"));
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}`);
       }
-      
+
       if (data.services?.details) {
         setServices(data.services.details);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch services';
+      const message =
+        err instanceof Error ? err.message : "Failed to fetch services";
       setError(message);
     } finally {
       setLoading(false);
@@ -296,7 +305,7 @@ export function useZgComputeServices() {
     loading,
     error,
     fetchServices,
-    serviceCount: services.length
+    serviceCount: services.length,
   };
 }
 
@@ -309,7 +318,8 @@ export function useZgCompute() {
   const analysis = useZgComputeAnalysis();
   const services = useZgComputeServices();
 
-  const isReady = health.isHealthy && account.hasBalance && services.serviceCount > 0;
+  const isReady =
+    health.isHealthy && account.hasBalance && services.serviceCount > 0;
 
   return {
     health,
@@ -321,8 +331,8 @@ export function useZgCompute() {
       await Promise.all([
         health.checkHealth(),
         account.fetchAccount(),
-        services.fetchServices()
+        services.fetchServices(),
       ]);
-    }
+    },
   };
 }

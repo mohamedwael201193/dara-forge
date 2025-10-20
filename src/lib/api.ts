@@ -1,12 +1,13 @@
 // src/lib/api.ts - API helper for frontend
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL ||
-  (import.meta.env.DEV ? "http://localhost:3001" : "/api");
+  (import.meta.env.DEV ? "http://localhost:3000" : "/api");
 
 export function apiUrl(endpoint: string): string {
-  // Remove leading slash and add to base
+  // Remove ALL leading slashes and add single slash
   const path = endpoint.replace(/^\/+/, "");
-  return `${API_BASE}/${path}`;
+  const base = API_BASE.replace(/\/+$/, ""); // Remove trailing slashes from base
+  return `${base}/${path}`;
 }
 
 // Helper for fetch calls with proper error handling

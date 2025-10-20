@@ -1,12 +1,21 @@
-export async function verifyManifestUrl(expectedRoot: string, _fetchUrl: string) {
+import { apiUrl } from "./api";
+
+export async function verifyManifestUrl(
+  expectedRoot: string,
+  _fetchUrl: string
+) {
   try {
-    const resp = await fetch(`/api/og-verify?root=${encodeURIComponent(expectedRoot)}&wait_ms=5000`, { cache: 'no-store' });
+    const resp = await fetch(
+      apiUrl(
+        `/api/og-verify?root=${encodeURIComponent(expectedRoot)}&wait_ms=5000`
+      ),
+      { cache: "no-store" }
+    );
     const json = await resp.json().catch(() => ({}));
-    if (!resp.ok) return { ok: false, error: json?.error || `HTTP ${resp.status}` };
+    if (!resp.ok)
+      return { ok: false, error: json?.error || `HTTP ${resp.status}` };
     return { ok: !!json.ok, computed: json.computed as string | undefined };
   } catch (e: any) {
     return { ok: false, error: e?.message || String(e) };
   }
 }
-
-

@@ -1,10 +1,12 @@
 /**
  * Enhanced Verification Service
- * 
+ *
  * Provides enhanced verification methods that use specific endpoints and track
  * detailed metrics for Storage, DA, Chain, and Compute verification.
  * This ensures publish-verify parity by using the same endpoints recorded during publish.
  */
+
+import { apiUrl } from "../lib/api";
 
 interface DAVerificationResult {
   available: boolean;
@@ -45,36 +47,38 @@ interface ComputeVerificationResult {
 }
 
 export class VerificationService {
-  
   /**
    * Verify DA availability using specific endpoint if provided
    */
-  static async verifyDA(blobHash: string, preferredEndpoint?: string): Promise<DAVerificationResult> {
+  static async verifyDA(
+    blobHash: string,
+    preferredEndpoint?: string
+  ): Promise<DAVerificationResult> {
     try {
-      const response = await fetch('/api/da', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/da", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: 'verify',
+          action: "verify",
           blobHash,
-          preferredEndpoint
-        })
+          preferredEndpoint,
+        }),
       });
 
       const result = await response.json();
-      
+
       if (!result.ok) {
-        throw new Error(result.error || 'DA verification failed');
+        throw new Error(result.error || "DA verification failed");
       }
 
       return {
         available: result.available,
         endpoint: result.endpoint,
         verificationTime: result.verificationTime,
-        blobHash: result.blobHash
+        blobHash: result.blobHash,
       };
     } catch (error) {
-      console.error('[Verification] DA verification failed:', error);
+      console.error("[Verification] DA verification failed:", error);
       throw error;
     }
   }
@@ -83,24 +87,26 @@ export class VerificationService {
    * Verify Storage availability using specific indexer if provided
    */
   static async verifyStorage(
-    merkleRoot: string, 
-    path?: string, 
+    merkleRoot: string,
+    path?: string,
     preferredIndexer?: string
   ): Promise<StorageVerificationResult> {
     try {
       const params = new URLSearchParams({
         root: merkleRoot,
-        enhanced: 'true'
+        enhanced: "true",
       });
-      
-      if (path) params.append('path', path);
-      if (preferredIndexer) params.append('preferredIndexer', preferredIndexer);
 
-      const response = await fetch(`/api/storage/resolve?${params.toString()}`);
+      if (path) params.append("path", path);
+      if (preferredIndexer) params.append("preferredIndexer", preferredIndexer);
+
+      const response = await fetch(
+        apiUrl(`/api/storage/resolve?${params.toString()}`)
+      );
       const result = await response.json();
-      
+
       if (!result.ok) {
-        throw new Error(result.error || 'Storage verification failed');
+        throw new Error(result.error || "Storage verification failed");
       }
 
       return {
@@ -109,10 +115,10 @@ export class VerificationService {
         verificationTime: result.verificationTime,
         probeResults: result.probeResults || [],
         root: result.root,
-        path: result.path
+        path: result.path,
       };
     } catch (error) {
-      console.error('[Verification] Storage verification failed:', error);
+      console.error("[Verification] Storage verification failed:", error);
       throw error;
     }
   }
@@ -127,13 +133,13 @@ export class VerificationService {
     try {
       // For now, use a simple implementation
       // In production, this would check the actual blockchain
-      const response = await fetch('/api/chain/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/chain/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           transactionHash,
-          contractAddress
-        })
+          contractAddress,
+        }),
       });
 
       if (response.status === 404) {
@@ -142,14 +148,14 @@ export class VerificationService {
       }
 
       const result = await response.json();
-      
+
       if (!result.ok) {
-        throw new Error(result.error || 'Chain verification failed');
+        throw new Error(result.error || "Chain verification failed");
       }
 
       return result;
     } catch (error) {
-      console.error('[Verification] Chain verification failed:', error);
+      console.error("[Verification] Chain verification failed:", error);
       // Fallback to simulation for development
       return this.simulateChainVerification(transactionHash, contractAddress);
     }
@@ -163,13 +169,15 @@ export class VerificationService {
     contractAddress?: string
   ): Promise<ChainVerificationResult> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
-    
+    await new Promise((resolve) =>
+      setTimeout(resolve, 1000 + Math.random() * 2000)
+    );
+
     // Simple validation - check if hash looks valid
     const isValidHash = /^0x[0-9a-fA-F]{64}$/.test(transactionHash);
-    
+
     if (!isValidHash) {
-      throw new Error('Invalid transaction hash format');
+      throw new Error("Invalid transaction hash format");
     }
 
     return {
@@ -178,22 +186,25 @@ export class VerificationService {
       blockNumber: Math.floor(Math.random() * 1000000) + 5000000,
       confirmations: Math.floor(Math.random() * 20) + 1,
       verificationTime: 1500 + Math.random() * 1000,
-      contractAddress
+      contractAddress,
     };
   }
 
   /**
    * Verify Compute job status
    */
-  static async verifyCompute(jobId: string, endpoint?: string): Promise<ComputeVerificationResult> {
+  static async verifyCompute(
+    jobId: string,
+    endpoint?: string
+  ): Promise<ComputeVerificationResult> {
     try {
-      const response = await fetch('/api/compute/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/compute/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           jobId,
-          endpoint
-        })
+          endpoint,
+        }),
       });
 
       if (response.status === 404) {
@@ -202,14 +213,14 @@ export class VerificationService {
       }
 
       const result = await response.json();
-      
+
       if (!result.ok) {
-        throw new Error(result.error || 'Compute verification failed');
+        throw new Error(result.error || "Compute verification failed");
       }
 
       return result;
     } catch (error) {
-      console.error('[Verification] Compute verification failed:', error);
+      console.error("[Verification] Compute verification failed:", error);
       // Fallback to simulation for development
       return this.simulateComputeVerification(jobId, endpoint);
     }
@@ -223,17 +234,19 @@ export class VerificationService {
     endpoint?: string
   ): Promise<ComputeVerificationResult> {
     // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1500));
-    
-    const statuses = ['completed', 'running', 'failed', 'pending'];
+    await new Promise((resolve) =>
+      setTimeout(resolve, 800 + Math.random() * 1500)
+    );
+
+    const statuses = ["completed", "running", "failed", "pending"];
     const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-    
+
     return {
-      available: randomStatus === 'completed' || randomStatus === 'running',
+      available: randomStatus === "completed" || randomStatus === "running",
       jobId,
       status: randomStatus,
       verificationTime: 1200 + Math.random() * 800,
-      endpoint: endpoint || 'compute-testnet.0g.ai'
+      endpoint: endpoint || "compute-testnet.0g.ai",
     };
   }
 
@@ -262,7 +275,7 @@ export class VerificationService {
           metadata.storage.indexer
         );
       } catch (error) {
-        console.error('Storage verification failed:', error);
+        console.error("Storage verification failed:", error);
       }
     }
 
@@ -274,7 +287,7 @@ export class VerificationService {
           metadata.da.endpoint
         );
       } catch (error) {
-        console.error('DA verification failed:', error);
+        console.error("DA verification failed:", error);
       }
     }
 
@@ -286,7 +299,7 @@ export class VerificationService {
           metadata.chain.contractAddress
         );
       } catch (error) {
-        console.error('Chain verification failed:', error);
+        console.error("Chain verification failed:", error);
       }
     }
 
@@ -298,7 +311,7 @@ export class VerificationService {
           metadata.compute.endpoint
         );
       } catch (error) {
-        console.error('Compute verification failed:', error);
+        console.error("Compute verification failed:", error);
       }
     }
 
