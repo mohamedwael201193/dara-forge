@@ -8,7 +8,9 @@ const API_BASE =
 // Expose API base for debugging in console
 if (typeof window !== "undefined") {
   (window as any).DARA_API_BASE = API_BASE;
+  (window as any).DARA_BUILD_TIME = "2025-10-20 19:46 UTC";
   console.log("🔧 DARA API Base URL:", API_BASE);
+  console.log("📦 Build Time:", (window as any).DARA_BUILD_TIME);
 }
 
 export function apiUrl(endpoint: string): string {
