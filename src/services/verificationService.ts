@@ -55,7 +55,7 @@ export class VerificationService {
     preferredEndpoint?: string
   ): Promise<DAVerificationResult> {
     try {
-      const response = await fetch("/api/da", {
+      const response = await fetch(apiUrl("/api/da"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -133,7 +133,7 @@ export class VerificationService {
     try {
       // For now, use a simple implementation
       // In production, this would check the actual blockchain
-      const response = await fetch("/api/chain/verify", {
+      const response = await fetch(apiUrl("/api/chain/verify"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -198,7 +198,7 @@ export class VerificationService {
     endpoint?: string
   ): Promise<ComputeVerificationResult> {
     try {
-      const response = await fetch("/api/compute/verify", {
+      const response = await fetch(apiUrl("/api/compute/verify"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

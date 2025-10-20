@@ -144,7 +144,7 @@ export function useZgComputeAccount() {
       setError(null);
 
       try {
-        const response = await fetch("/api/compute?action=topup", {
+        const response = await fetch(apiUrl("/api/compute?action=topup"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -199,13 +199,16 @@ export function useZgComputeAnalysis() {
 
     try {
       // Start analysis
-      const analyzeResponse = await fetch("/api/compute?action=analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(request),
-      });
+      const analyzeResponse = await fetch(
+        apiUrl("/api/compute?action=analyze"),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(request),
+        }
+      );
 
       const analyzeData = await analyzeResponse.json();
 

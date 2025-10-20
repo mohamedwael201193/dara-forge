@@ -87,9 +87,7 @@ export const computeClient = {
     };
   },
 
-  async chat(
-    request: ComputeRequest
-  ): Promise<{
+  async chat(request: ComputeRequest): Promise<{
     content: string;
     provider: string;
     model: string;
@@ -97,7 +95,7 @@ export const computeClient = {
     usage?: any;
     raw?: any;
   }> {
-    const response = await fetch("/api/compute?action=analyze", {
+    const response = await fetch(apiUrl("/api/compute?action=analyze"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -144,7 +142,7 @@ export const computeClient = {
     text: string,
     options: { root?: string; model?: string; temperature?: number } = {}
   ): Promise<{ ok: boolean; jobId?: string; error?: string }> {
-    const response = await fetch("/api/compute?action=analyze", {
+    const response = await fetch(apiUrl("/api/compute?action=analyze"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text, ...options }),

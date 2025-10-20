@@ -132,9 +132,15 @@ app.get('/api/compute', async (req, res) => {
     } else if (action === 'result') {
       res.json({
         ok: true,
-        id: id || 'mock-id',
-        status: 'completed',
-        result: 'Mock computation result',
+        content: `Mock analysis result for job ${id || 'unknown'}. This is a comprehensive analysis response from the 0G Compute network.`,
+        provider: '0xMockProvider',
+        model: 'mock-llama-3.3-70b',
+        verified: false,
+        usage: {
+          prompt_tokens: 100,
+          completion_tokens: 50,
+          total_tokens: 150
+        },
         timestamp: new Date().toISOString()
       });
     } else if (action === 'diagnostics') {
@@ -182,13 +188,12 @@ app.post('/api/compute', async (req, res) => {
       });
     }
 
-    // Mock AI analysis response
+    // Mock AI analysis response with jobId
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     res.json({
       ok: true,
-      answer: `Mock analysis of: "${text.substring(0, 50)}..." - This is a simplified response for Render deployment.`,
-      provider: '0xMockProvider',
-      model: 'mock-model',
-      verified: false,
+      jobId: jobId,
+      message: 'Analysis started successfully',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -209,14 +214,12 @@ app.post('/api/compute/analyze', async (req, res) => {
       });
     }
 
-    // Mock AI analysis response
+    // Mock AI analysis response with jobId
+    const jobId = `job_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     res.json({
       ok: true,
-      answer: `Analysis of: "${text.substring(0, 50)}..." - Mock response for Render deployment.`,
-      provider: '0xMockProvider',
-      model: 'mock-model',
-      verified: false,
-      chatID: `chat_${Date.now()}`,
+      jobId: jobId,
+      message: 'Analysis started successfully',
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -321,6 +324,41 @@ app.get('/api/verify/chain', async (req, res) => {
     status: 'confirmed',
     timestamp: new Date().toISOString()
   });
+});
+
+// Chain verification endpoint
+app.post('/api/chain/verify', async (req, res) => {
+  try {
+    const { transactionHash, expectedRoot } = req.body;
+    res.json({
+      ok: true,
+      verified: true,
+      transactionHash: transactionHash || 'mock-tx-hash',
+      expectedRoot: expectedRoot || 'mock-root',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Chain verify error:', error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// Compute verification endpoint
+app.post('/api/compute/verify', async (req, res) => {
+  try {
+    const { jobId, endpoint } = req.body;
+    res.json({
+      ok: true,
+      verified: true,
+      jobId: jobId || 'mock-job-id',
+      endpoint: endpoint || 'mock-endpoint',
+      result: 'Mock computation verification result',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Compute verify error:', error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
 });
 
 // 404 handler

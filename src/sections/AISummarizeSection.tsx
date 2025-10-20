@@ -1,11 +1,22 @@
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
-import { callComputeWithCircuitBreaker, computeCircuitBreaker } from '@/services/computeCircuitBreaker';
-import { useDataStore } from '@/store/dataStore';
-import { AlertCircle, Brain, CheckCircle, Loader2, Shield, Sparkles } from 'lucide-react';
-import { useState } from 'react';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { apiUrl } from "@/lib/api";
+import {
+  callComputeWithCircuitBreaker,
+  computeCircuitBreaker,
+} from "@/services/computeCircuitBreaker";
+import { useDataStore } from "@/store/dataStore";
+import {
+  AlertCircle,
+  Brain,
+  CheckCircle,
+  Loader2,
+  Shield,
+  Sparkles,
+} from "lucide-react";
+import { useState } from "react";
 
 interface AnalysisResult {
   answer: string;
@@ -18,52 +29,52 @@ interface AnalysisResult {
 
 export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
   // Global store
-  const { 
+  const {
     currentUpload,
     computeResults,
     currentCompute,
     addComputeResult,
-    setCurrentCompute
+    setCurrentCompute,
   } = useDataStore();
-  
+
   // Local UI state
-  const [text, setText] = useState('');
+  const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   // Get result from store
   const result = currentCompute;
 
   const handleAnalyze = async () => {
     if (!text.trim()) {
-      setError('Please enter text to analyze');
+      setError("Please enter text to analyze");
       return;
     }
 
     setLoading(true);
-    setError('');
+    setError("");
     setCurrentCompute(null);
 
     try {
       // Check circuit breaker status
       const status = computeCircuitBreaker.getStatus();
-      console.log('🔄 Circuit breaker status:', status);
-      
+      console.log("🔄 Circuit breaker status:", status);
+
       // Use circuit breaker protected compute call
       const data = await callComputeWithCircuitBreaker(async () => {
-        console.log('🚀 Calling real 0G Compute API...');
-        
+        console.log("🚀 Calling real 0G Compute API...");
+
         // Use the dataset root from store if available, or from prop
         const rootHash = currentUpload?.rootHash || datasetRoot;
-        
-        const response = await fetch('/api/compute', {
-          method: 'POST',
+
+        const response = await fetch(apiUrl("/api/compute"), {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             text: text.trim(),
-            datasetRoot: rootHash
+            datasetRoot: rootHash,
           }),
         });
 
@@ -74,13 +85,13 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
         }
 
         return data;
-      }, '0G Compute AI Analysis');
+      }, "0G Compute AI Analysis");
 
-      console.log('✅ Real 0G Compute response received');
-      console.log('Provider:', data.provider);
-      console.log('Model:', data.model);
-      console.log('Verified:', data.verified);
-      
+      console.log("✅ Real 0G Compute response received");
+      console.log("Provider:", data.provider);
+      console.log("Model:", data.model);
+      console.log("Verified:", data.verified);
+
       // Save to global store
       const computeResult = {
         answer: data.answer,
@@ -90,31 +101,31 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
         chatID: data.chatID,
         timestamp: data.timestamp,
         rootHash: currentUpload?.rootHash || datasetRoot || undefined,
-        input: text.trim()
+        input: text.trim(),
       };
-      
-      addComputeResult(computeResult);
 
+      addComputeResult(computeResult);
     } catch (err: any) {
-      console.error('❌ 0G Compute error:', err);
-      
+      console.error("❌ 0G Compute error:", err);
+
       // Handle circuit breaker errors with graceful degradation
-      if (err.message.includes('Circuit:')) {
+      if (err.message.includes("Circuit:")) {
         const status = computeCircuitBreaker.getStatus();
         const gracefulOptions = computeCircuitBreaker.getGracefulOptions();
-        
+
         let errorMessage = computeCircuitBreaker.getStatusMessage();
-        
+
         if (gracefulOptions.offlineMode) {
-          errorMessage += ' You can continue working with other features while compute service is restored.';
+          errorMessage +=
+            " You can continue working with other features while compute service is restored.";
         } else if (gracefulOptions.retryEstimate > 0) {
           const retryMinutes = Math.ceil(gracefulOptions.retryEstimate / 60000);
           errorMessage += ` Estimated retry time: ${retryMinutes} minutes.`;
         }
-        
+
         setError(errorMessage);
       } else {
-        setError(err.message || 'Failed to analyze with 0G Compute');
+        setError(err.message || "Failed to analyze with 0G Compute");
       }
     } finally {
       setLoading(false);
@@ -150,7 +161,9 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
         {(currentUpload?.rootHash || datasetRoot) && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 bg-muted rounded">
             <span className="text-xs font-medium">Dataset:</span>
-            <code className="font-mono text-xs">{currentUpload?.rootHash || datasetRoot}</code>
+            <code className="font-mono text-xs">
+              {currentUpload?.rootHash || datasetRoot}
+            </code>
           </div>
         )}
 
@@ -186,7 +199,10 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
               <h3 className="font-semibold text-lg">Analysis Result</h3>
               <div className="flex gap-2">
                 {result.verified ? (
-                  <Badge variant="outline" className="flex items-center gap-1 text-green-600 border-green-600">
+                  <Badge
+                    variant="outline"
+                    className="flex items-center gap-1 text-green-600 border-green-600"
+                  >
                     <CheckCircle className="w-3 h-3" />
                     Verified by 0G
                   </Badge>
@@ -197,15 +213,19 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
                 )}
               </div>
             </div>
-            
+
             <div className="prose dark:prose-invert max-w-none">
-              <p className="whitespace-pre-wrap text-sm leading-relaxed">{result.answer}</p>
+              <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                {result.answer}
+              </p>
             </div>
 
             <div className="text-xs text-muted-foreground space-y-1.5 pt-3 border-t">
               <div className="flex items-center gap-2">
                 <span className="font-medium">Model:</span>
-                <code className="px-2 py-0.5 bg-muted rounded">{result.model}</code>
+                <code className="px-2 py-0.5 bg-muted rounded">
+                  {result.model}
+                </code>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Provider:</span>
@@ -215,7 +235,9 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Chat ID:</span>
-                <code className="px-2 py-0.5 bg-muted rounded text-xs">{result.chatID}</code>
+                <code className="px-2 py-0.5 bg-muted rounded text-xs">
+                  {result.chatID}
+                </code>
               </div>
             </div>
           </div>

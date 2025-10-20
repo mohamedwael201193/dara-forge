@@ -18,6 +18,7 @@ import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CHAIN_CONFIG } from "../config/chain";
 import { useOgUpload } from "../hooks/useOgUpload";
+import { apiUrl } from "../lib/api";
 import { anchorWithWallet } from "../lib/chain/anchorClient";
 import { useActivityRecorder } from "../services/activityRecorder";
 import {
@@ -251,9 +252,7 @@ const PipelineWizard: React.FC = () => {
       const fileData = await selectedFile.arrayBuffer();
       const base64Data = btoa(String.fromCharCode(...new Uint8Array(fileData)));
 
-      const API_BASE = import.meta.env.DEV ? "http://localhost:3000" : "";
-
-      const response = await fetch(`${API_BASE}/api/da`, {
+      const response = await fetch(apiUrl("/api/da"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -432,7 +431,7 @@ Return:
         addLog(4, `Analysis prompt: ${prompt.substring(0, 100)}...`);
 
         // Submit compute request with proper text payload
-        const analyzeResponse = await fetch("/api/compute", {
+        const analyzeResponse = await fetch(apiUrl("/api/compute"), {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
