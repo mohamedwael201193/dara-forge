@@ -1,0 +1,36 @@
+# Don't upload frontend files to API server
+
+src/components/
+src/pages/
+src/sections/
+src/hooks/
+src/assets/
+public/
+dist/
+index.html
+vite.config.ts
+tailwind.config.ts
+postcss.config.cjs
+components.json
+_.timestamp-_.mjs
+
+# Don't upload dev/build artifacts
+
+artifacts/
+cache/
+temp_readme.md
+docs/
+dev/
+packages/contracts/
+contracts/
+
+# Don't upload test files
+
+src/tests/
+\*.test.ts
+vitest.config.ts
+
+# Don't upload heavy dependencies that aren't needed for API
+
+node_modules/.vite/
+node_modules/.cache/

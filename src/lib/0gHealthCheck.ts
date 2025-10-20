@@ -12,9 +12,11 @@ export interface HealthCheckResult {
   }>;
 }
 
+import { apiUrl } from "./api.js";
+
 export async function checkHealth(): Promise<HealthCheckResult> {
   try {
-    const response = await fetch('/api/storage-utils?action=health');
+    const response = await fetch(apiUrl("api/storage-utils?action=health"));
     const result = await response.json();
     return result;
   } catch (error) {
@@ -25,4 +27,3 @@ export async function checkHealth(): Promise<HealthCheckResult> {
     };
   }
 }
-

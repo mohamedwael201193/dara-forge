@@ -1,0 +1,23 @@
+# Don't deploy API to Vercel - it's on Render now
+
+api/
+server.js
+src/server/
+.renderignore
+
+# Don't deploy heavy dev stuff
+
+artifacts/
+cache/
+contracts/
+packages/contracts/
+dev/
+docs/
+temp_readme.md
+_.timestamp-_.mjs
+
+# Don't deploy test files
+
+src/tests/
+\*.test.ts
+vitest.config.ts

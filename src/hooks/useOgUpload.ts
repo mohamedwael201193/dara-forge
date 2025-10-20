@@ -1,6 +1,10 @@
-import { downloadWithProofUrl as dlProofPublic, gatewayUrlForRoot as gatewayPublic } from "@/services/ogStorage";
-import { getAccount } from '@wagmi/core';
-import { wagmiConfig } from '@/lib/wallet';
+import { wagmiConfig } from "@/lib/wallet";
+import {
+  downloadWithProofUrl as dlProofPublic,
+  gatewayUrlForRoot as gatewayPublic,
+} from "@/services/ogStorage";
+import { getAccount } from "@wagmi/core";
+import { apiUrl } from "../lib/api.js";
 
 type UploadResult = {
   ok: boolean;
@@ -18,23 +22,23 @@ export function useOgUpload() {
       // Get connected wallet address for authentication
       const account = getAccount(wagmiConfig);
       if (!account.address) {
-        return { 
-          ok: false, 
-          error: "Please connect your wallet before uploading files" 
+        return {
+          ok: false,
+          error: "Please connect your wallet before uploading files",
         };
       }
 
       const form = new FormData();
       for (const f of files) form.append("file", f);
-      
-      const r = await fetch("/api/storage/upload", { 
-        method: "POST", 
+
+      const r = await fetch(apiUrl("api/storage/upload"), {
+        method: "POST",
         body: form,
         headers: {
-          "X-Wallet-Address": account.address
-        }
+          "X-Wallet-Address": account.address,
+        },
       });
-      
+
       if (!r.ok) return { ok: false, error: await r.text() };
       const out = await r.json();
       const root = out?.root;
@@ -44,7 +48,7 @@ export function useOgUpload() {
         indexerTx: out?.indexerTx || null,
         proofUrl: root ? dlProofPublic(root) : undefined,
         gatewayUrl: root ? gatewayPublic(root) : undefined,
-        raw: out
+        raw: out,
       };
     } catch (e: any) {
       return { ok: false, error: e?.message || "Upload failed" };
