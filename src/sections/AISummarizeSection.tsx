@@ -224,19 +224,23 @@ export function AISummarizeSection({ datasetRoot }: { datasetRoot?: string }) {
               <div className="flex items-center gap-2">
                 <span className="font-medium">Model:</span>
                 <code className="px-2 py-0.5 bg-muted rounded">
-                  {result.model}
+                  {result.model || "N/A"}
                 </code>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Provider:</span>
                 <code className="px-2 py-0.5 bg-muted rounded text-xs">
-                  {result.provider.slice(0, 6)}...{result.provider.slice(-4)}
+                  {result.provider
+                    ? `${result.provider.slice(0, 6)}...${result.provider.slice(
+                        -4
+                      )}`
+                    : "N/A"}
                 </code>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-medium">Chat ID:</span>
                 <code className="px-2 py-0.5 bg-muted rounded text-xs">
-                  {result.chatID}
+                  {result.chatID || "N/A"}
                 </code>
               </div>
             </div>

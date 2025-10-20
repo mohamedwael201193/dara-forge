@@ -7,12 +7,18 @@ import multer from 'multer';
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
-// CORS - Simple configuration
+// CORS - Allow Vercel domain and localhost
 app.use(cors({
-  origin: true, // Allow all origins for now
+  origin: [
+    'https://dara-forge.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Wallet-Address'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 app.use(express.json({ limit: '50mb' }));
