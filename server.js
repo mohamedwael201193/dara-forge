@@ -8,21 +8,39 @@ const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 // CORS - Allow Vercel domain and localhost
+const allowedOrigins = [
+  'https://dara-forge.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5174' // Vite alternative port
+];
+
 app.use(cors({
-  origin: [
-    'https://dara-forge.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from origin ${origin}.`;
+      console.warn('⚠️ CORS blocked:', origin);
+      return callback(new Error(msg), false);
+    }
+    console.log('✅ CORS allowed:', origin);
+    return callback(null, true);
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Wallet-Address'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Wallet-Address', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
   preflightContinue: false,
   optionsSuccessStatus: 204
 }));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Explicit preflight handler for all routes
+app.options('*', cors());
 
 // Health check
 app.get('/health', (req, res) => {
