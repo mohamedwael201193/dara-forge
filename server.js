@@ -59,12 +59,18 @@ app.get('/debug', (req, res) => {
 
 // Storage upload
 app.post('/api/storage/upload', upload.array('file'), async (req, res) => {
+  console.log('📤 Storage upload request received');
+  console.log('Origin:', req.get('origin'));
+  console.log('Files count:', req.files ? req.files.length : 0);
+  
   try {
     const files = req.files;
     if (!files || files.length === 0) {
+      console.log('❌ No files in request');
       return res.status(400).json({ ok: false, message: 'No files uploaded' });
     }
 
+    console.log('✅ Processing', files.length, 'file(s)');
     // Mock response for now - you can implement full 0G storage later
     res.json({ 
       ok: true, 
@@ -191,10 +197,17 @@ app.get('/api/compute-health', async (req, res) => {
 
 // Compute analyze
 app.post('/api/compute', async (req, res) => {
+  console.log('📥 Received compute request:', { 
+    body: req.body ? Object.keys(req.body) : 'empty',
+    query: req.query,
+    headers: req.headers['content-type']
+  });
+  
   try {
     const { text, action } = req.body;
     
     if (action === 'health' || req.query.action === 'health') {
+      console.log('✅ Health check request');
       return res.json({
         status: 'healthy',
         sdk: '0G Compute SDK available',
@@ -384,9 +397,23 @@ app.post('/api/compute/verify', async (req, res) => {
 
 // 404 handler
 app.use((req, res) => {
+  console.log('❌ 404:', req.method, req.originalUrl);
   res.status(404).json({
     ok: false,
     message: `Route ${req.method} ${req.originalUrl} not found`
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('💥 Global error handler:', err);
+  console.error('Request:', req.method, req.originalUrl);
+  console.error('Body:', req.body);
+  
+  res.status(500).json({
+    ok: false,
+    message: err.message || 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.stack : undefined
   });
 });
 
