@@ -3,6 +3,7 @@
 ## ✅ What Was Fixed
 
 ### 1. DA (Data Availability) Endpoint - NOW REAL ✅
+
 **Before:** Mock data with random hashes
 **After:** Real 0G DA integration with blockchain transactions
 
@@ -12,6 +13,7 @@
 - Returns actual transaction hash and block number
 
 **Test Result:**
+
 ```json
 {
   "ok": true,
@@ -26,6 +28,7 @@
 ```
 
 ### 2. Compute Endpoint - NOW REAL ✅
+
 **Before:** Placeholder/undefined responses
 **After:** Real 0G Compute Network integration
 
@@ -35,6 +38,7 @@
 - Includes provider signature verification
 
 **Test Result:**
+
 ```json
 {
   "ok": true,
@@ -49,13 +53,17 @@
 ```
 
 ### 3. Storage Upload - ALREADY REAL ✅
+
 **Status:** Was already working correctly
+
 - Uses `@0glabs/0g-ts-sdk` with `Indexer` and `ZgFile`
 - Returns real Merkle roots
 - Verified on 0G Storage network
 
 ### 4. Chain Anchor - WORKING ✅
+
 **Status:** Contract is deployed and functional
+
 - Contract: `0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f`
 - Frontend calls contract directly via MetaMask
 - Gas estimate: ~222,177 (0.0008 OG)
@@ -91,10 +99,12 @@ DARA_CONTRACT=0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f
 ### Step 2: Fund Accounts
 
 #### 2.1 Get Testnet Tokens
+
 - Get OG testnet tokens for your wallet from faucet
 - Minimum required: ~10 OG per account
 
 #### 2.2 Fund Compute Broker Ledger
+
 **CRITICAL:** The compute broker requires funds in its ledger contract
 
 ```bash
@@ -103,11 +113,13 @@ node fund-broker-ledger.js
 ```
 
 This script:
+
 - Checks current ledger balance
 - Adds 5 OG to the broker ledger
 - Verifies the funds were added
 
 **Expected Output:**
+
 ```
 ✅ Broker ledger is now funded and ready for compute tasks!
 New ledger balance: 7.4943642 OG
@@ -116,9 +128,11 @@ New ledger balance: 7.4943642 OG
 ### Step 3: Deploy to Render
 
 #### 3.1 Update `server.js`
+
 ✅ Already done - `server.js` now has real integrations
 
 #### 3.2 Push to GitHub
+
 ```bash
 git add .
 git commit -m "feat: Add real 0G DA and Compute integrations"
@@ -126,9 +140,11 @@ git push origin main
 ```
 
 #### 3.3 Render Auto-Deploy
+
 Render will automatically deploy from GitHub push
 
 #### 3.4 Verify Deployment
+
 ```bash
 # Test health
 curl https://dara-api.onrender.com/health
@@ -147,12 +163,15 @@ curl -X POST https://dara-api.onrender.com/api/compute \
 ### Step 4: Update Vercel Frontend
 
 #### 4.1 Update Environment Variable
+
 In Vercel dashboard, set:
+
 ```
 VITE_API_BASE_URL=https://dara-api.onrender.com
 ```
 
 #### 4.2 Redeploy
+
 Vercel will auto-deploy or trigger manual deploy
 
 ---
@@ -160,6 +179,7 @@ Vercel will auto-deploy or trigger manual deploy
 ## 🧪 Testing Checklist
 
 ### Local Testing (Before Deploy)
+
 - [x] `node server.js` - Server starts
 - [x] `curl http://localhost:3000/health` - Returns healthy
 - [x] POST `/api/da` - Returns real blobHash (not mock)
@@ -167,6 +187,7 @@ Vercel will auto-deploy or trigger manual deploy
 - [x] `node test-anchor-contract.js` - Contract works
 
 ### Remote Testing (After Deploy)
+
 - [ ] https://dara-forge.vercel.app - Frontend loads
 - [ ] Upload dataset → Real Merkle root
 - [ ] DA Publish → Real blob hash (check: not random 0x...)
@@ -177,46 +198,54 @@ Vercel will auto-deploy or trigger manual deploy
 
 ## 📋 Environment Variables Reference
 
-| Variable | Purpose | Required | Example |
-|----------|---------|----------|---------|
-| `OG_STORAGE_PRIVATE_KEY` | Storage upload signing | ✅ Yes | `0x...` |
-| `OG_DA_PRIVATE_KEY` | DA publish signing | ✅ Yes | `0x...` |
-| `OG_COMPUTE_PRIVATE_KEY` | Compute broker | ✅ Yes | `0x...` |
-| `OG_RPC_URL` | EVM RPC endpoint | ✅ Yes | `https://evmrpc-testnet.0g.ai` |
-| `OG_INDEXER_RPC` | Storage indexer | ✅ Yes | `https://indexer-storage-testnet-turbo.0g.ai/` |
-| `OG_COMPUTE_PREF_PROVIDER` | Preferred compute provider | ⚠️ Recommended | `0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3` |
-| `VITE_DARA_CONTRACT` | Anchor contract (frontend) | ✅ Yes | `0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f` |
-| `DARA_CONTRACT` | Anchor contract (backend) | ✅ Yes | `0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f` |
-| `VITE_API_BASE_URL` | API server URL | ✅ Yes | `https://dara-api.onrender.com` |
+| Variable                   | Purpose                    | Required       | Example                                        |
+| -------------------------- | -------------------------- | -------------- | ---------------------------------------------- |
+| `OG_STORAGE_PRIVATE_KEY`   | Storage upload signing     | ✅ Yes         | `0x...`                                        |
+| `OG_DA_PRIVATE_KEY`        | DA publish signing         | ✅ Yes         | `0x...`                                        |
+| `OG_COMPUTE_PRIVATE_KEY`   | Compute broker             | ✅ Yes         | `0x...`                                        |
+| `OG_RPC_URL`               | EVM RPC endpoint           | ✅ Yes         | `https://evmrpc-testnet.0g.ai`                 |
+| `OG_INDEXER_RPC`           | Storage indexer            | ✅ Yes         | `https://indexer-storage-testnet-turbo.0g.ai/` |
+| `OG_COMPUTE_PREF_PROVIDER` | Preferred compute provider | ⚠️ Recommended | `0x3feE5a4dd5FDb8a32dDA97Bed899830605dBD9D3`   |
+| `VITE_DARA_CONTRACT`       | Anchor contract (frontend) | ✅ Yes         | `0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f`   |
+| `DARA_CONTRACT`            | Anchor contract (backend)  | ✅ Yes         | `0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f`   |
+| `VITE_API_BASE_URL`        | API server URL             | ✅ Yes         | `https://dara-api.onrender.com`                |
 
 ---
 
 ## ⚠️ Common Issues & Solutions
 
 ### Issue: "Internal JSON-RPC error" during Anchor
+
 **Cause:** MetaMask/contract interaction issue
-**Solution:** 
+**Solution:**
+
 - ✅ Contract is deployed and working (verified with test script)
 - Check MetaMask is connected to correct network (Chain ID 16602)
 - Ensure wallet has enough OG for gas (~0.001 OG)
 - Try refreshing page and reconnecting wallet
 
 ### Issue: Compute returns "insufficient balance"
+
 **Cause:** Broker ledger not funded
 **Solution:**
+
 ```bash
 node fund-broker-ledger.js
 ```
 
 ### Issue: DA returns mock-looking data
+
 **Cause:** Old `server-direct.js` running instead of `server.js`
 **Solution:**
+
 - ✅ Already fixed - `server.js` now has real DA client
 - Verify by checking if blobHash changes each time
 
 ### Issue: Compute returns undefined/null
+
 **Cause:** Response not including `answer` field
 **Solution:**
+
 - ✅ Already fixed - compute endpoint now returns full result including `answer`
 
 ---
@@ -224,6 +253,7 @@ node fund-broker-ledger.js
 ## 📊 Verification Examples
 
 ### DA Publish (Real vs Mock)
+
 ```javascript
 // ❌ MOCK (OLD):
 {
@@ -239,6 +269,7 @@ node fund-broker-ledger.js
 ```
 
 ### Compute Response (Real vs Undefined)
+
 ```javascript
 // ❌ UNDEFINED (OLD):
 {
@@ -261,17 +292,20 @@ node fund-broker-ledger.js
 ## 🎯 Summary
 
 **All three main APIs are now REAL:**
+
 1. ✅ Storage Upload - Real Merkle roots (was already working)
 2. ✅ DA Publish - Real blob hashes + on-chain transactions (FIXED)
 3. ✅ Compute - Real AI responses from 0G network (FIXED)
 4. ✅ Chain Anchor - Working contract on 0G testnet (verified)
 
 **Files Changed:**
+
 - `server.js` - Now has real DA client, compute broker, and proper response formats
 - `fund-broker-ledger.js` - NEW script to fund compute ledger
 - `test-anchor-contract.js` - NEW script to verify anchor contract
 
 **Next Steps:**
+
 1. Push changes to GitHub
 2. Render auto-deploys
 3. Update Vercel `VITE_API_BASE_URL`

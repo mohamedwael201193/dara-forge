@@ -782,12 +782,23 @@
 }
 
 /* Wallet Modal Fix - Ensure proper z-index */
-.appkit-modal, .appkit-modal-overlay, [data-reown-modal] {
+/* AppKit/Reown modal selectors */
+w3m-modal,
+wcm-modal,
+appkit-modal,
+[data-testid="w3m-modal"],
+div[class*="w3m"],
+div[class*="wcm"],
+div[class*="appkit"] {
   z-index: 99999 !important;
 }
 
-.appkit-modal-container {
-  z-index: 100000 !important;
+/* Additional override for any wallet modal container */
+body > div[style*="z-index"],
+#walletconnect-wrapper,
+#w3m-modal,
+#appkit-modal {
+  z-index: 99999 !important;
 }
 
 /* Mobile-First Responsive Design */
