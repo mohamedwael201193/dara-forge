@@ -13,8 +13,10 @@ contracts/
 packages/contracts/
 dev/
 docs/
-temp_readme.md
-_.timestamp-_.mjs
+temp*readme.md
+*.timestamp-\_.mjs
+hardhat.config.cjs
+hardhat.config.js
 
 # Don't deploy test files
 
