@@ -1,8 +1,8 @@
 // =============================================================================
-// 0G GALILEO TESTNET CONFIGURATION
+// 0G MAINNET CONFIGURATION
 // =============================================================================
 // Centralized configuration with environment variable support
-// All hardcoded values moved here for maintainability
+// Configured for Wave 5 mainnet deployment
 
 // Feature Flags
 // -------------
@@ -32,16 +32,15 @@ export const FEATURE_FLAGS = {
 
 // Network Constants (with environment override)
 // ---------------------------------------------
+// WAVE 5: Default to MAINNET (Chain ID 16661)
 const getChainId = (): number => {
   const envChainId = getEnvVar("VITE_OG_CHAIN_ID") || getEnvVar("OG_CHAIN_ID");
-  return envChainId ? parseInt(envChainId, 10) : 16602;
+  return envChainId ? parseInt(envChainId, 10) : 16661; // Changed from 16602 to 16661 (mainnet)
 };
 
 const getRpcUrl = (): string => {
   return (
-    getEnvVar("VITE_OG_RPC") ||
-    getEnvVar("OG_RPC") ||
-    "https://evmrpc-testnet.0g.ai/"
+    getEnvVar("VITE_OG_RPC") || getEnvVar("OG_RPC") || "https://evmrpc.0g.ai" // Changed from testnet to mainnet
   );
 };
 
@@ -49,7 +48,7 @@ const getBaseExplorerUrl = (): string => {
   return (
     getEnvVar("VITE_OG_EXPLORER") ||
     getEnvVar("OG_EXPLORER") ||
-    "https://chainscan-galileo.0g.ai"
+    "https://chainscan.0g.ai" // Changed from galileo to mainnet
   );
 };
 
@@ -57,7 +56,7 @@ const getIndexerUrl = (): string => {
   return (
     getEnvVar("VITE_OG_INDEXER") ||
     getEnvVar("OG_INDEXER") ||
-    "https://indexer-storage-testnet-turbo.0g.ai/"
+    "https://indexer-storage-turbo.0g.ai" // Changed from testnet to mainnet
   );
 };
 
@@ -66,7 +65,7 @@ const getIndexerUrl = (): string => {
 export const CHAIN_CONFIG = {
   // Chain Details
   chainId: getChainId(),
-  name: "Galileo (Testnet)",
+  name: "0G Mainnet", // Changed from "Galileo (Testnet)"
   nativeCurrency: {
     name: "0G",
     symbol: "0G",

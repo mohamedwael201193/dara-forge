@@ -28,12 +28,18 @@ async function handleStatus(_req: VercelRequest, res: VercelResponse) {
 
     return res.status(200).json({
       ok: true,
-      env: { OG_RPC_URL: rpcOk, OG_STORAGE_PRIVATE_KEY: pkOk, DARA_CONTRACT: hasAddr },
+      env: {
+        OG_RPC_URL: rpcOk,
+        OG_STORAGE_PRIVATE_KEY: pkOk,
+        DARA_CONTRACT: hasAddr,
+      },
       network: { chainId },
-      contract: { address: addr, hasCode }
+      contract: { address: addr, hasCode },
     });
   } catch (e: any) {
-    return res.status(500).json({ ok: false, error: e?.message || "status error" });
+    return res
+      .status(500)
+      .json({ ok: false, error: e?.message || "status error" });
   }
 }
 
@@ -45,29 +51,52 @@ async function handleAnchor(req: VercelRequest, res: VercelResponse) {
     }
 
     const { rootHash, manifestHash, projectId } = (req.body ?? {}) as {
-      rootHash?: string; manifestHash?: string; projectId?: string;
+      rootHash?: string;
+      manifestHash?: string;
+      projectId?: string;
     };
     if (!rootHash || !/^0x[0-9a-fA-F]{64}$/.test(rootHash)) {
-      return res.status(400).json({ ok: false, error: "rootHash must be 32-byte hex" });
+      return res
+        .status(400)
+        .json({ ok: false, error: "rootHash must be 32-byte hex" });
     }
 
-    const OG_RPC_URL = process.env.OG_RPC_URL;
-    const PRIV = process.env.OG_STORAGE_PRIVATE_KEY;
+    // Wave 5: Use MAINNET for anchoring
+    const OG_RPC_URL =
+      process.env.OG_RPC_URL_MAINNET ||
+      process.env.OG_RPC_URL ||
+      "https://evmrpc.0g.ai";
+    const PRIV =
+      process.env.OG_MAINNET_PRIVATE_KEY || process.env.OG_STORAGE_PRIVATE_KEY;
     const CONTRACT_ADDRESS = process.env.DARA_CONTRACT;
-    if (!OG_RPC_URL) return res.status(500).json({ ok: false, error: "Missing OG_RPC_URL" });
-    if (!PRIV) return res.status(500).json({ ok: false, error: "Missing OG_STORAGE_PRIVATE_KEY" });
-    if (!CONTRACT_ADDRESS) return res.status(500).json({ ok: false, error: "Missing DARA_CONTRACT" });
+
+    console.log("[Anchor] Using mainnet RPC:", OG_RPC_URL);
+    console.log("[Anchor] Contract address:", CONTRACT_ADDRESS);
+
+    if (!OG_RPC_URL)
+      return res.status(500).json({ ok: false, error: "Missing OG_RPC_URL" });
+    if (!PRIV)
+      return res.status(500).json({ ok: false, error: "Missing private key" });
+    if (!CONTRACT_ADDRESS)
+      return res
+        .status(500)
+        .json({ ok: false, error: "Missing DARA_CONTRACT" });
 
     const provider = new ethers.JsonRpcProvider(OG_RPC_URL);
     const signer = new ethers.Wallet(PRIV, provider);
 
     const code = await provider.getCode(CONTRACT_ADDRESS);
     if (!code || code === "0x") {
-      return res.status(500).json({ ok: false, error: `No contract at ${CONTRACT_ADDRESS} on current network` });
+      return res
+        .status(500)
+        .json({
+          ok: false,
+          error: `No contract at ${CONTRACT_ADDRESS} on current network`,
+        });
     }
     const ABI = [
       "function anchor(bytes32 root, bytes32 manifestHash, bytes32 projectId) external",
-      "event DatasetAnchored(uint256 indexed id, bytes32 indexed root, bytes32 indexed manifestHash, bytes32 projectId, address uploader, uint256 timestamp)"
+      "event DatasetAnchored(uint256 indexed id, bytes32 indexed root, bytes32 indexed manifestHash, bytes32 projectId, address uploader, uint256 timestamp)",
     ];
     const contract = new ethers.Contract(CONTRACT_ADDRESS, ABI, signer);
 
@@ -90,8 +119,16 @@ async function handleAnchor(req: VercelRequest, res: VercelResponse) {
       } catch {}
     }
 
-    const explorer = process.env.VITE_OG_EXPLORER || "https://chainscan-galileo.0g.ai";
+    // Wave 5: Use mainnet explorer
+    const explorer =
+      process.env.OG_EXPLORER_MAINNET ||
+      process.env.VITE_OG_EXPLORER_MAINNET ||
+      "https://chainscan.0g.ai";
     const net = await provider.getNetwork();
+
+    console.log("[Anchor] Transaction successful:", receipt.hash);
+    console.log("[Anchor] Chain ID:", net.chainId.toString());
+    console.log("[Anchor] Explorer URL:", `${explorer}/tx/${receipt.hash}`);
 
     return res.status(200).json({
       ok: true,
@@ -101,23 +138,28 @@ async function handleAnchor(req: VercelRequest, res: VercelResponse) {
       projectId: project,
       txHash: receipt.hash,
       chainId: net.chainId.toString(),
-      explorerUrl: `${explorer}/tx/${receipt.hash}`
+      explorerUrl: `${explorer}/tx/${receipt.hash}`,
     });
   } catch (e: any) {
     console.error("Anchor error:", e?.stack || e?.message || e);
-    return res.status(500).json({ ok: false, error: e?.message || "anchor failed" });
+    return res
+      .status(500)
+      .json({ ok: false, error: e?.message || "anchor failed" });
   }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { action } = req.query;
 
-  if (action === 'status') {
+  if (action === "status") {
     return handleStatus(req, res);
-  } else if (!action || action === 'anchor') {
+  } else if (!action || action === "anchor") {
     return handleAnchor(req, res);
   } else {
-    return res.status(400).json({ error: 'Invalid action. Use ?action=status or POST for anchoring' });
+    return res
+      .status(400)
+      .json({
+        error: "Invalid action. Use ?action=status or POST for anchoring",
+      });
   }
 }
-

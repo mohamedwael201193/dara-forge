@@ -210,60 +210,81 @@ export const DemoApp: React.FC = () => {
                         Network Information
                       </CardTitle>
                       <CardDescription className="text-slate-300">
-                        0G Galileo Testnet details and status
+                        Split architecture: Mainnet (16661) + Galileo Testnet
+                        (16602)
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <p className="text-slate-400 mb-1">Chain ID</p>
-                          <p className="text-white font-mono">16602</p>
+                      <div className="space-y-3">
+                        <div className="bg-slate-700/30 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                            <h5 className="text-sm font-semibold text-emerald-300">
+                              0G Mainnet (Chain ID: 16661)
+                            </h5>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-slate-400">RPC</p>
+                              <p className="text-white font-mono">
+                                evmrpc.0g.ai
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400">Explorer</p>
+                              <p className="text-white font-mono">
+                                chainscan.0g.ai
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-xs text-slate-300">
+                            <strong>Services:</strong> Storage, Chain Anchor,
+                            iNFT Minting
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-slate-400 mb-1">Currency</p>
-                          <p className="text-white font-mono">0G</p>
-                        </div>
-                        <div>
-                          <p className="text-slate-400 mb-1">RPC Endpoint</p>
-                          <p className="text-white font-mono text-xs">
-                            evmrpc-testnet.0g.ai
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-slate-400 mb-1">Explorer</p>
-                          <p className="text-white font-mono text-xs">
-                            chainscan-galileo.0g.ai
-                          </p>
+
+                        <div className="bg-slate-700/30 rounded-lg p-3">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                            <h5 className="text-sm font-semibold text-blue-300">
+                              0G Galileo Testnet (Chain ID: 16602)
+                            </h5>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-slate-400">RPC</p>
+                              <p className="text-white font-mono">
+                                evmrpc-galileo.0g.ai
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-400">Explorer</p>
+                              <p className="text-white font-mono">
+                                chainscan-galileo.0g.ai
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-xs text-slate-300">
+                            <strong>Services:</strong> Compute Network, DA Layer
+                          </div>
                         </div>
                       </div>
 
                       <div className="border-t border-slate-700 pt-4">
                         <h4 className="font-semibold text-white mb-3">
-                          Network Services
+                          Network Services Status
                         </h4>
                         <div className="space-y-2">
                           <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
                             <span className="text-sm text-slate-300">
-                              0G Chain (Blockchain)
+                              0G Mainnet (Storage, Anchor, iNFTs)
                             </span>
                           </div>
                           <div className="flex items-center gap-3">
                             <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
                             <span className="text-sm text-slate-300">
-                              0G Storage Network
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-purple-400 animate-pulse"></div>
-                            <span className="text-sm text-slate-300">
-                              0G Compute Network
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <div className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></div>
-                            <span className="text-sm text-slate-300">
-                              0G DA Layer
+                              0G Galileo (Compute, DA)
                             </span>
                           </div>
                         </div>

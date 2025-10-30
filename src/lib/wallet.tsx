@@ -4,7 +4,7 @@ import { createAppKit } from "@reown/appkit/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { WagmiProvider } from "wagmi";
-import { ogGalileo } from "./networks";
+import { ogMainnet } from "./networks"; // Only import mainnet
 
 const projectId = import.meta.env.VITE_WC_PROJECT_ID || "your-project-id";
 
@@ -23,7 +23,8 @@ const metadata = {
   icons: ["https://avatars.githubusercontent.com/u/179229932"],
 };
 
-const networks: [AppKitNetwork, ...AppKitNetwork[]] = [ogGalileo];
+// Wave 5: ONLY mainnet - auto-connect and approve to mainnet always
+const networks: [AppKitNetwork, ...AppKitNetwork[]] = [ogMainnet];
 
 const wagmiAdapter = new WagmiAdapter({
   networks,
@@ -36,14 +37,18 @@ const modal = createAppKit({
   networks,
   projectId,
   metadata,
-  defaultNetwork: ogGalileo,
-  features: { analytics: true },
+  defaultNetwork: ogMainnet,
+  features: {
+    analytics: true,
+    allWallets: true,
+  },
   themeVariables: {
     "--w3m-z-index": 99999,
   },
-});
-
-// 6. Create query client
+  enableWalletConnect: true,
+  enableInjected: true,
+  enableCoinbase: true,
+}); // 6. Create query client
 const queryClient = new QueryClient();
 
 export function WalletProviders({ children }: { children: React.ReactNode }) {

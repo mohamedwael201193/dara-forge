@@ -2,23 +2,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
-  Bell,
   CheckCircle,
   Crown,
+  ExternalLink,
   Gem,
-  Lock,
-  Rocket,
   Shield,
   Sparkles,
-  Star,
   Trophy,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function NFTsComingSoon() {
-  const [email, setEmail] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
+  const navigate = useNavigate();
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
 
   const features = [
@@ -27,63 +24,66 @@ export function NFTsComingSoon() {
       title: "Research Achievement iNFTs",
       description:
         "Mint intelligent iNFTs for your verified research milestones",
-      color: "from-yellow-500 to-orange-500",
+      color: "from-emerald-500 to-teal-500",
+      status: "✅ Live",
     },
     {
       icon: <Shield className="w-8 h-8" />,
-      title: "Proof of Contribution",
-      description: "On-chain verification badges for peer reviewers",
+      title: "ERC-7857 Standard",
+      description:
+        "Production-grade intelligent NFTs with encrypted capabilities",
       color: "from-blue-500 to-purple-500",
+      status: "✅ Live",
     },
     {
       icon: <Gem className="w-8 h-8" />,
-      title: "Dataset Ownership iNFTs",
+      title: "Gasless Minting",
       description:
-        "Tokenize your datasets with intelligent ownership records and AI analysis",
-      color: "from-green-500 to-teal-500",
+        "DARA covers all gas fees - focus on research, not transactions",
+      color: "from-green-500 to-emerald-500",
+      status: "✅ Live",
     },
     {
       icon: <Crown className="w-8 h-8" />,
-      title: "Research DAO Membership",
-      description: "Exclusive iNFTs for DARA Forge governance participation",
+      title: "Full Ownership",
+      description: "You own the iNFT completely with full transfer rights",
       color: "from-purple-500 to-pink-500",
+      status: "✅ Live",
     },
   ];
 
   const benefits = [
-    "🎯 Verifiable ownership of research contributions",
-    "💎 Tradeable scientific achievements",
-    "🔐 Immutable proof of discovery timestamps",
-    "🌟 Reputation building in the scientific community",
-    "💰 Monetization opportunities for datasets",
-    "🤝 Collaboration tokens for joint research",
+    "🎯 Zero gas fees - DARA covers minting costs",
+    "💎 Instant minting after pipeline completion",
+    "🔐 Immutable on-chain research credentials",
+    "🌟 ERC-7857 compliant intelligent NFTs",
+    "💰 Full ownership and transferability",
+    "🤝 Backend-secured, user-friendly experience",
   ];
-
-  const handleNotifyMe = () => {
-    if (email && email.includes("@")) {
-      setSubscribed(true);
-      // In production, send this to your backend
-      localStorage.setItem("nft-notify-email", email);
-      setTimeout(() => setSubscribed(false), 5000);
-    }
-  };
 
   return (
     <div className="w-full max-w-7xl mx-auto p-6 space-y-8">
       {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-purple-900/20 via-blue-900/20 to-pink-900/20 p-12 border border-purple-500/20">
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900/20 via-blue-900/20 to-purple-900/20 p-12 border border-emerald-500/30">
         <div className="absolute inset-0 bg-grid-white/5" />
         <div className="relative z-10 text-center space-y-6">
           <div className="flex justify-center mb-6">
             <div className="relative">
-              <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-3xl opacity-50" />
-              <div className="relative bg-gradient-to-br from-purple-600 to-pink-600 p-6 rounded-full">
-                <Sparkles className="w-16 h-16 text-white animate-pulse" />
+              <div className="absolute inset-0 animate-pulse bg-gradient-to-r from-emerald-500 to-blue-500 rounded-full blur-3xl opacity-50" />
+              <div className="relative bg-gradient-to-br from-emerald-600 to-blue-600 p-6 rounded-full">
+                <CheckCircle className="w-16 h-16 text-white" />
               </div>
             </div>
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 border border-emerald-500/30 rounded-full mb-4">
+            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            <span className="text-sm font-semibold text-emerald-300">
+              Live on 0G Mainnet
+            </span>
+          </div>
+
+          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
             Research iNFTs
           </h1>
 
@@ -92,26 +92,41 @@ export function NFTsComingSoon() {
           </p>
 
           <div className="flex items-center justify-center gap-2 mt-4 flex-wrap">
-            <Badge className="px-4 py-2 text-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white border-0">
-              <Rocket className="w-4 h-4 mr-2" />
-              Launching Soon
+            <Badge className="px-4 py-2 text-lg bg-gradient-to-r from-emerald-600 to-blue-600 text-white border-0">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Now Available!
             </Badge>
             <Badge
               variant="outline"
-              className="px-4 py-2 text-lg border-purple-500 text-purple-400"
+              className="px-4 py-2 text-lg border-emerald-500 text-emerald-400"
             >
-              <Lock className="w-4 h-4 mr-2" />
-              Early Access Available
+              <Zap className="w-4 h-4 mr-2" />
+              Gasless Minting
             </Badge>
           </div>
-        </div>
 
-        {/* Floating Elements */}
-        <div className="absolute top-10 left-10 animate-float">
-          <Star className="w-8 h-8 text-yellow-400 opacity-50" />
-        </div>
-        <div className="absolute bottom-10 right-10 animate-float-delay">
-          <Zap className="w-8 h-8 text-blue-400 opacity-50" />
+          {/* Contract Address */}
+          <div className="bg-slate-800/50 backdrop-blur rounded-lg p-4 max-w-2xl mx-auto mt-6">
+            <p className="text-xs text-slate-400 mb-1">
+              Deployed Contract (0G Mainnet)
+            </p>
+            <div className="flex items-center justify-center gap-2">
+              <p className="font-mono text-sm text-purple-300">
+                0x3156F6E761D7c9dA0a88A6165864995f2b58854f
+              </p>
+              <button
+                onClick={() =>
+                  window.open(
+                    "https://chainscan.0g.ai/address/0x3156F6E761D7c9dA0a88A6165864995f2b58854f",
+                    "_blank"
+                  )
+                }
+                className="text-emerald-400 hover:text-emerald-300"
+              >
+                <ExternalLink className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -120,7 +135,7 @@ export function NFTsComingSoon() {
         {features.map((feature, idx) => (
           <Card
             key={idx}
-            className="relative overflow-hidden border-gray-800 bg-gray-900/50 backdrop-blur cursor-pointer transform transition-all duration-300 hover:scale-105"
+            className="relative overflow-hidden border-emerald-800/50 bg-gray-900/50 backdrop-blur cursor-pointer transform transition-all duration-300 hover:scale-105"
             onMouseEnter={() => setHoveredFeature(idx)}
             onMouseLeave={() => setHoveredFeature(null)}
           >
@@ -142,6 +157,9 @@ export function NFTsComingSoon() {
                 >
                   {feature.icon}
                 </div>
+                <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/20 px-2 py-1 rounded">
+                  {feature.status}
+                </span>
               </div>
 
               <div>
@@ -156,10 +174,10 @@ export function NFTsComingSoon() {
       </div>
 
       {/* Benefits Section */}
-      <Card className="bg-gradient-to-br from-blue-900/20 to-purple-900/20 border-blue-500/20">
+      <Card className="bg-gradient-to-br from-emerald-900/20 to-blue-900/20 border-emerald-500/20">
         <CardContent className="p-8">
-          <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-            Why Research iNFTs Matter
+          <h2 className="text-3xl font-bold text-center mb-8 bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
+            Why Research iNFTs on DARA
           </h2>
 
           <div className="grid md:grid-cols-2 gap-4">
@@ -168,7 +186,7 @@ export function NFTsComingSoon() {
                 key={idx}
                 className="flex items-center gap-3 p-4 rounded-lg bg-gray-900/50 hover:bg-gray-800/50 transition-colors"
               >
-                <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                 <span className="text-gray-300">{benefit}</span>
               </div>
             ))}
@@ -177,42 +195,29 @@ export function NFTsComingSoon() {
       </Card>
 
       {/* CTA Section */}
-      <Card className="bg-gradient-to-r from-purple-900 to-pink-900 border-0">
+      <Card className="bg-gradient-to-r from-emerald-900 to-blue-900 border-0">
         <CardContent className="p-8 text-center space-y-6">
           <h3 className="text-2xl font-bold text-white">
-            Be Among the First to Mint Research iNFTs
+            Ready to Mint Your Research iNFT?
           </h3>
 
           <p className="text-gray-300">
-            Join the waitlist for early access and exclusive benefits
+            Complete the research pipeline and mint your intelligent NFT
+            instantly - zero gas fees!
           </p>
 
-          {!subscribed ? (
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-lg bg-gray-800 text-white border border-gray-700 focus:border-purple-500 focus:outline-none"
-              />
-              <Button
-                onClick={handleNotifyMe}
-                className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transform transition hover:scale-105"
-              >
-                <Bell className="w-4 h-4 mr-2" />
-                Notify Me
-              </Button>
-            </div>
-          ) : (
-            <div className="text-green-400 font-semibold flex items-center justify-center gap-2">
-              <CheckCircle className="w-5 h-5" />
-              You're on the list! We'll notify you when iNFTs launch.
-            </div>
-          )}
+          <Button
+            onClick={() => navigate("/pipeline")}
+            className="px-8 py-4 bg-gradient-to-r from-emerald-600 to-blue-600 hover:from-emerald-700 hover:to-blue-700 text-white font-semibold rounded-lg transform transition hover:scale-105 text-lg"
+          >
+            <Sparkles className="w-5 h-5 mr-2" />
+            Start Minting Now
+          </Button>
 
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-400 flex-wrap">
-            <span>🔥 2,847 researchers waiting</span>
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-400 flex-wrap mt-4">
+            <span>✅ Production Ready</span>
+            <span>🎁 Zero Gas Fees</span>
+            <span>⚡ Instant Minting</span>
           </div>
         </CardContent>
       </Card>

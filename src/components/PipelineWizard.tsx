@@ -11,11 +11,9 @@ import {
   FileDown,
   Play,
   RefreshCw,
-  Sparkles,
   Upload,
 } from "lucide-react";
 import React, { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { CHAIN_CONFIG } from "../config/chain";
 import { useOgUpload } from "../hooks/useOgUpload";
 import { apiUrl } from "../lib/api";
@@ -26,6 +24,7 @@ import {
   computeCircuitBreaker,
 } from "../services/computeCircuitBreaker";
 import { useDataStore } from "../store/dataStore";
+import { MintPassportButton } from "./iNFT/MintPassportButton";
 
 // Pipeline step states
 export type StepStatus = "pending" | "running" | "completed" | "error";
@@ -847,9 +846,9 @@ Return:
           </motion.div>
         )}
 
-        {/* Research iNFT Teaser */}
+        {/* Research iNFT Minting */}
         {pipelineState.steps[5].status === "completed" && (
-          <ResearchINFTTeaser />
+          <ResearchINFTTeaser pipelineState={pipelineState} />
         )}
       </div>
     </div>
@@ -1053,82 +1052,42 @@ const StepCard: React.FC<StepCardProps> = ({
   );
 };
 
-// Research iNFT Teaser Component
-const ResearchINFTTeaser: React.FC = () => {
-  const navigate = useNavigate();
+// Research iNFT Teaser Component (replaced with actual minting in Step 5)
+const ResearchINFTTeaser: React.FC<{ pipelineState: PipelineState }> = ({
+  pipelineState,
+}) => {
+  // Extract research data from completed pipeline steps
+  const storage = pipelineState.results.storage;
+  const chain = pipelineState.results.chain;
+  const compute = pipelineState.results.compute;
+
+  // Prepare research data for iNFT
+  const researchData = {
+    cid: storage?.merkleRoot || storage?.datasetId || "",
+    anchorHash: chain?.txHash || "",
+    analysisResults: compute?.responseId || compute?.requestId || "",
+    fileName:
+      storage?.fileName ||
+      `research-${storage?.merkleRoot?.slice(0, 8) || "unknown"}.txt`,
+    timestamp: new Date().toISOString(),
+  };
+
+  const handleMintSuccess = (tokenId: string, txHash: string) => {
+    console.log(`✅ iNFT Minted! Token ID: ${tokenId}, TX: ${txHash}`);
+    // Could add analytics tracking here
+  };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.5 }}
-      className="mt-8 relative"
+      className="mt-8"
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-3xl blur-xl" />
-      <div className="relative bg-slate-800/50 backdrop-blur-sm border border-purple-500/30 rounded-3xl p-8">
-        <div className="flex items-center gap-4 mb-6">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-500 rounded-2xl flex items-center justify-center"
-          >
-            <Sparkles className="w-8 h-8 text-white" />
-          </motion.div>
-          <div>
-            <h3 className="text-2xl font-bold text-white">
-              🎨 Ready for Research iNFT
-            </h3>
-            <p className="text-purple-300">All verification proofs complete</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {[
-            {
-              label: "Storage",
-              status: "✅ Verified",
-              color: "text-emerald-400",
-            },
-            { label: "DA", status: "✅ Available", color: "text-emerald-400" },
-            {
-              label: "Chain",
-              status: "✅ Anchored",
-              color: "text-emerald-400",
-            },
-            {
-              label: "Compute",
-              status: "✅ Analyzed",
-              color: "text-emerald-400",
-            },
-          ].map((item, i) => (
-            <motion.div
-              key={item.label}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.7 + i * 0.1 }}
-              className="text-center p-4 bg-slate-700/30 rounded-xl"
-            >
-              <div className={`font-semibold ${item.color}`}>{item.label}</div>
-              <div className="text-sm text-slate-300">{item.status}</div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-2xl shadow-lg text-lg"
-            onClick={() => navigate("/infts")}
-          >
-            <Sparkles className="w-5 h-5" />
-            Explore Research iNFTs →
-          </motion.button>
-          <p className="text-sm text-slate-400 mt-3">
-            Coming soon: One-click intelligent NFT minting
-          </p>
-        </div>
-      </div>
+      <MintPassportButton
+        researchData={researchData}
+        onSuccess={handleMintSuccess}
+      />
     </motion.div>
   );
 };

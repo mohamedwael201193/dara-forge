@@ -699,12 +699,14 @@ DARA Forge is **revolutionizing how humanity creates, verifies, and monetizes re
 - 📺 **YouTube**: Technical deep dives and platform demos
 - � **Academic Events**: Conference presentations and workshops
 
-### � **For Researchers**
+### 🔬 **For Researchers**
 
 - **Upload your research** and experience the full verification pipeline
+- **Zero-cost minting**: DARA covers all gas fees for iNFT creation
+- **Focus on science**: No crypto complexity or transaction fees
 - **Connect with peers** building the future of decentralized science
+- **Own your credentials**: Full control and transferability of research iNFTs
 - **Provide feedback** on features that matter to your workflow
-- **Join the beta** when Research iNFT minting goes live
 
 ### �‍💻 **For Developers**
 

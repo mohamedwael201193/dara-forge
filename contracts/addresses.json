@@ -1,0 +1,26 @@
+{
+  "description": "0G Mainnet Contract Addresses - Wave 5 Deployment",
+  "network": {
+    "name": "0G Mainnet",
+    "chainId": 16661,
+    "rpcUrl": "https://evmrpc.0g.ai",
+    "explorer": "https://chainscan.0g.ai"
+  },
+  "DaraAnchor": {
+    "mainnet": "0xB0324Dd39875185658f48aB78473d288d8f9B52e",
+    "deployer": "0x1dF8e57ea7A6A3bB554E13412b27d4d26BBA851B",
+    "deployedAt": "2025-10-29T21:08:30.193Z",
+    "chainId": 16661,
+    "network": "0G Mainnet"
+  },
+  "ERC7857ResearchPassport": {
+    "mainnet": "0x3156F6E761D7c9dA0a88A6165864995f2b58854f",
+    "oracle": "0xa4e554b54cF94BfBca0682c34877ee7C96aC9261",
+    "deployer": "0x1dF8e57ea7A6A3bB554E13412b27d4d26BBA851B",
+    "deployedAt": "2025-10-29T21:11:05.051Z",
+    "chainId": 16661,
+    "network": "0G Mainnet",
+    "name": "DARA Research Passport",
+    "symbol": "DRP"
+  }
+}

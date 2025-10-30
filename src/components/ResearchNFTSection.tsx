@@ -371,7 +371,7 @@ export default function ResearchNFTSection() {
           </div>
         </motion.div>
 
-        {/* Coming Soon Notice */}
+        {/* Now Available Notice */}
         <motion.div
           className="text-center mt-12"
           initial={{ opacity: 0 }}
@@ -379,13 +379,15 @@ export default function ResearchNFTSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <p className="text-muted-foreground">
-            Research iNFT minting will be available in Wave 4.
-            <span className="text-electric-blue font-semibold">
-              {" "}
-              Stay tuned for updates!
-            </span>
-          </p>
+          <div className="inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 border border-emerald-500/30 rounded-full">
+            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            <p className="text-white font-semibold">
+              Research iNFT minting is now live on 0G Mainnet!
+              <span className="text-emerald-300 ml-2">
+                🎉 Gasless minting available
+              </span>
+            </p>
+          </div>
         </motion.div>
       </div>
     </section>

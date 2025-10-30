@@ -1,9 +1,9 @@
-import React from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useWalletBalance } from '@/hooks/useWalletBalance'
-import { Wallet, AlertTriangle, CheckCircle, RefreshCw } from '@/lib/icons'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
+import { AlertTriangle, CheckCircle, RefreshCw, Wallet } from "@/lib/icons";
+import React from "react";
 
 export const WalletStatus: React.FC = () => {
   const {
@@ -17,8 +17,8 @@ export const WalletStatus: React.FC = () => {
     switchToZeroGChain,
     refetchBalance,
     zeroGChainId,
-    hasError
-  } = useWalletBalance()
+    hasError,
+  } = useWalletBalance();
 
   if (!isConnected) {
     return (
@@ -36,7 +36,7 @@ export const WalletStatus: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -52,7 +52,9 @@ export const WalletStatus: React.FC = () => {
         <div>
           <p className="text-sm font-medium mb-1">Address</p>
           <p className="text-xs font-mono bg-muted p-2 rounded">
-            {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not connected'}
+            {address
+              ? `${address.slice(0, 6)}...${address.slice(-4)}`
+              : "Not connected"}
           </p>
         </div>
 
@@ -63,7 +65,10 @@ export const WalletStatus: React.FC = () => {
             {isOnZeroGChain ? (
               <>
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <Badge variant="default" className="bg-green-100 text-green-800">
+                <Badge
+                  variant="default"
+                  className="bg-green-100 text-green-800"
+                >
                   Connected to 0G Chain
                 </Badge>
               </>
@@ -76,10 +81,10 @@ export const WalletStatus: React.FC = () => {
               </>
             )}
           </div>
-          
+
           {!isOnZeroGChain && (
-            <Button 
-              onClick={switchToZeroGChain} 
+            <Button
+              onClick={switchToZeroGChain}
               disabled={isLoading}
               className="w-full mt-2"
               variant="outline"
@@ -106,10 +111,12 @@ export const WalletStatus: React.FC = () => {
               onClick={() => refetchBalance()}
               disabled={balanceLoading || !isOnZeroGChain}
             >
-              <RefreshCw className={`w-3 h-3 ${balanceLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw
+                className={`w-3 h-3 ${balanceLoading ? "animate-spin" : ""}`}
+              />
             </Button>
           </div>
-          
+
           <div className="bg-muted p-3 rounded-lg">
             <div className="flex items-center justify-between">
               <span className="text-lg font-bold">
@@ -136,16 +143,17 @@ export const WalletStatus: React.FC = () => {
                 <CheckCircle className="w-4 h-4 text-green-500" />
               )}
             </div>
-            
+
             {!isOnZeroGChain && (
               <p className="text-xs text-muted-foreground mt-1">
                 Connect to 0G Chain (ID: {zeroGChainId}) to view your balance
               </p>
             )}
-            
-            {isOnZeroGChain && balance === '0.0000' && !balanceLoading && (
+
+            {isOnZeroGChain && balance === "0.0000" && !balanceLoading && (
               <p className="text-xs text-muted-foreground mt-1">
-                This wallet has no 0G tokens. Visit a faucet to get testnet tokens.
+                This wallet has no 0G tokens. Visit a faucet or bridge to get
+                tokens.
               </p>
             )}
           </div>
@@ -153,14 +161,49 @@ export const WalletStatus: React.FC = () => {
 
         {/* Network Details */}
         <div className="text-xs text-muted-foreground space-y-1">
-          <p><strong>0G Chain ID:</strong> {zeroGChainId}</p>
-          <p><strong>Current Chain:</strong> {chainId}</p>
-          <p><strong>Status:</strong> {isOnZeroGChain ? '✅ Correct Network' : '❌ Wrong Network'}</p>
-          <p><strong>RPC:</strong> evmrpc-testnet.0g.ai</p>
-          <p><strong>Explorer:</strong> chainscan-galileo.0g.ai</p>
+          <p>
+            <strong>0G Chain ID:</strong> {zeroGChainId}
+          </p>
+          <p>
+            <strong>Current Chain:</strong> {chainId}
+          </p>
+          <p>
+            <strong>Status:</strong>{" "}
+            {isOnZeroGChain ? "✅ Correct Network" : "❌ Wrong Network"}
+          </p>
+          {chainId === 16661 && (
+            <>
+              <p>
+                <strong>Network:</strong> 0G Mainnet
+              </p>
+              <p>
+                <strong>RPC:</strong> evmrpc.0g.ai
+              </p>
+              <p>
+                <strong>Explorer:</strong> chainscan.0g.ai
+              </p>
+            </>
+          )}
+          {chainId === 16602 && (
+            <>
+              <p>
+                <strong>Network:</strong> 0G Galileo Testnet
+              </p>
+              <p>
+                <strong>RPC:</strong> evmrpc-galileo.0g.ai
+              </p>
+              <p>
+                <strong>Explorer:</strong> chainscan-galileo.0g.ai
+              </p>
+            </>
+          )}
+          {chainId !== 16661 && chainId !== 16602 && (
+            <p>
+              <strong>Network:</strong> Unknown 0G Network
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>
-  )
-}
-
+  );
+};

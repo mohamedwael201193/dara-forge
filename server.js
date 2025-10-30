@@ -127,8 +127,9 @@ try {
   console.error('[0G Broker] Failed to load SDK:', err);
 }
 
-const COMPUTE_RPC = process.env.OG_COMPUTE_RPC || process.env.OG_RPC_URL || 'https://evmrpc-testnet.0g.ai';
-const COMPUTE_PRIVATE_KEY = process.env.OG_COMPUTE_PRIVATE_KEY || process.env.OG_STORAGE_PRIVATE_KEY;
+// Wave 5: Compute stays on testnet (Galileo) per requirements
+const COMPUTE_RPC = process.env.OG_COMPUTE_RPC || 'https://evmrpc-galileo.0g.ai';
+const COMPUTE_PRIVATE_KEY = process.env.OG_COMPUTE_PRIVATE_KEY || process.env.OG_TESTNET_PRIVATE_KEY;
 
 let _brokerInstance = null;
 
@@ -309,9 +310,9 @@ app.post('/api/storage/upload', upload.array('file'), async (req, res) => {
       });
     }
 
-    // Get 0G configuration
-    const indexerBase = process.env.OG_INDEXER_RPC || 'https://indexer-storage-galileo-turbo.0g.ai';
-    const rpc = process.env.OG_RPC_URL || 'https://evmrpc-galileo.0g.ai';
+    // Get 0G configuration - Wave 5: Use MAINNET for storage
+    const indexerBase = process.env.OG_STORAGE_INDEXER_MAINNET || process.env.OG_INDEXER_RPC || 'https://indexer-storage-turbo.0g.ai';
+    const rpc = process.env.OG_RPC_URL_MAINNET || process.env.OG_RPC_URL || 'https://evmrpc.0g.ai';
     const priv = process.env.OG_STORAGE_PRIVATE_KEY;
 
     if (!priv) {
@@ -410,8 +411,10 @@ app.get('/api/storage-utils', async (req, res) => {
   if (action === 'health') {
     res.json({ 
       ok: true, 
-      status: '0G Storage operational',
-      rpc: process.env.OG_RPC_URL || 'https://evmrpc-galileo.0g.ai'
+      status: '0G Storage operational (Mainnet)',
+      rpc: process.env.OG_RPC_URL_MAINNET || process.env.OG_RPC_URL || 'https://evmrpc.0g.ai',
+      indexer: process.env.OG_STORAGE_INDEXER_MAINNET || 'https://indexer-storage-turbo.0g.ai',
+      network: '0G Mainnet (16661)'
     });
   } else {
     res.status(400).json({ ok: false, message: 'Invalid action' });
@@ -570,22 +573,71 @@ app.post('/api/anchor', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'rootHash required' });
     }
 
-    // This should call your deployed smart contract
-    // For now, return success but log that contract integration needed
-    console.warn('[ANCHOR] TODO: Integrate with deployed DaraAnchor contract');
+    // Wave 5: Use mainnet DaraAnchor contract
+    const rpc = process.env.OG_RPC_URL_MAINNET || process.env.OG_RPC_URL || 'https://evmrpc.0g.ai';
+    const contractAddress = process.env.DARA_CONTRACT || '0xB0324Dd39875185658f48aB78473d288d8f9B52e';
+    const priv = process.env.OG_STORAGE_PRIVATE_KEY || process.env.OG_MAINNET_PRIVATE_KEY;
+
+    if (!priv) {
+      return res.status(500).json({ 
+        ok: false, 
+        message: 'OG_STORAGE_PRIVATE_KEY or OG_MAINNET_PRIVATE_KEY required for anchoring' 
+      });
+    }
+
+    console.log('[ANCHOR] Using mainnet contract:', contractAddress);
     console.log('[ANCHOR] Root:', rootHash);
-    console.log('[ANCHOR] Project:', projectId);
+    console.log('[ANCHOR] Project:', projectId || 'default');
+
+    // Initialize provider and signer
+    const provider = new ethers.JsonRpcProvider(rpc);
+    const signer = new ethers.Wallet(priv, provider);
+
+    // DaraAnchor contract ABI (minimal - just the anchor function)
+    const abi = [
+      "function anchor(bytes32 rootHash, bytes32 manifestHash, string calldata projectId) external returns (uint256)"
+    ];
+
+    const contract = new ethers.Contract(contractAddress, abi, signer);
+
+    // Convert strings to bytes32 if needed
+    const rootHashBytes32 = rootHash.startsWith('0x') ? rootHash : '0x' + rootHash;
+    const manifestHashBytes32 = manifestHash ? 
+      (manifestHash.startsWith('0x') ? manifestHash : '0x' + manifestHash) : 
+      ethers.ZeroHash;
+
+    console.log('[ANCHOR] Sending transaction...');
+    const tx = await contract.anchor(
+      rootHashBytes32,
+      manifestHashBytes32,
+      projectId || 'dara-research'
+    );
+
+    console.log('[ANCHOR] Transaction sent:', tx.hash);
+    console.log('[ANCHOR] Waiting for confirmation...');
+    
+    const receipt = await tx.wait();
+    
+    console.log('[ANCHOR] ✅ Confirmed in block:', receipt.blockNumber);
 
     res.json({
       ok: true,
-      message: 'Anchor endpoint ready - contract integration needed',
-      rootHash,
-      projectId,
-      note: 'Configure OG_ANCHOR_CONTRACT_ADDRESS environment variable'
+      txHash: tx.hash,
+      blockNumber: receipt.blockNumber,
+      contractAddress,
+      rootHash: rootHashBytes32,
+      manifestHash: manifestHashBytes32,
+      projectId: projectId || 'dara-research',
+      network: '0G Mainnet (16661)',
+      explorer: `https://chainscan.0g.ai/tx/${tx.hash}`
     });
   } catch (error) {
     console.error('[ANCHOR] Error:', error);
-    res.status(500).json({ ok: false, message: error.message });
+    res.status(500).json({ 
+      ok: false, 
+      message: error.message,
+      details: error.reason || error.code 
+    });
   }
 });
 
