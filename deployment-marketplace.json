@@ -1,0 +1,12 @@
+{
+  "network": "0G Mainnet",
+  "chainId": 16661,
+  "marketplaceContract": "0x57e463BF845cf328715446b9246fFa536B671A10",
+  "researchPassportContract": "0x3156F6E761D7c9dA0a88A6165864995f2b58854f",
+  "treasury": "0x1dF8e57ea7A6A3bB554E13412b27d4d26BBA851B",
+  "platformFee": "2.5%",
+  "royalty": "5%",
+  "deployedAt": "2025-10-30T21:11:37.172Z",
+  "deployer": "0x1dF8e57ea7A6A3bB554E13412b27d4d26BBA851B",
+  "deploymentTx": "0x3d0f9317f48dd878d3beeae0e569175285dd70fafe4172001492516e7cba9254"
+}

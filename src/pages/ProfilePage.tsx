@@ -13,12 +13,15 @@ import {
   Download,
   ExternalLink,
   FileSearch,
+  Package,
   Shield,
+  ShoppingBag,
+  Star,
   Upload,
   User,
   Wallet,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface ActivityEntry {
@@ -41,10 +44,28 @@ const ProfilePage = () => {
   const [copiedAddress, setCopiedAddress] = useState(false);
   const [filterType, setFilterType] = useState("all");
   const [exportFormat, setExportFormat] = useState<"json" | "csv">("json");
+  const [ownedNFTs, setOwnedNFTs] = useState<any[]>([]);
+  const [nftAchievements, setNftAchievements] = useState<any[]>([]);
   const { address, isConnected } = useAppKitAccount();
   const { caipNetwork } = useAppKitNetwork();
   const { uploadedDatasets, daPublications, computeResults, chainAnchors } =
     useDataStore();
+
+  // Load NFT purchases from localStorage
+  useEffect(() => {
+    const purchases = JSON.parse(
+      localStorage.getItem("nftPurchaseHistory") || "[]"
+    );
+    const userPurchases = purchases.filter(
+      (p: any) => p.buyer?.toLowerCase() === address?.toLowerCase()
+    );
+    setOwnedNFTs(userPurchases);
+
+    const achievements = JSON.parse(
+      localStorage.getItem("userAchievements") || "[]"
+    );
+    setNftAchievements(achievements);
+  }, [address]);
 
   // Create verifiable activity entries with typed payloads
   const createVerifyLink = (
@@ -180,6 +201,36 @@ const ProfilePage = () => {
       progress: Math.min(allActivities.length, 10),
       maxProgress: 10,
       color: "from-amber-500 to-orange-500",
+    },
+    {
+      id: 5,
+      title: "First iNFT Collector",
+      description: "Purchased your first research iNFT",
+      icon: ShoppingBag,
+      unlocked: ownedNFTs.length >= 1,
+      progress: Math.min(ownedNFTs.length, 1),
+      maxProgress: 1,
+      color: "from-pink-500 to-rose-500",
+    },
+    {
+      id: 6,
+      title: "Research Enthusiast",
+      description: "Collected 5 research iNFTs",
+      icon: Star,
+      unlocked: ownedNFTs.length >= 5,
+      progress: Math.min(ownedNFTs.length, 5),
+      maxProgress: 5,
+      color: "from-violet-500 to-purple-500",
+    },
+    {
+      id: 7,
+      title: "Master Collector",
+      description: "Collected 10 research iNFTs",
+      icon: Package,
+      unlocked: ownedNFTs.length >= 10,
+      progress: Math.min(ownedNFTs.length, 10),
+      maxProgress: 10,
+      color: "from-indigo-500 to-blue-500",
     },
   ];
 
@@ -387,6 +438,87 @@ const ProfilePage = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Owned iNFTs Section */}
+            {ownedNFTs.length > 0 && (
+              <motion.div
+                className="bg-gradient-to-br from-purple-900/20 to-pink-900/20 backdrop-blur-sm border border-purple-500/30 rounded-2xl p-8"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 0.1 }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-white mb-1 flex items-center gap-2">
+                      <Package className="w-6 h-6 text-purple-400" />
+                      My Research iNFTs
+                    </h2>
+                    <p className="text-gray-400 text-sm">
+                      {ownedNFTs.length} NFT{ownedNFTs.length !== 1 ? "s" : ""}{" "}
+                      owned
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => navigate("/infts")}
+                    className="text-purple-400 hover:text-purple-300 text-sm font-semibold flex items-center gap-1 transition-colors"
+                  >
+                    Browse More
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {ownedNFTs.map((nft, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-black/30 rounded-xl border border-purple-500/20 overflow-hidden hover:border-purple-500/50 transition-all group"
+                    >
+                      <div className="relative h-32">
+                        <img
+                          src={nft.imageUrl}
+                          alt={nft.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                        <div className="absolute bottom-2 left-2 right-2">
+                          <h3 className="text-sm font-semibold text-white line-clamp-1">
+                            {nft.title}
+                          </h3>
+                          <p className="text-xs text-gray-300">
+                            {nft.category}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <div className="flex items-center justify-between text-xs mb-2">
+                          <span className="text-gray-400">Purchase Price</span>
+                          <span className="text-green-400 font-semibold">
+                            {nft.price} OG
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-400">
+                            {new Date(nft.timestamp).toLocaleDateString()}
+                          </span>
+                          <a
+                            href={`https://chainscan.0g.ai/tx/${nft.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-purple-400 hover:text-purple-300 flex items-center gap-1 transition-colors"
+                          >
+                            View TX
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
             {/* Activity History */}
             <motion.div
               className="bg-slate-800/30 backdrop-blur-sm border border-slate-700/50 rounded-2xl p-8"

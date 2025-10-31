@@ -1,3 +1,4 @@
+import RealNFTMarketplace from "@/components/RealNFTMarketplace";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -385,6 +386,38 @@ export default function ResearchINFTsPage() {
             </motion.button>
           </div>
         </motion.div>
+      </div>
+
+      {/* NFT Marketplace Section */}
+      <div className="max-w-7xl mx-auto px-6 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 50 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-8"
+        >
+          <h2 className="text-4xl font-bold text-white mb-4">
+            Browse & Collect{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
+              Research iNFTs
+            </span>
+          </h2>
+          <p className="text-lg text-slate-300 max-w-3xl mx-auto">
+            Discover groundbreaking research verified on 0G blockchain. Each
+            iNFT includes complete verification proofs, encrypted AI analysis,
+            and full ownership rights.
+          </p>
+
+          {/* Live Blockchain Badge */}
+          <div className="mt-4 bg-green-900/20 border border-green-500/50 rounded-lg p-3 max-w-2xl mx-auto">
+            <p className="text-sm text-green-400">
+              🔥 <strong>Live Marketplace:</strong> Real transactions with OG
+              tokens on 0G Mainnet. NFTs transfer directly to your wallet!
+            </p>
+          </div>
+        </motion.div>
+
+        <RealNFTMarketplace />
       </div>
     </div>
   );
