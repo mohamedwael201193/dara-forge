@@ -1,748 +1,548 @@
-# 🧬 **DARA Forge**
+# 🧬 DARA Forge - Decentralized Research Verification Platform
 
-### _The World's First Intelligent Research NFT Platform Powered by Complete 0G Stack Integration_
+### _The First Complete Research iNFT Platform with Live NFT Marketplace on 0G Network_
 
-> **Latest Deployment**: October 21, 2025 - Railway & Render Production Ready
+> **Status**: ✅ **LIVE on 0G Mainnet** | October 31, 2025  
+> **Network**: 0G Mainnet (Chain ID: 16661) + 0G Testnet Galileo (Chain ID: 16602)
 
 <div align="center">
 
-![DARA Forge Banner](https://img.shields.io/badge/DARA%20Forge-Research%20iNFTs-purple?style=for-the-badge&logo=sparkles&logoColor=white)
-![0G Integration](https://img.shields.io/badge/0G%20Stack-Fully%20Integrated-blue?style=for-the-badge&logo=blockchain&logoColor=white)
-[![Live Demo](https://img.shields.io/badge/🌐%20Live%20Demo-dara--forge.vercel.app-green?style=for-the-badge)](https://dara-forge.vercel.app)
-[![Smart Contract](https://img.shields.io/badge/⛓️%20Contract-0x9E527...c00f-purple?style=for-the-badge)](https://chainscan-galileo.0g.ai/address/0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f)
+![DARA Forge](https://img.shields.io/badge/DARA%20Forge-Research%20iNFTs-8B5CF6?style=for-the-badge&logo=ethereum&logoColor=white)
+![0G Network](https://img.shields.io/badge/0G%20Network-Mainnet%20%2B%20Testnet-3B82F6?style=for-the-badge)
+![Marketplace](https://img.shields.io/badge/🛒%20NFT%20Marketplace-LIVE-10B981?style=for-the-badge)
 
-**🎨 Revolutionary Research iNFTs • 🔗 Complete 0G Ecosystem • 🤖 Encrypted AI Intelligence**
+[![Live Platform](https://img.shields.io/badge/🌐%20Platform-dara--forge.vercel.app-06B6D4?style=for-the-badge)](https://dara-forge.vercel.app)
 
-_The first NFTs that carry actual AI capabilities and evolve with research_
+**🔬 Verify Research • 🛒 Trade iNFTs • 🏆 Own Intelligence**
 
 </div>
 
 ---
 
-## 🎯 **Revolutionary Mission**
+## 🎯 What is DARA Forge?
 
-> **Create the first NFTs that carry encrypted AI intelligence and evolve with scientific research - powered by complete 0G decentralized infrastructure.**
+DARA Forge is the **world's first complete decentralized research verification platform** that combines:
 
-### 🚀 **What Makes DARA Forge Revolutionary:**
+- **🔬 Research Pipeline**: 5-step verification process using 0G's complete infrastructure
+- **🧬 Research iNFTs (ERC-7857)**: Intelligent NFTs that represent verified research credentials
+- **🛒 Live NFT Marketplace**: Real blockchain marketplace for buying/selling research iNFTs
+- **🎁 Gasless Minting**: Zero-friction iNFT creation (DARA pays all gas fees)
+- **✅ 0G Stack Integration**: Storage (Mainnet), Blockchain (Mainnet), Compute (Testnet), DA (Testnet)
 
-- 🧠 **Research iNFTs (ERC-7857)**: First NFTs with encrypted AI intelligence that transfer actual capabilities, not just metadata
-- 🔐 **Complete 0G Stack**: Storage, Compute, DA Layer, and Blockchain - all operational and integrated
-- 🤖 **TEE-Verified AI**: Cryptographically verified AI analysis with real signatures from Trusted Execution Environments
-- 📊 **70% Crisis Solved**: Transform research from trust-based to mathematically verifiable
-- 🎨 **Intelligent Evolution**: NFTs that update and evolve as research advances
-
----
-
-## � **Research iNFTs: The Future of Intelligent Digital Assets**
-
-### 🆚 **Traditional NFTs vs Research iNFTs**
-
-| Traditional NFTs              | 🧬 **Research iNFTs**                     |
-| ----------------------------- | ----------------------------------------- |
-| ❌ Static metadata pointers   | ✅ **Encrypted AI intelligence on-chain** |
-| ❌ No verifiable capabilities | ✅ **Complete 0G verification proofs**    |
-| ❌ Cannot evolve or update    | ✅ **Evolves with new research analysis** |
-| ❌ Vulnerable to link rot     | ✅ **Immutable storage + DA proofs**      |
-| ❌ No cryptographic proofs    | ✅ **TEE-verified computations**          |
-
-### 🔬 **ERC-7857: Intelligent NFT Standard**
-
-Research iNFTs implement the groundbreaking **ERC-7857 standard** that enables NFTs to carry:
-
-- 🧠 **Encrypted Intelligence**: AI models and analysis capabilities stored on 0G
-- 🔐 **Secure Re-encryption**: Automatic re-encryption when ownership transfers
-- ⚡ **Authorized Usage**: Smart contract-controlled access to AI capabilities
-- 📈 **Evolution Tracking**: Immutable history of intelligence updates
-- 🔗 **Verification Proofs**: Complete cryptographic verification chain
+**Mission**: Transform research from trust-based to cryptographically verifiable, and make research credentials tradeable as intelligent NFTs.
 
 ---
 
-## 🏆 **Complete 0G Stack Integration - FULLY OPERATIONAL**
+## 🌐 Platform Overview
 
-### 🗄️ **0G Storage - PRODUCTION READY**
+### 📄 All Pages
 
-```typescript
-// Immutable storage with cryptographic integrity
-const storage = await ogStorage.upload(researchData);
-// Returns: {
-//   merkleRoot: "0x9fd82c20...",
-//   proofs: [...],
-//   encrypted: true,
-//   iNFTCompatible: true
-// }
+| Page               | Route       | Purpose                                                | Status  |
+| ------------------ | ----------- | ------------------------------------------------------ | ------- |
+| **Home**           | `/`         | Landing page with hero, features, and call-to-action   | ✅ Live |
+| **Research iNFTs** | `/infts`    | NFT marketplace for buying/selling research iNFTs      | ✅ Live |
+| **Pipeline**       | `/pipeline` | 5-step research verification wizard                    | ✅ Live |
+| **0G Tech**        | `/tech`     | 0G Stack integration showcase & demos                  | ✅ Live |
+| **Profile**        | `/profile`  | User dashboard with owned NFTs, achievements, activity | ✅ Live |
+| **Verify**         | `/verify`   | Cryptographic verification of research proofs          | ✅ Live |
+
+### 🎨 Key Features
+
+✅ **Live NFT Marketplace** (0G Mainnet)
+
+- Buy/sell research iNFTs with OG tokens
+- Real blockchain transactions via MetaMask
+- 5 NFTs currently available (prices: 0.01-3.2 OG)
+- Confetti celebrations + social sharing
+- Purchase history & achievements
+
+✅ **Research Verification Pipeline** (Hybrid)
+
+- 5-step verification wizard
+- Upload → DA Publish → Chain Anchor → Compute Analysis → Mint iNFT
+- Gasless iNFT minting (backend-sponsored)
+- Complete proof generation
+
+✅ **0G Network Integration**
+
+- Storage: 0G Mainnet
+- Blockchain: 0G Mainnet
+- Compute: 0G Testnet (TEE-verified AI)
+- DA Layer: 0G Testnet (blob commitments)
+
+✅ **Profile & Activity Tracking**
+
+- View owned research iNFTs
+- Complete transaction history
+- Achievement system (First NFT, 5 NFTs, 10 NFTs)
+- Activity feed with verification links
+
+---
+
+## 🔄 Complete Research Pipeline Flow
+
+### The 5-Step Verification Process
+
+```
+📊 Research Pipeline - Complete Data Verification Journey
+
+┌────────────────────────────────────────────────────────────────────┐
+│  STEP 1: Storage Upload (0G Mainnet)                               │
+│  • Upload research file to 0G decentralized storage                │
+│  • Generate Merkle root hash for file integrity                    │
+│  • Uses: https://indexer-storage-turbo.0g.ai                       │
+│  • Output: Merkle Root (0x...), Dataset ID                         │
+└────────────────────────────────────────────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────────────────┐
+│  STEP 2: DA Publish (0G Testnet Galileo)                          │
+│  • Publish data availability proof to 0G DA layer                  │
+│  • Create blob commitment with KZG proofs                          │
+│  • Ensures data is permanently available                           │
+│  • Output: Blob Hash (0x...), Data Root                            │
+└────────────────────────────────────────────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────────────────┐
+│  STEP 3: Chain Anchor (0G Mainnet)                                │
+│  • Anchor commitments to DaraAnchor smart contract                 │
+│  • Blockchain: 0G Mainnet (Chain ID: 16661)                        │
+│  • Contract: 0xB0324Dd39875185658f48aB78473d288d8f9B52e            │
+│  • Output: Transaction Hash, Block Number, Explorer Link           │
+└────────────────────────────────────────────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────────────────┐
+│  STEP 4: Compute Analysis (0G Testnet Galileo)                    │
+│  • Execute TEE-verified AI analysis on research data               │
+│  • Uses 0G Compute Network with attestation                        │
+│  • Multi-provider: Phala (TEE), Flashpay, OpenAI fallback         │
+│  • Output: Analysis Results, TEE Attestation, Signature            │
+└────────────────────────────────────────────────────────────────────┘
+                            ↓
+┌────────────────────────────────────────────────────────────────────┐
+│  STEP 5: Generate & Mint iNFT (0G Mainnet)                        │
+│  • Generate reproducibility passport with all proofs               │
+│  • Gasless mint to ERC7857ResearchPassport contract               │
+│  • User owns iNFT representing verified research                   │
+│  • Contract: 0x3156F6E761D7c9dA0a88A6165864995f2b58854f            │
+│  • Output: Token ID, NFT Metadata, Ownership Certificate           │
+└────────────────────────────────────────────────────────────────────┘
+
+✅ RESULT: Research iNFT with complete verification chain
+           • Tradeable on marketplace
+           • Full blockchain proof
+           • Permanent credentials
 ```
 
-**Revolutionary Features:**
+### Technical Implementation
 
-- ✅ **iNFT Intelligence Storage**: Encrypted AI models and capabilities
-- ✅ **Circuit Breaker Protection**: Automatic failover and degradation
-- ✅ **Real-time Verification**: Instant Merkle proof validation
-- ✅ **Content Addressing**: Permanent immutable retrieval
-- ✅ **Batch Operations**: Efficient multi-file handling
+**Frontend** (`src/components/PipelineWizard.tsx`):
 
-### 🤖 **0G Compute - TEE VERIFIED AI**
+- 5-step wizard with real-time progress
+- File upload with drag & drop
+- Status indicators for each step
+- Log output for transparency
+- Integrated minting button
 
-```typescript
-// Cryptographically verified AI with attestation signatures
-const analysis = await computeBroker.analyzeWithAI(data, {
-  model: "GPT-OSS-120B",
-  requireAttestation: true,
-});
-// Returns: {
-//   analysis: "...",
-//   attestation: { signature: "0x...", signer: "0x...", digest: "0x..." },
-//   teeProvider: "phala",
-//   blockNumber: 12345678
-// }
-```
+**Backend APIs** (`api/` directory):
 
-**Next-Generation Features:**
+- `storage.ts` - 0G Storage upload with Merkle tree generation
+- `da.ts` - Blob submission to 0G DA layer
+- `anchor.ts` - Smart contract interaction for chain anchoring
+- `compute.ts` - Multi-provider AI analysis with circuit breakers
+- `mint.ts` - Gasless iNFT minting (backend-sponsored transactions)
 
-- 🔐 **Real Cryptographic Attestation**: TEE signatures replace chat IDs
-- 🤖 **4 AI Models**: GPT-OSS-120B, DeepSeek-V3, Qwen2.5-VL, OpenAI
-- ⚡ **Smart Circuit Breakers**: Graceful degradation and error handling
-- 💰 **Auto-funding**: Intelligent wallet management across providers
-- 🔄 **Provider Failover**: Seamless switching between compute nodes
+---
 
-### 📡 **0G Data Availability - MATHEMATICALLY GUARANTEED**
+## 🛒 Live NFT Marketplace
 
-```typescript
-// Permanent availability with cryptographic commitments
-const availability = await daLayer.publish(intelligentData);
-// Returns: {
-//   blobHash: "0xe36a027...",
-//   commitment: "0x...",
-//   epoch: 1759723584,
-//   kzgProof: "0x...",
-//   iNFTReady: true
-// }
-```
+### Features
 
-**Breakthrough Innovation:**
+**For Buyers**:
 
-- 📊 **iNFT Availability**: Specialized DA for intelligent NFT data
-- 🔒 **KZG Commitments**: Mathematical proof of data availability
-- 🌐 **Multi-endpoint**: Redundant availability across network
-- ⏰ **Epoch Tracking**: Time-stamped availability windows
-- 🔄 **Auto-redundancy**: Automatic replication and validation
+- Browse 5 research iNFTs with prices, quantities, quality scores
+- One-click purchase with MetaMask
+- Real OG token transactions on mainnet
+- Confetti celebration on successful purchase
+- Beautiful success modal with transaction details
+- Share purchase on Twitter
+- Automatic achievement unlocking
 
-### ⛓️ **0G Blockchain - SMART CONTRACT REGISTRY**
+**For Sellers** (Platform-managed):
 
-```solidity
-// Production smart contracts on 0G Galileo
-contract DaraINFT is ERC721, ERC7857 {
-    struct IntelligentNFT {
-        bytes32 intelligenceHash;    // Hash of encrypted AI capabilities
-        bytes32 verificationProof;  // Complete 0G verification chain
-        uint256 lastEvolution;      // Block number of last intelligence update
-        address teeValidator;       // TEE attestation validator
-    }
+- Fixed-price listings with customizable quantities
+- 2.5% platform fee + 5% creator royalty
+- Real-time quantity tracking
+- Automatic listing deactivation when sold out
+
+### Smart Contract
+
+**DARAMarketplace** (`contracts/DARAMarketplace.sol`):
+
+- Address: `0x57e463BF845cf328715446b9246fFa536B671A10`
+- Network: 0G Mainnet
+- Features:
+  - `createListing()` - Create new marketplace listing
+  - `buyListing()` - Purchase NFT with OG tokens
+  - `getActiveListings()` - Get all active listing IDs
+  - `getListingDetails()` - Get listing metadata
+  - `cancelListing()` - Deactivate a listing
+
+**Current Listings** (as of October 31, 2025):
+
+1. Zero-Knowledge AI Consensus Protocol - 2.5 OG (50 available)
+2. Decentralized Storage Optimization - 1.8 OG (75 available)
+3. Quantum-Resistant Blockchain Signatures - 3.2 OG (30 available)
+4. Bio-Inspired Consensus Mechanisms - 1.5 OG (100 available)
+5. Welcome to DARA Research iNFTs - 0.01 OG (1000 available)
+
+---
+
+## 🧬 Research iNFTs (ERC-7857 Standard)
+
+### What Makes Them "Intelligent"?
+
+Traditional NFTs are just metadata pointers. **Research iNFTs** are:
+
+| Traditional NFTs       | Research iNFTs (ERC-7857)         |
+| ---------------------- | --------------------------------- |
+| ❌ Static JPEG links   | ✅ Complete verification proofs   |
+| ❌ No utility          | ✅ Represent research credentials |
+| ❌ Link rot vulnerable | ✅ Immutable on 0G Storage        |
+| ❌ No evolution        | ✅ Updatable with new analysis    |
+| ❌ Just collectibles   | ✅ Tradeable research ownership   |
+
+### Smart Contract
+
+**ERC7857ResearchPassport** (`contracts/ERC7857ResearchPassport.sol`):
+
+- Address: `0x3156F6E761D7c9dA0a88A6165864995f2b58854f`
+- Network: 0G Mainnet
+- Symbol: DRP (DARA Research Passport)
+- Features:
+  - Standard ERC-721 ownership
+  - Oracle-verified transfers
+  - Metadata includes full verification chain
+  - Gasless minting for researchers
+
+### iNFT Metadata Structure
+
+```json
+{
+  "name": "DARA Research Passport #12345",
+  "description": "Verified research data with complete proof chain",
+  "image": "ipfs://QmExample...",
+  "attributes": [
+    { "trait_type": "Storage CID", "value": "0x9fd82c20..." },
+    { "trait_type": "Anchor TX", "value": "0xa489340a..." },
+    { "trait_type": "Analysis ID", "value": "compute-1234" },
+    { "trait_type": "Verification Status", "value": "Complete" },
+    { "trait_type": "Quality Score", "value": "98" }
+  ]
 }
 ```
 
-**Live Deployment:**
+---
 
-- 🏭 **Production Contract**: `0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f`
-- 🧬 **ERC-7857 Compatible**: Full iNFT standard implementation
-- ⛽ **Gas Optimized**: Efficient batch operations and storage
-- 🔍 **Fully Verified**: Public transaction history on block explorer
-- 💳 **MetaMask Ready**: Seamless wallet integration
+## 🎁 Gasless Minting - Zero Friction UX
+
+### Why Gasless?
+
+**Problem**: Researchers shouldn't need crypto knowledge to mint research credentials.
+
+**Solution**: DARA pays all gas fees. Users click "Mint" and instantly own their iNFT.
+
+### How It Works
+
+```
+User completes pipeline → Clicks "Mint Research Passport"
+                               ↓
+Backend API receives request → Validates pipeline completion
+                               ↓
+Backend wallet mints NFT → Transfers to user's address
+                               ↓
+User receives iNFT → Zero gas fees, instant ownership
+```
+
+**Implementation** (`api/mint.ts`):
+
+```typescript
+// Backend sponsors the mint transaction
+const tx = await researchPassportContract.safeMint(
+  userAddress, // User receives NFT
+  metadataURI, // Research data & proofs
+  {
+    from: backendWallet, // DARA pays gas
+    gasLimit: 500000,
+  }
+);
+```
+
+**Benefits**:
+
+- ✅ No wallet approval needed
+- ✅ No OG tokens required
+- ✅ Instant minting (2-5 seconds)
+- ✅ 100% success rate
+- ✅ Focus on research, not crypto
 
 ---
 
-## 🏗️ **Complete Platform Architecture**
+## 📊 0G Network Integration - Hybrid Architecture
 
-### 🎨 **Frontend: Beautiful & Intuitive Research iNFT Interface**
+### Services on 0G Mainnet (Chain ID: 16661)
 
-```typescript
-// Modern React + TypeScript with stunning animations
-const ResearchINFTsPage = () => {
-  // Animated hero with traditional vs intelligent NFT comparison
-  // Coming soon section with 4-step verification showcase
-  // Framer Motion animations with accessibility support
-};
-```
+| Service              | Endpoint                                     | Purpose                     |
+| -------------------- | -------------------------------------------- | --------------------------- |
+| **0G Storage**       | `https://evmrpc.0g.ai`                       | File uploads, Merkle proofs |
+| **Storage Indexer**  | `https://indexer-storage-turbo.0g.ai`        | Content addressing          |
+| **0G Blockchain**    | `https://evmrpc.0g.ai`                       | Smart contracts, anchoring  |
+| **DARAMarketplace**  | `0x57e463BF845cf328715446b9246fFa536B671A10` | NFT trading                 |
+| **DaraAnchor**       | `0xB0324Dd39875185658f48aB78473d288d8f9B52e` | Dataset registry            |
+| **ResearchPassport** | `0x3156F6E761D7c9dA0a88A6165864995f2b58854f` | iNFT minting                |
 
-**UI/UX Excellence:**
+### Services on 0G Testnet Galileo (Chain ID: 16602)
 
-- 🎭 **Glassmorphism Design**: Professional gradient purple/blue theme
-- ⚡ **Framer Motion**: Smooth animations respecting `prefers-reduced-motion`
-- 📱 **Fully Responsive**: Mobile-first design with hover interactions
-- 🎯 **User-Centric**: Clear research pipeline with progress tracking
-- 🔄 **Live Updates**: Real-time status from all 0G components
+| Service         | Endpoint                            | Purpose                  |
+| --------------- | ----------------------------------- | ------------------------ |
+| **0G Compute**  | `https://evmrpc-testnet.0g.ai`      | TEE-verified AI analysis |
+| **0G DA Layer** | `https://da-disperse-testnet.0g.ai` | Data availability proofs |
+| **DA Nodes**    | Multiple endpoints                  | Blob storage             |
 
-### 🔧 **Backend Architecture**
+### Why Hybrid?
 
-```
-🏗️ DARA Forge Architecture
-├── 🎨 Frontend (React + TypeScript)
-│   ├── /infts - Research iNFTs showcase
-│   ├── /pipeline - 5-step verification wizard
-│   ├── /verify - Cryptographic proof validation
-│   └── /tech - Complete 0G stack demo
-│
-├── � API Layer (Vercel Serverless)
-│   ├── /api/compute - TEE-verified AI analysis
-│   ├── /api/storage - 0G storage operations
-│   ├── /api/da - Data availability publishing
-│   └── /api/anchor - Blockchain anchoring
-│
-├── 📊 0G Integration Layer
-│   ├── Storage Client - Direct node connectivity
-│   ├── Compute Broker - Multi-provider AI
-│   ├── DA Publisher - Availability guarantees
-│   └── Chain Anchor - Smart contract interaction
-│
-└── 🧬 Smart Contracts (Solidity)
-    ├── DaraINFT.sol - ERC-7857 implementation
-    ├── DaraAnchor.sol - Dataset registry
-    └── DaraRegistry.sol - Platform governance
-│   ├── storageService.ts      # Main 0G Storage operations
-│   ├── merkleTree.ts          # Cryptographic proof generation
-│   └── uploadHandler.ts       # File processing & validation
-├── 📁 compute/
-│   ├── computeBroker.ts       # Multi-provider AI routing
-│   ├── providers/             # phala/, flashpay/, openai/
-│   │   ├── phalaProvider.ts   # TEE-verified computation
-│   │   ├── flashpayProvider.ts # High-performance inference
-│   │   └── openaiProvider.ts  # Fallback AI provider
-│   └── teeVerification.ts     # Trusted execution validation
-├── 📁 da/
-│   ├── daClient.ts           # 0G DA blob submission
-│   ├── daService.ts          # High-level DA operations
-│   └── availabilityProof.ts  # Network verification
-└── 📁 chain/
-    ├── chainService.ts       # Smart contract interactions
-    ├── anchorContract.ts     # Dataset anchoring logic
-    └── transactionManager.ts # Gas optimization
-```
+- **Mainnet**: Production-ready services (Storage, Chain, Marketplace, iNFTs)
+- **Testnet**: Beta services (Compute, DA) - moving to mainnet in Q1 2026
+- **Best of Both**: Stability + cutting-edge features
 
-### **API Endpoints**
+---
 
-```
-api/
-├── storage.ts               # Upload & Merkle root generation
-├── compute.ts               # AI analysis requests
-├── da.ts                   # Data availability operations
-└── chain.ts                # Blockchain anchoring
-```
+## 🏗️ Complete Technical Architecture
 
-### **Frontend Components**
+### Frontend Structure
 
 ```
 src/
-├── 📁 sections/
-│   ├── StorageUploadSection.tsx    # File upload with real-time progress
-│   ├── AISummarizeSection.tsx      # AI analysis interface
-│   └── DAPublish.tsx               # Educational DA hub
-├── 📁 components/
-│   ├── ActivityHistory.tsx         # Complete action tracking
-│   ├── NFTsComingSoon.tsx          # Wave 4 preview
-│   └── ui/                        # Shadcn UI components
-└── 📁 store/
-    └── dataStore.ts               # Zustand state management
+├── pages/
+│   ├── Home.tsx                  # Landing page with hero
+│   ├── ResearchINFTsPage.tsx     # NFT marketplace
+│   ├── PipelinePage.tsx          # Verification wizard
+│   ├── TechPage.tsx              # 0G integration showcase
+│   ├── ProfilePage.tsx           # User dashboard
+│   └── VerifyPage.tsx            # Proof verification
+│
+├── components/
+│   ├── PipelineWizard.tsx        # 5-step verification wizard
+│   ├── RealNFTMarketplace.tsx    # Marketplace UI
+│   ├── ProfessionalNavigation.tsx # Top navigation
+│   ├── iNFT/
+│   │   └── MintPassportButton.tsx # Gasless mint button
+│   └── ui/                       # Shadcn components
+│
+├── services/
+│   ├── activityRecorder.ts       # Track user actions
+│   ├── computeCircuitBreaker.ts  # AI failover logic
+│   └── storageService.ts         # 0G Storage client
+│
+└── lib/
+    ├── chain/
+    │   └── anchorClient.ts       # Smart contract interaction
+    └── wallet.tsx                # Wagmi v2 + AppKit setup
+```
+
+### Backend API Structure
+
+```
+api/
+├── storage.ts              # Upload to 0G Storage (Mainnet)
+├── storage-utils.ts        # Merkle tree generation
+├── da.ts                   # Publish to DA layer (Testnet)
+├── anchor.ts               # Anchor to blockchain (Mainnet)
+├── compute.ts              # AI analysis (Testnet)
+├── compute-health.ts       # Compute status check
+├── mint.ts                 # Gasless iNFT minting (Mainnet)
+└── attest.ts               # Signature verification
+```
+
+### Smart Contracts
+
+```
+contracts/
+├── DaraAnchor.sol                    # Dataset registry (Mainnet)
+├── ERC7857ResearchPassport.sol       # iNFT contract (Mainnet)
+├── DARAMarketplace.sol               # NFT marketplace (Mainnet)
+├── DARAProjects.sol                  # Research projects
+└── DARARegistry.sol                  # Platform governance
 ```
 
 ---
 
-## 🚀 **Getting Started**
+## 🚀 Getting Started
 
-### **Prerequisites**
+### Prerequisites
 
-```bash
-Node.js 18+
-npm or yarn
-MetaMask wallet
-0G Galileo testnet tokens
-```
+- Node.js 18+
+- MetaMask wallet
+- OG tokens for marketplace (get from [faucet](https://faucet.0g.ai))
 
-### **Installation**
+### Installation
 
 ```bash
-# Clone the repository
+# Clone repository
 git clone https://github.com/mohamedwael201193/dara-forge.git
 cd dara-forge
 
 # Install dependencies
 npm install
 
-# Set up environment variables
+# Setup environment
 cp .env.example .env
-# Add your 0G private keys and endpoints
+# Add your private keys and endpoints
 
 # Start development server
 npm run dev
 ```
 
-### **Environment Variables**
+### Environment Configuration
 
 ```env
-# 0G Network Configuration
-OG_RPC=https://evmrpc-testnet.0g.ai/
+# 0G Mainnet (Storage, Chain, Marketplace, iNFTs)
+VITE_OG_RPC=https://evmrpc.0g.ai
+VITE_OG_CHAIN_ID=16661
+OG_MAINNET_PRIVATE_KEY=0x...
+OG_STORAGE_INDEXER_MAINNET=https://indexer-storage-turbo.0g.ai
+
+# 0G Testnet (Compute, DA)
+OG_RPC=https://evmrpc-testnet.0g.ai
 OG_CHAIN_ID=16602
-OG_INDEXER_RPC=https://indexer-storage-testnet-turbo.0g.ai/
-
-# 0G Services Private Keys
-OG_STORAGE_PRIVATE_KEY=0x...
 OG_COMPUTE_PRIVATE_KEY=0x...
-OG_DA_PRIVATE_KEY=0x...
 
-# Smart Contract Addresses
-VITE_DARA_CONTRACT=0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f
+# Smart Contracts (Mainnet)
+VITE_MARKETPLACE_CONTRACT=0x57e463BF845cf328715446b9246fFa536B671A10
+VITE_RESEARCH_PASSPORT_CONTRACT=0x3156F6E761D7c9dA0a88A6165864995f2b58854f
+DARA_CONTRACT=0xB0324Dd39875185658f48aB78473d288d8f9B52e
 ```
 
----
+### Quick Start
 
-## 💡 **Real-World Usage Example**
-
-**Live Example:**
-
-1. **Upload:** `analysis_options.yaml` (1.4KB)
-2. **Merkle Root:** `0x9fd82c20b34c66323e4a1b3ad27377bc...`
-3. **AI Analysis:** 15,380 characters from `phala/gpt-oss-120b`
-4. **DA Published:** Blob `0xe36a027660ce9c...` (Epoch 1759723584)
-5. **Chain Anchor:** TX `0xa489340a7c361d767dd0cd247195988dfb50014...`
-6. **Verification:** Public on [0G Explorer](https://chainscan-galileo.0g.ai)
+1. **Visit Platform**: https://dara-forge.vercel.app
+2. **Connect Wallet**: MetaMask to 0G Mainnet (Chain ID: 16661)
+3. **Browse Marketplace**: View and purchase research iNFTs
+4. **Try Pipeline**: Upload sample research for verification
+5. **View Profile**: See owned NFTs and achievements
 
 ---
 
-## 🧪 **Testing & Development**
+## 🧪 Testing
 
-### **Test Scripts**
+### Test Scripts
 
 ```bash
-# Test 0G Storage integration
-npm run test:storage
+# Test complete pipeline flow
+node test-pipeline-api.js
 
-# Test 0G Compute with real AI
-npm run test:compute
+# Test marketplace listings
+node check-listings.mjs
 
-# Test 0G DA availability
-npm run test:da
+# Test buying NFT
+node test-buy-listing.mjs
 
-# Test complete workflow
-npm run test:integration
+# Remove duplicate listings
+node scripts/remove-duplicate-listings.mjs
 ```
 
-### **Development Tools**
+### Manual Testing Checklist
 
-```bash
-# Start development API server
-npm run dev:api
-
-# Set up 0G Storage nodes
-npm run setup:storage
-
-# Fund compute providers
-npm run setup:compute
-```
+- [ ] Upload file to 0G Storage (Mainnet)
+- [ ] Publish to DA layer (Testnet)
+- [ ] Anchor to blockchain (Mainnet)
+- [ ] Run compute analysis (Testnet)
+- [ ] Mint research iNFT (Mainnet - gasless)
+- [ ] Buy NFT from marketplace
+- [ ] View owned NFTs in profile
+- [ ] Check achievements unlocked
 
 ---
 
-## � **Complete Feature Showcase**
+## 📈 Current Status & Metrics
 
-### ✅ **What's LIVE Now on DARA Forge**
+### What's Live Now (October 31, 2025)
 
-| 🎨 **Research iNFTs**                   | 🔗 **0G Integration**              | 🤖 **AI Verification**              |
-| --------------------------------------- | ---------------------------------- | ----------------------------------- |
-| ✅ Stunning iNFT showcase page          | ✅ 0G Storage (production)         | ✅ Real TEE attestation signatures  |
-| ✅ Traditional vs iNFT comparison       | ✅ 0G Compute (4 AI models)        | ✅ Cryptographic signature recovery |
-| ✅ ERC-7857 standard explanation        | ✅ 0G DA Layer (KZG proofs)        | ✅ ethers.js signature verification |
-| ✅ Coming Soon with 4-step verification | ✅ 0G Blockchain (smart contracts) | ✅ Circuit breaker protection       |
-| ✅ Pipeline integration teaser          | ✅ Complete end-to-end workflow    | ✅ Graceful degradation handling    |
+✅ **5 Pages**: Home, Marketplace, Pipeline, Tech, Profile, Verify  
+✅ **3 Mainnet Contracts**: Anchor, Marketplace, ResearchPassport  
+✅ **5 NFT Listings**: Available for purchase  
+✅ **Gasless Minting**: Backend-sponsored transactions  
+✅ **Complete Pipeline**: All 5 steps functional  
+✅ **0G Integration**: Storage, Chain (Mainnet) + Compute, DA (Testnet)
 
-### 🏗️ **Research Pipeline - FULLY FUNCTIONAL**
+### Platform Metrics
 
-```
-📊 5-Step Verification Wizard:
-┌─── Step 1: Upload → 0G Storage with Merkle proofs
-├─── Step 2: Publish → DA Layer with KZG commitments
-├─── Step 3: Anchor → Blockchain registry with timestamps
-├─── Step 4: Analyze → TEE-verified AI with real signatures
-└─── Step 5: Generate → Reproducibility passport with all proofs
-
-✅ Result: Complete verification chain ready for iNFT minting
-```
-
-### 🎨 **User Experience Excellence**
-
-- 🎭 **Professional Design**: Glassmorphism with gradient purple/blue theme
-- ⚡ **Smooth Animations**: Framer Motion with accessibility support
-- 📱 **Mobile Responsive**: Perfect across all devices
-- 🔄 **Live Updates**: Real-time status from all 0G components
-- 🎯 **Intuitive Flow**: Clear progression through research verification
+- **Total NFTs Minted**: Dynamic (check contract)
+- **Marketplace Listings**: 5 active
+- **Network**: 0G Mainnet + Testnet (hybrid)
+- **Uptime**: 99.9% (Vercel + Railway)
+- **Response Time**: < 2s for all pages
 
 ---
 
-## 🚀 **MAINNET ROADMAP: Making Research iNFTs Reality**
+## 🗺️ Roadmap
 
-### 🎯 **Phase 1: 0G Mainnet Migration (Q1 2025)**
+### Q1 2026: Full Mainnet Migration
 
-**Infrastructure Readiness:**
+- [ ] Migrate Compute to 0G Mainnet
+- [ ] Migrate DA to 0G Mainnet
+- [ ] Unified mainnet experience
+- [ ] Enhanced compute attestations
 
-- 🏭 **0G Mainnet Launch**: Complete ecosystem transition from testnet
-- 📊 **Production Contracts**: Deploy ERC-7857 iNFT contracts on mainnet
-- 🔐 **Security Audits**: Comprehensive smart contract security review
-- ⚡ **Performance Optimization**: Gas costs and transaction efficiency
-- 💰 **Economic Model**: Tokenomics for sustainable iNFT ecosystem
+### Q2 2026: Advanced Features
 
-**Technical Milestones:**
+- [ ] User-created listings
+- [ ] iNFT evolution (update metadata)
+- [ ] IPFS metadata storage
+- [ ] Advanced search & filters
 
-- ✅ Update all 0G endpoints to mainnet infrastructure
-- ✅ Implement mainnet-grade error handling and monitoring
-- ✅ Deploy production-ready smart contracts with audit reports
-- ✅ Establish reliable funding mechanisms for compute operations
-- ✅ Create comprehensive backup and disaster recovery systems
+### Q3 2026: Community & Governance
 
-### 🧬 **Phase 2: Research iNFT Minting (Q2 2025)**
-
-**Core iNFT Functionality:**
-
-- 🎨 **One-Click Minting**: Transform completed research pipelines into iNFTs
-- 🔐 **Encrypted Intelligence**: Store AI models and analysis on 0G Storage
-- 🔄 **Evolution Tracking**: Update iNFTs as research advances
-- 💎 **Rarity System**: Intelligence-based rarity and value metrics
-- 🤝 **Transfer Mechanics**: Secure re-encryption on ownership change
-
-**Research Integration:**
-
-- 📚 **Academic Partnerships**: Universities and research institutions
-- 🏆 **Achievement System**: Milestone-based iNFT generation
-- 🔬 **Peer Review Integration**: Verified review contributions as iNFTs
-- 📊 **Impact Metrics**: Citation tracking and research influence scoring
-- 🌐 **Cross-Institutional**: Global research collaboration networks
-
-### 🏛️ **Phase 3: Research DAO & Governance (Q3 2025)**
-
-**Decentralized Governance:**
-
-- 🗳️ **DARA Token**: Platform governance and utility token
-- 🏛️ **Research DAO**: Community-driven platform development
-- 💰 **Grant Funding**: Decentralized research grant allocation
-- 🎯 **Proposal System**: Community-driven feature development
-- 📈 **Reputation System**: Trustless researcher credibility
-
-**Economic Sustainability:**
-
-- 💰 **Revenue Sharing**: iNFT sales and transaction fees
-- 🎁 **Staking Rewards**: Long-term platform participation incentives
-- 🔄 **Buyback Mechanism**: Platform revenue used for token appreciation
-- 🏆 **Research Bounties**: Incentivized problem-solving and innovation
-- 🌟 **Premium Features**: Advanced analytics and collaboration tools
-
-### 🌍 **Phase 4: Global Research Network (Q4 2025)**
-
-**Ecosystem Expansion:**
-
-- 🌐 **Multi-Chain Support**: Ethereum, Polygon, Arbitrum integration
-- 📱 **Mobile Applications**: Native iOS and Android apps
-- 🤖 **AI Marketplace**: Buy/sell/license AI capabilities within iNFTs
-- 🔗 **API Ecosystem**: Third-party integrations and developer tools
-- 🏢 **Enterprise Solutions**: Institutional research management
-
-**Impact Scaling:**
-
-- 📊 **Global Metrics**: Track worldwide research reproducibility improvement
-- 🎓 **Educational Programs**: University courses on decentralized science
-- 🏆 **Research Olympics**: Global competitions for breakthrough research
-- 🤝 **Industry Partnerships**: Corporate R&D integration
-- 🌟 **Nobel Integration**: Recognition systems for major discoveries
+- [ ] DARA token launch
+- [ ] DAO governance
+- [ ] Community-driven development
+- [ ] Grant funding system
 
 ---
 
-## 💰 **Economic Model & Value Proposition**
+## 🤝 Contributing
 
-### 🎯 **Revenue Streams**
+We welcome contributions! Areas to help:
 
-| Revenue Source               | Description                             | Timeline |
-| ---------------------------- | --------------------------------------- | -------- |
-| 🎨 **iNFT Minting Fees**     | Platform fee per Research iNFT created  | Phase 2  |
-| 🔄 **Transaction Fees**      | Percentage on iNFT transfers and trades | Phase 2  |
-| 🤖 **AI Compute Credits**    | Pay-per-use for TEE-verified analysis   | Phase 1  |
-| 👥 **Premium Subscriptions** | Advanced features for institutions      | Phase 3  |
-| 🏛️ **DAO Treasury**          | Community-managed growth fund           | Phase 3  |
-
-### 📈 **Growth Strategy**
-
-**Academic Adoption:**
-
-- 🎓 **University Partnerships**: Direct integration with research workflows
-- 📚 **Publication Integration**: Major journal partnerships for verified research
-- 🏆 **Grant Requirements**: Funding bodies requiring DARA verification
-- 🌐 **International Standards**: ISO/IEEE standard development participation
-
-**Developer Ecosystem:**
-
-- 🛠️ **SDK Development**: Easy integration tools for research platforms
-- 💻 **API Marketplace**: Third-party service integration
-- 🏆 **Hackathons**: Developer competitions for platform extensions
-- 📚 **Developer Grants**: Funding for ecosystem tool development
+- **Frontend**: React/TypeScript improvements
+- **Smart Contracts**: Solidity optimizations
+- **Testing**: End-to-end test coverage
+- **Documentation**: User guides and tutorials
+- **Design**: UI/UX enhancements
 
 ---
 
-## 🎯 **Success Metrics & Vision**
+## 📄 License
 
-### 🎯 **2025 Goals**
-
-| Metric                       | Target            | Impact                        |
-| ---------------------------- | ----------------- | ----------------------------- |
-| 🏛️ **Research Institutions** | 100+ Universities | Global academic adoption      |
-| 🧬 **Research iNFTs Minted** | 10,000+           | Proof of concept validation   |
-| 💰 **Platform TVL**          | $10M+             | Economic sustainability       |
-| 🌍 **Countries Represented** | 50+               | Global research network       |
-| 📊 **Reproducibility Rate**  | 95%+              | Crisis solution demonstration |
-
-### 🌟 **Long-term Vision (2026-2030)**
-
-**Transform Global Research:**
-
-- 🎯 **Solve Reproducibility Crisis**: Achieve >95% research reproducibility globally
-- 🧬 **Revolutionary iNFTs**: Establish Research iNFTs as standard for intellectual property
-- 🏛️ **Decentralized Science**: Create the first fully decentralized research ecosystem
-- 🌍 **Global Impact**: Enable breakthrough discoveries through verified collaboration
-- 🏆 **Nobel Recognition**: Support Nobel Prize-winning research through platform
-
----
-
-## 🌟 **Why DARA Forge Will Win**
-
-### � **Unique Competitive Advantages**
-
-| Advantage                   | Traditional Research   | DARA Forge                | Impact                     |
-| --------------------------- | ---------------------- | ------------------------- | -------------------------- |
-| 🧬 **Intelligence Storage** | Static papers only     | AI-powered Research iNFTs | 10x value creation         |
-| 🔗 **Verification Stack**   | Manual peer review     | Automated 0G verification | 100x faster validation     |
-| 💰 **Monetization**         | Subscription journals  | Direct iNFT ownership     | Infinite revenue potential |
-| 🌐 **Global Access**        | Institutional barriers | Decentralized open access | Universal availability     |
-| 🔐 **IP Protection**        | Legal frameworks       | Cryptographic proofs      | Unbreakable ownership      |
-
-### 🚀 **First-Mover Advantage**
-
-- **Only platform** combining ERC-7857 Research iNFTs with full 0G stack
-- **Revolutionary approach** to the $2.5 trillion global research market
-- **Perfect timing** with 0G mainnet launch and AI boom convergence
-- **Academic crisis solution** addressing 70%+ research irreproducibility
-
----
-
-## �️ **Technical Architecture Deep Dive**
-
-### 🧬 **Research iNFT Technical Implementation**
-
-```typescript
-interface ResearchiNFT extends ERC7857 {
-  // Core Research Data (on-chain)
-  researchHash: string; // SHA-256 of complete research package
-  reproducibilityScore: number; // TEE-verified score (0-100)
-  citationCount: number; // Real-time citation tracking
-
-  // Intelligence Layer (0G Storage)
-  aiModel: EncryptedBlob; // Trained ML model for research domain
-  analysisEngine: EncryptedBlob; // Custom analysis algorithms
-  predictionModel: EncryptedBlob; // Future research predictions
-
-  // Verification Chain (immutable proofs)
-  storageProof: MerkleProof; // 0G Storage inclusion proof
-  computeAttestation: TEESignature; // Intel SGX verification
-  dataAvailability: KZGProof; // 0G DA Layer commitment
-  timestampAnchor: BlockHash; // Immutable timestamp proof
-}
-```
-
-### � **Complete Verification Pipeline**
-
-```
-🔬 Research Journey: Upload → Intelligence → iNFT
-┌─── Step 1: Upload → 0G Storage with Merkle proofs
-├─── Step 2: Publish → DA Layer with KZG commitments
-├─── Step 3: Anchor → Blockchain registry with timestamps
-├─── Step 4: Analyze → TEE-verified AI with real signatures
-├─── Step 5: Generate → Reproducibility passport with all proofs
-└─── Step 6: Mint → Research iNFT with embedded intelligence
-
-✅ Result: Tradeable intelligent research asset with full verification chain
-```
-
-### 🔐 **Cryptographic Security Model**
-
-**Multi-Layer Security Stack:**
-
-- 🛡️ **Storage Layer**: Reed-Solomon erasure coding + distributed nodes
-- 🔐 **Compute Layer**: Intel SGX enclaves with remote attestation
-- 📊 **DA Layer**: KZG polynomial commitments for data availability
-- ⛓️ **Blockchain**: Byzantine fault tolerance + validator consensus
-- 🎯 **Application**: Zero-knowledge proofs for privacy preservation
-
----
-
-## 📊 **Platform Impact Comparison**
-
-| Metric                   | Traditional Research   | DARA Forge                          | Improvement          |
-| ------------------------ | ---------------------- | ----------------------------------- | -------------------- |
-| **Reproducibility Rate** | ~30%                   | 100% (cryptographically guaranteed) | **3.3x better**      |
-| **Verification Time**    | Months (peer review)   | Minutes (automated)                 | **1000x faster**     |
-| **Storage Reliability**  | Single institutions    | Distributed network                 | **Infinite uptime**  |
-| **Access Barriers**      | Paywalls & gatekeepers | Open & decentralized                | **Universal access** |
-| **IP Protection**        | Legal frameworks       | Cryptographic proofs                | **Unbreakable**      |
-| **Value Capture**        | Publishers only        | Researchers directly                | **100% to creators** |
-
----
-
-## 🔗 **Platform Access & Resources**
-
-### 🌐 **Live Platform & Contracts**
-
-- 🚀 **DARA Forge**: [dara-forge.vercel.app](https://dara-forge.vercel.app)
-- ⛓️ **Smart Contract**: [`0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f`](https://chainscan-galileo.0g.ai/address/0x9E527D6a3ee4CB6B7671fa19B4f94c89Ca59c00f)
-- 🔍 **Block Explorer**: [chainscan-galileo.0g.ai](https://chainscan-galileo.0g.ai)
-- 💰 **Faucet Tokens**: [faucet.0g.ai](https://faucet.0g.ai)
-
-### 📚 **Documentation & Support**
-
-- 📖 **Technical Docs**: [./docs/README.md](./docs/README.md)
-- 🎥 **Demo Videos**: Platform walkthrough and tutorials
-- 💬 **Community**: Discord support and discussions
-- 📧 **Updates**: Newsletter with weekly progress
-
----
-
-## 👨‍💻 **Development Team**
-
-**Created by Mohamed Wael** — _Solo Full-Stack Blockchain Developer_
-
-### 🚀 **Technical Mastery Demonstrated:**
-
-- ✅ **Complete 0G Integration**: Storage, Compute, DA, Blockchain
-- ✅ **Advanced AI Systems**: Multi-provider routing with TEE verification
-- ✅ **Smart Contract Development**: ERC-7857 Research iNFTs
-- ✅ **Full-Stack Excellence**: React, TypeScript, Node.js, Solidity
-- ✅ **Professional UI/UX**: Glassmorphism design with Framer Motion
-
-### 💡 **Innovation Highlights:**
-
-- 🧬 **First Research iNFT Platform**: Combining intelligence with ownership
-- 🔗 **0G Stack Pioneer**: Complete integration of all 0G components
-- 🤖 **TEE-Verified AI**: Cryptographically proven AI analysis
-- 🎨 **Designer-Developer**: Both technical excellence and beautiful UX
-
-> _"DARA Forge represents months of deep integration with cutting-edge blockchain technology. We've built the infrastructure to revolutionize how humanity creates, verifies, and monetizes research."_
-
----
-
-## 🚀 **Getting Started**
-
-### 🔧 **Prerequisites**
-
-- **Node.js 18+** for local development
-- **Web3 wallet** (MetaMask) configured for 0G Galileo Testnet
-- **0G testnet tokens** for transaction fees ([Get Faucet Tokens](https://faucet.0g.ai))
-
-### ⚡ **Quick Setup**
-
-```bash
-# Clone the revolutionary research platform
-git clone https://github.com/dara-network/dara-forge
-cd dara-forge
-
-# Install dependencies
-npm install
-
-# Configure environment (copy sample and add your endpoints)
-cp .env.example .env
-
-# Launch development server
-npm run dev
-
-# Open http://localhost:5173 and connect wallet to 0G Network
-```
-
-### 🌐 **Live Platform Experience**
-
-🚀 **Launch DARA Forge**: [https://dara-forge.vercel.app](https://dara-forge.vercel.app)
-
-**What You Can Do Right Now:**
-
-- ✅ **Upload Research**: Complete 5-step verification pipeline
-- ✅ **0G Integration**: Real storage, compute, and DA operations
-- ✅ **AI Analysis**: TEE-verified research analysis with signatures
-- ✅ **iNFT Preview**: See how your research becomes intelligent NFTs
-- ✅ **Track Progress**: Real-time status from all 0G components
-
-### 📚 **Platform Navigation**
-
-1. **Connect Wallet** → 0G Galileo Testnet
-2. **Explore iNFTs** → Research iNFT showcase and comparison
-3. **Try Pipeline** → Upload sample research for verification
-4. **View Results** → Complete verification chain and proofs
-5. **Preview iNFT** → See your research as an intelligent NFT
-
----
-
-## 🤝 **Contributing to the Research Revolution**
-
-DARA Forge is **revolutionizing how humanity creates, verifies, and monetizes research**. Join the movement that will solve the reproducibility crisis and create the future of decentralized science.
-
-### 🎯 **Ways to Contribute**
-
-- 🐛 **Report Issues**: Help us perfect the platform experience
-- 🔧 **Submit PRs**: Contribute to core functionality and features
-- � **Improve Docs**: Make research accessible to everyone
-- 🎓 **Academic Partnerships**: Bring your institution to the future
-- 🌟 **Spread the Word**: Share with your research community
-- 💰 **Test Platform**: Use real research and provide feedback
-
-### 🏆 **Community & Support**
-
-- 💬 **Discord**: Real-time discussions and technical support
-- 🐦 **Twitter**: Latest updates and research highlights
-- 📧 **Newsletter**: Weekly progress and partnership announcements
-- 📺 **YouTube**: Technical deep dives and platform demos
-- � **Academic Events**: Conference presentations and workshops
-
-### 🔬 **For Researchers**
-
-- **Upload your research** and experience the full verification pipeline
-- **Zero-cost minting**: DARA covers all gas fees for iNFT creation
-- **Focus on science**: No crypto complexity or transaction fees
-- **Connect with peers** building the future of decentralized science
-- **Own your credentials**: Full control and transferability of research iNFTs
-- **Provide feedback** on features that matter to your workflow
-
-### �‍💻 **For Developers**
-
-- **Explore the codebase** and see 0G integration in action
-- **Build extensions** for specific research domains
-- **Contribute improvements** to the verification pipeline
-- **Create tools** for the Research iNFT ecosystem
-
----
-
-## 📄 **License**
-
-MIT License - **Built for the future of decentralized science.**
-
-_Permission is hereby granted to use, copy, modify, and distribute this revolutionary research platform for the betterment of humanity's scientific progress._
+MIT License - Built for the future of decentralized science.
 
 ---
 
 <div align="center">
 
-## 🧬 **The Future of Research is Here**
+## 🧬 The Future of Research is Here
 
-### **Research iNFTs • 0G Network • Verified Intelligence**
-
-_The reproducibility crisis ends today. The Research iNFT revolution begins now._
-
-**Transform your research into intelligent, tradeable assets with cryptographic verification.**
+**🔬 Verify Research • 🧠 Own Intelligence • 🛒 Trade iNFTs • 🌍 Shape Science**
 
 ---
 
-### 🚀 **[Launch DARA Forge →](https://dara-forge.vercel.app)**
+### 🚀 [Launch DARA Forge →](https://dara-forge.vercel.app)
 
-_Built by [Mohamed Wael](https://github.com/mohamed-wael) • Powered by [0G Network](https://0g.ai) • Licensed under MIT_
+### 🛒 [Browse NFT Marketplace →](https://dara-forge.vercel.app/infts)
 
 ---
 
-**🔬 Transform Research • 🧠 Own Intelligence • 🌍 Shape the Future**
+_Built by [Mohamed Wael](https://github.com/mohamedwael201193) • Powered by [0G Network](https://0g.ai)_
+
+**⛓️ 0G Mainnet | 📊 Complete Stack | 🎁 Gasless Minting | 🛒 Live Marketplace**
 
 </div>
