@@ -92,20 +92,36 @@ SECURITY.md
 deployment-notes.txt
 private-docs/
 
-# Development scripts with credentials
-scripts/deploy-*.js
+# Development scripts with credentials (hide most, keep a few examples)
+scripts/deploy-anchor.cjs
+scripts/deploy-marketplace.cjs
+scripts/fund-*.ts
 scripts/fund-*.js
-scripts/setup-production.js
-
-# Batch files with potential credentials
+scripts/setup-*.js
+scripts/setup-*.mjs
+scripts/compute-fund.ts
+scripts/compute-smoke.ts
 cli-wrapper.bat
 *.bat
+
+# Test scripts (hide duplicates, keep main tests)
+test-anchor-contract.js
+test-pipeline-api.js
+test-buy-listing.mjs
+test-quick.js
+fund-broker-ledger.js
+
+# Server files (hide old/test versions, keep main)
+server-*.js
+local-api.js
 
 # Railway deployment files (not used)
 railway.json
 railway.toml
 railway.yaml
 Procfile
+.railway
+railway/
 
 # Documentation files (keep only README.md visible)
 ACTION_PLAN.md
@@ -115,12 +131,15 @@ TWITTER_THREAD.md
 WAVE5_REVIEW_SUMMARY.md
 WAVE5_IMPLEMENTATION.md
 DEPLOYMENT_GUIDE.md
+DEPLOYMENT_WAVE5.md
 TESTING_GUIDE.md
 CONFIGURATION_AUDIT.md
 NETWORK_FIX.md
 RAILWAY_DEPLOYMENT.md
-DEPLOYMENT_WAVE5.md
 WAVE5_COMPLIANCE.md
+TEST_MATRIX.md
+0G-COMPUTE-SETUP.md
+NEW_README.md
 temp_readme.md
 README.old.md
 *.old.md
