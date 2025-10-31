@@ -2,7 +2,7 @@
 
 ### _The First Complete Research iNFT Platform with Live NFT Marketplace on 0G Network_
 
-> **Status**: ✅ **LIVE on 0G Mainnet** | October 31, 2025  
+> **Status**: ✅ **LIVE on 0G Mainnet**  
 > **Network**: 0G Mainnet (Chain ID: 16661) + 0G Testnet Galileo (Chain ID: 16602)
 
 <div align="center">
