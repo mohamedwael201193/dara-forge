@@ -97,6 +97,38 @@ scripts/deploy-*.js
 scripts/fund-*.js
 scripts/setup-production.js
 
+# Batch files with potential credentials
+cli-wrapper.bat
+*.bat
+
+# Railway deployment files (not used)
+railway.json
+railway.toml
+railway.yaml
+Procfile
+
+# Documentation files (keep only README.md visible)
+ACTION_PLAN.md
+WAVE5_JUDGING_COMPLIANCE.md
+SUBMISSION_CHECKLIST.md
+TWITTER_THREAD.md
+WAVE5_REVIEW_SUMMARY.md
+WAVE5_IMPLEMENTATION.md
+DEPLOYMENT_GUIDE.md
+TESTING_GUIDE.md
+CONFIGURATION_AUDIT.md
+NETWORK_FIX.md
+RAILWAY_DEPLOYMENT.md
+DEPLOYMENT_WAVE5.md
+WAVE5_COMPLIANCE.md
+temp_readme.md
+README.old.md
+*.old.md
+
+# Test and development files
+TEST_MATRIX.md
+0G-COMPUTE-SETUP.md
+
 # Production builds and cache
 /.next/
 /out/
